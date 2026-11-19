@@ -48,8 +48,13 @@ object PrefsCardDefaults {
     /** 行左右内边距。 */
     val ContentPadding: Dp = GlassTokens.Spacing.pagePadding
 
-    /** 行内上下内边距（再配合 [RowMinHeight] 得到 56dp 的单行高度）。 */
-    val RowVerticalPadding: Dp = 10.dp
+    /**
+     * 行内上下内边距。
+     *
+     * 取 6dp 是为了让「标题 22sp + 副标题最多 2 行 40sp」的行也不超过 74dp：
+     * 22 + 40 + 6×2 = 74；单行/无副标题的行由 [RowMinHeight] 兜到 56dp。
+     */
+    val RowVerticalPadding: Dp = 6.dp
 
     /** 次级行（`minimalHeight`）最小高度。 */
     val MinimalRowMinHeight: Dp = 32.dp
@@ -59,6 +64,9 @@ object PrefsCardDefaults {
 
     /** 分组标题与卡片之间的间距。 */
     val HeaderGap: Dp = 8.dp
+
+    /** 非首个分组的标题上方额外间距（组间距 8dp + 16dp = 24dp）。 */
+    val HeaderTopSpacing: Dp = 16.dp
 
     /**
      * 卡片表层色：浅色 `#FFFFFF`、深色 `#1C1C1E`。
@@ -87,16 +95,22 @@ private val PrefsCardShape: Shape by lazy { SquircleShape(PrefsCardDefaults.Corn
  *
  * - 卡片本体：表层色 + 16dp 连续圆角 + **无阴影**（FlClash settings 组就是平铺卡片）；
  * - 可选分组标题：渲染在卡片**上方**（FlClash / iOS 的分组标题不在卡片里）；
+ *   [headerTopSpacing] 是标题到「上一张卡片/页面顶部」的距离，由 [PrefsScreen] 按
+ *   「首组 16dp、其余组 24dp（已扣掉组间距 8dp）」传入；
  * - 卡片内部的分割线由调用方（[PrefsScreen]）插在行与行之间。
  */
 @Composable
 internal fun PrefsCard(
     modifier: Modifier = Modifier,
+    headerTopSpacing: Dp = 0.dp,
     header: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         if (header != null) {
+            if (headerTopSpacing > 0.dp) {
+                Spacer(modifier = Modifier.height(headerTopSpacing))
+            }
             header()
             Spacer(modifier = Modifier.height(PrefsCardDefaults.HeaderGap))
         }

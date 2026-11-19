@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsListItem
-import com.huanchengfly.tieba.post.ui.common.prefs.ifNotNullThen
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
 
 //TODO add single line title?
@@ -53,7 +52,8 @@ fun TextPref(
         textColor = textColor,
         minimalHeight = minimalHeight,
         icon = leadingIcon,
-        secondaryText = summary.ifNotNullThen { Text(summary!!) },
+        // 副标题最多 2 行的规则在 PrefsListItem 里（所有 pref widget 共用的那一层）
+        summary = summary,
         trailing = trailingContent,
         // trailing 已经占了右侧（开关 / 值），再画 chevron 就重复了
         showChevron = showChevron && trailingContent == null,

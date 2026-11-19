@@ -2,8 +2,8 @@ package com.huanchengfly.tieba.post.ui.page.settings.habit
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.BrandingWatermark
@@ -26,11 +26,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.dataStore
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCollapsedTitle
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsLargeTitle
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsScreen
+import com.huanchengfly.tieba.post.ui.common.prefs.rememberPrefsTitleCollapseProgress
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.ListPref
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.ListPrefInt
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.SwitchPref
@@ -52,14 +54,17 @@ fun HabitSettingsPage(
     navigator: DestinationsNavigator
 ) {
     val context = LocalContext.current
+    // 与设置主页同一套大标题：标题随列表滚走，顶栏标题按滚动进度淡入
+    val listState = rememberLazyListState()
+    val collapseProgress = rememberPrefsTitleCollapseProgress(listState)
     MyScaffold(
         backgroundColor = Color.Transparent,
         topBar = {
             TitleCentredToolbar(
                 title = {
-                    Text(
+                    PrefsCollapsedTitle(
                         text = stringResource(id = R.string.title_settings_read_habit),
-                        fontWeight = FontWeight.Bold, style = MaterialTheme.typography.h6
+                        progress = collapseProgress,
                     )
                 },
                 navigationIcon = {
@@ -70,9 +75,11 @@ fun HabitSettingsPage(
     ) { paddingValues ->
         PrefsScreen(
             dataStore = LocalContext.current.dataStore,
+            listState = listState,
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize(),
+            header = { PrefsLargeTitle(stringResource(id = R.string.title_settings_read_habit)) },
         ) {
             prefsItem {
                 ListPref(

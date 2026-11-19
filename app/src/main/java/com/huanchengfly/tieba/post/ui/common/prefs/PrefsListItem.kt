@@ -16,6 +16,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalTextStyle
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.runtime.Composable
@@ -24,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
@@ -34,7 +36,8 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
  * 几何 / 字号对齐 FlClash `prism_ui` 的 settings 行：
  * - 行最小高 56dp、左右内边距 16dp；
  * - 标题 17sp / w400（[GlassTokens.Typography.body]）；
- * - 副标题 15sp / secondary（[GlassTokens.Typography.subheadline] + `textSecondary`）；
+ * - 副标题 15sp / secondary（[GlassTokens.Typography.subheadline] + `textSecondary`），
+ *   **最多 2 行、超出省略**，所以再长的说明也只会把行撑到 74dp（22 + 20×2 + 6×2）；
  * - 右侧 chevron 20dp，只在「可点但没有 trailing 控件」时出现。
  */
 @Composable
@@ -44,7 +47,7 @@ fun PrefsListItem(
     enabled: Boolean = true,
     darkenOnDisable: Boolean = true,
     icon: @Composable (() -> Unit)? = null,
-    secondaryText: @Composable (() -> Unit)? = null,
+    summary: String? = null,
     trailing: @Composable (() -> Unit)? = null,
     textColor: Color = glassColors().textPrimary,
     minimalHeight: Boolean = false,
@@ -71,11 +74,6 @@ fun PrefsListItem(
         contentAlpha,
         text
     )!!
-    val styledSecondaryText = applyTextStyle(
-        GlassTokens.Typography.subheadline.toTextStyle(secondaryColor),
-        contentAlpha,
-        secondaryText
-    )
     val styledTrailing = applyTextStyle(
         GlassTokens.Typography.caption1.toTextStyle(textColor),
         contentAlpha,
@@ -110,7 +108,19 @@ fun PrefsListItem(
             modifier = Modifier.weight(1f)
         ) {
             styledText()
-            styledSecondaryText?.invoke()
+            if (summary != null) {
+                CompositionLocalProvider(
+                    LocalContentAlpha provides contentAlpha,
+                    LocalTextStyle provides GlassTokens.Typography.subheadline
+                        .toTextStyle(secondaryColor),
+                ) {
+                    Text(
+                        text = summary,
+                        maxLines = SummaryMaxLines,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
 
         when {
@@ -134,6 +144,9 @@ fun PrefsListItem(
 
 private val IconMinPaddedWidth = 40.dp
 private const val ChevronAlpha = 0.7f
+
+/** 副标题最多两行：再长的说明也只会把行撑到 74dp。 */
+private const val SummaryMaxLines = 2
 
 /**
  * 只注入样式，不改变调用方写的内容：`Text(title)` 会自己取 `LocalTextStyle`。

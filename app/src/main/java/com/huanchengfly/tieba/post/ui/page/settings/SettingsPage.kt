@@ -5,16 +5,13 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.LocalContentColor
-import androidx.compose.material.Text
 import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Campaign
@@ -22,28 +19,23 @@ import androidx.compose.material.icons.outlined.SecurityUpdateWarning
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.dataStore
 import com.huanchengfly.tieba.post.models.database.Account
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCollapsedTitle
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsLargeTitle
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsScreen
+import com.huanchengfly.tieba.post.ui.common.prefs.rememberPrefsTitleCollapseProgress
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.SwitchPref
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
-import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
-import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
-import com.huanchengfly.tieba.post.ui.common.prefs.toTextStyle
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.AccountManagePageDestination
@@ -127,28 +119,24 @@ fun SettingsPage(
     navigator: DestinationsNavigator,
 ) {
     val context = LocalContext.current
-    // 「大标题滚动收进顶栏」：列表滚过标题高度后，顶栏标题从 0 渐变到 1。
-    // 明暗跟随 App 自己的 ExtendedTheme（不是系统），所以颜色都取自 glass 令牌。
+    // 「大标题滚动收进顶栏」：大标题是列表第一项，随内容滚走；顶栏标题的透明度直接由滚动偏移驱动。
+    // 明暗跟随 App 自己的 ExtendedTheme（不是系统），颜色都取自 glass 令牌。
     val listState = rememberLazyListState()
-    val collapseDistancePx = with(LocalDensity.current) { LargeTitleCollapseDistance.toPx() }
-    val collapseProgress by remember(collapseDistancePx) {
-        derivedStateOf {
-            if (listState.firstVisibleItemIndex > 0) 1f
-            else (listState.firstVisibleItemScrollOffset / collapseDistancePx).coerceIn(0f, 1f)
-        }
-    }
+    val collapseProgress = rememberPrefsTitleCollapseProgress(listState)
+    // 分组标题文案要在这里（composable 上下文）取：DSL 的 content 不是 composable lambda，
+    // 在里面调 stringResource 编译不过。
+    val groupAccount = stringResource(id = R.string.settings_group_account)
+    val groupSecurity = stringResource(id = R.string.settings_group_security)
+    val groupAppearance = stringResource(id = R.string.settings_group_appearance)
     ProvideNavigator(navigator = navigator) {
         Scaffold(
             backgroundColor = Color.Transparent,
             topBar = {
                 TitleCentredToolbar(
                     title = {
-                        // 收起后才出现：17sp / w600（FlClash 的导航栏标题）
-                        Text(
+                        PrefsCollapsedTitle(
                             text = stringResource(id = R.string.title_settings),
-                            style = GlassTokens.Typography.headline.toTextStyle(glassColors().textPrimary),
-                            modifier = Modifier.alpha(collapseProgress),
-                            maxLines = 1,
+                            progress = collapseProgress,
                         )
                     },
                     navigationIcon = {
@@ -163,129 +151,158 @@ fun SettingsPage(
                 modifier = Modifier
                     .padding(it)
                     .fillMaxSize(),
-                header = { SettingsLargeTitle() },
+                header = { PrefsLargeTitle(stringResource(id = R.string.title_settings)) },
             ) {
-                prefsItem {
-                    NowAccountItem(account = LocalAccount.current)
-                }
-                // 安全模式（只读）总开关：影响全局入口显隐与所有写操作拦截，
-                // 属于最常用的开关之一，故直接放在设置主页顶部，不再埋进二级页面。
-                prefsItem {
-                    SwitchPref(
-                        key = "safeMode",
-                        title = stringResource(id = R.string.title_safe_mode),
-                        summary = stringResource(id = R.string.summary_safe_mode),
-                        defaultChecked = true,
-                        onCheckedChange = { checked ->
-                            // 关闭安全模式时重置「不再提示」，下次重新开启时仍会提醒一次
-                            if (!checked) {
-                                context.appPreferences.safeModeDialogDontShow = false
-                            }
-                            Toast.makeText(context, R.string.toast_restart_app, Toast.LENGTH_SHORT)
-                                .show()
-                            Handler(Looper.getMainLooper()).postDelayed({
-                                restartApp(context)
-                            }, 800)
-                        },
-                    ) {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.Outlined.SecurityUpdateWarning,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                // 三张分组卡片：账号 / 安全 / 外观与通用（组间距 8dp 由 PrefsScreen 负责）
+                prefsGroup(title = groupAccount) {
+                    prefsItem {
+                        NowAccountItem(account = LocalAccount.current)
                     }
                 }
-                // 「不再提示」的恢复入口：仅当用户此前点过「不再提示」时才显示，
-                // 打开该开关即清掉标记，重新开启进入贴子/发贴页的安全模式提醒。
-                if (context.appPreferences.safeModeDialogDontShow) {
+                prefsGroup(title = groupSecurity) {
+                    // 安全模式（只读）总开关：影响全局入口显隐与所有写操作拦截，
+                    // 属于最常用的开关之一，故直接放在设置主页，不再埋进二级页面。
                     prefsItem {
                         SwitchPref(
-                            key = "safeModeDialogDontShow",
-                            title = stringResource(id = R.string.title_dialog_safe_mode_hint_again),
-                            summary = stringResource(id = R.string.summary_dialog_safe_mode_hint_again),
-                            defaultChecked = false,
-                            onCheckedChange = {
-                                context.appPreferences.safeModeDialogDontShow = false
+                            key = "safeMode",
+                            title = stringResource(id = R.string.title_safe_mode),
+                            summary = stringResource(id = R.string.summary_safe_mode),
+                            defaultChecked = true,
+                            onCheckedChange = { checked ->
+                                // 关闭安全模式时重置「不再提示」，下次重新开启时仍会提醒一次
+                                if (!checked) {
+                                    context.appPreferences.safeModeDialogDontShow = false
+                                }
                                 Toast.makeText(
                                     context,
-                                    R.string.toast_safe_mode_hint_restored,
+                                    R.string.toast_restart_app,
                                     Toast.LENGTH_SHORT
                                 ).show()
+                                Handler(Looper.getMainLooper()).postDelayed({
+                                    restartApp(context)
+                                }, 800)
                             },
                         ) {
                             LeadingIcon {
                                 AvatarIcon(
-                                    icon = Icons.Outlined.Campaign,
+                                    icon = Icons.Outlined.SecurityUpdateWarning,
                                     size = Sizes.Small,
                                     contentDescription = null,
                                 )
                             }
                         }
                     }
-                }
-                prefsItem {
-                    TextPref(
-                        title = stringResource(id = R.string.title_block_settings),
-                        summary = stringResource(id = R.string.summary_block_settings),
-                        leadingIcon = {
-                            LeadingIcon {
-                                AvatarIcon(
-                                    icon = ImageVector.vectorResource(id = R.drawable.ic_settings_block),
-                                    size = Sizes.Small,
-                                    contentDescription = null,
-                                )
+                    // 「不再提示」的恢复入口：仅当用户此前点过「不再提示」时才显示，
+                    // 打开该开关即清掉标记，重新开启进入贴子/发贴页的安全模式提醒。
+                    if (context.appPreferences.safeModeDialogDontShow) {
+                        prefsItem {
+                            SwitchPref(
+                                key = "safeModeDialogDontShow",
+                                title = stringResource(id = R.string.title_dialog_safe_mode_hint_again),
+                                summary = stringResource(id = R.string.summary_dialog_safe_mode_hint_again),
+                                defaultChecked = false,
+                                onCheckedChange = {
+                                    context.appPreferences.safeModeDialogDontShow = false
+                                    Toast.makeText(
+                                        context,
+                                        R.string.toast_safe_mode_hint_restored,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                },
+                            ) {
+                                LeadingIcon {
+                                    AvatarIcon(
+                                        icon = Icons.Outlined.Campaign,
+                                        size = Sizes.Small,
+                                        contentDescription = null,
+                                    )
+                                }
                             }
-                        },
-                        darkenOnDisable = false,
-                        onClick = { navigator.navigate(BlockSettingsPageDestination) }
-                    )
-                }
-                prefsItem {
-                    TextPref(
-                        title = stringResource(id = R.string.title_settings_custom),
-                        summary = stringResource(id = R.string.summary_settings_custom),
-                        leadingIcon = {
-                            LeadingIcon {
-                                AvatarIcon(
-                                    icon = ImageVector.vectorResource(id = R.drawable.ic_brush_black_24dp),
-                                    size = Sizes.Small,
-                                    contentDescription = null,
-                                )
-                            }
-                        },
-                        darkenOnDisable = false,
-                        onClick = { navigator.navigate(CustomSettingsPageDestination) }
-                    )
-                }
-                prefsItem {
-                    TextPref(
-                        title = stringResource(id = R.string.title_settings_read_habit),
-                        summary = stringResource(id = R.string.summary_settings_habit),
-                        leadingIcon = {
-                            LeadingIcon {
-                                AvatarIcon(
-                                    icon = ImageVector.vectorResource(id = R.drawable.ic_dashboard_customize_black_24),
-                                    size = Sizes.Small,
-                                    contentDescription = null,
-                                )
-                            }
-                        },
-                        darkenOnDisable = false,
-                        onClick = { navigator.navigate(HabitSettingsPageDestination) }
-                    )
-                }
-                // 安全模式下该页所有签到设置均无意义（签到已被拦截），整项隐藏
-                if (!context.appPreferences.safeMode) {
+                        }
+                    }
                     prefsItem {
                         TextPref(
-                            title = stringResource(id = R.string.title_oksign),
-                            summary = stringResource(id = R.string.summary_settings_oksign),
+                            title = stringResource(id = R.string.title_block_settings),
+                            summary = stringResource(id = R.string.summary_block_settings),
                             leadingIcon = {
                                 LeadingIcon {
                                     AvatarIcon(
-                                        icon = ImageVector.vectorResource(id = R.drawable.ic_rocket_launch_black_24),
+                                        icon = ImageVector.vectorResource(id = R.drawable.ic_settings_block),
+                                        size = Sizes.Small,
+                                        contentDescription = null,
+                                    )
+                                }
+                            },
+                            darkenOnDisable = false,
+                            onClick = { navigator.navigate(BlockSettingsPageDestination) }
+                        )
+                    }
+                }
+                prefsGroup(title = groupAppearance) {
+                    prefsItem {
+                        TextPref(
+                            title = stringResource(id = R.string.title_settings_custom),
+                            summary = stringResource(id = R.string.summary_settings_custom),
+                            leadingIcon = {
+                                LeadingIcon {
+                                    AvatarIcon(
+                                        icon = ImageVector.vectorResource(id = R.drawable.ic_brush_black_24dp),
+                                        size = Sizes.Small,
+                                        contentDescription = null,
+                                    )
+                                }
+                            },
+                            darkenOnDisable = false,
+                            onClick = { navigator.navigate(CustomSettingsPageDestination) }
+                        )
+                    }
+                    prefsItem {
+                        TextPref(
+                            title = stringResource(id = R.string.title_settings_read_habit),
+                            summary = stringResource(id = R.string.summary_settings_habit),
+                            leadingIcon = {
+                                LeadingIcon {
+                                    AvatarIcon(
+                                        icon = ImageVector.vectorResource(id = R.drawable.ic_dashboard_customize_black_24),
+                                        size = Sizes.Small,
+                                        contentDescription = null,
+                                    )
+                                }
+                            },
+                            darkenOnDisable = false,
+                            onClick = { navigator.navigate(HabitSettingsPageDestination) }
+                        )
+                    }
+                    // 安全模式下该页所有签到设置均无意义（签到已被拦截），整项隐藏
+                    if (!context.appPreferences.safeMode) {
+                        prefsItem {
+                            TextPref(
+                                title = stringResource(id = R.string.title_oksign),
+                                summary = stringResource(id = R.string.summary_settings_oksign),
+                                leadingIcon = {
+                                    LeadingIcon {
+                                        AvatarIcon(
+                                            icon = ImageVector.vectorResource(id = R.drawable.ic_rocket_launch_black_24),
+                                            size = Sizes.Small,
+                                            contentDescription = null,
+                                        )
+                                    }
+                                },
+                                darkenOnDisable = false,
+                                onClick = {
+                                    navigator.navigate(OKSignSettingsPageDestination)
+                                }
+                            )
+                        }
+                    }
+                    prefsItem {
+                        TextPref(
+                            title = stringResource(id = R.string.title_settings_more),
+                            summary = stringResource(id = R.string.summary_settings_more),
+                            leadingIcon = {
+                                LeadingIcon {
+                                    AvatarIcon(
+                                        icon = ImageVector.vectorResource(id = R.drawable.ic_more_horiz_black_24),
                                         size = Sizes.Small,
                                         contentDescription = null,
                                     )
@@ -293,59 +310,13 @@ fun SettingsPage(
                             },
                             darkenOnDisable = false,
                             onClick = {
-                                navigator.navigate(OKSignSettingsPageDestination)
+                                navigator.navigate(MoreSettingsPageDestination)
                             }
                         )
                     }
                 }
-                prefsItem {
-                    TextPref(
-                        title = stringResource(id = R.string.title_settings_more),
-                        summary = stringResource(id = R.string.summary_settings_more),
-                        leadingIcon = {
-                            LeadingIcon {
-                                AvatarIcon(
-                                    icon = ImageVector.vectorResource(id = R.drawable.ic_more_horiz_black_24),
-                                    size = Sizes.Small,
-                                    contentDescription = null,
-                                )
-                            }
-                        },
-                        darkenOnDisable = false,
-                        onClick = {
-                            navigator.navigate(MoreSettingsPageDestination)
-                        }
-                    )
-                }
             }
         }
-    }
-}
-
-/**
- * 大标题滚出多少距离后，顶栏标题完全显示。
- * 取 32dp 而不是「标题高度」：手指刚一动顶栏就开始接字，观感更接近 iOS 大标题。
- */
-private val LargeTitleCollapseDistance = 32.dp
-
-/**
- * 设置页大标题：FlClash 的 `pageTitle`，24sp / w600，左对齐，跟着列表一起滚走。
- *
- * 左右留白由 [PrefsScreen] 的 `contentPadding`（16dp）给，这里只补上下的小间距，
- * 保证标题与卡片的左边缘对齐。
- */
-@Composable
-private fun SettingsLargeTitle() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 4.dp, bottom = 4.dp)
-    ) {
-        Text(
-            text = stringResource(id = R.string.title_settings),
-            style = GlassTokens.Typography.pageTitle.toTextStyle(glassColors().textPrimary),
-            maxLines = 1,
-        )
     }
 }
 
@@ -362,3 +333,4 @@ internal fun restartApp(context: Context) {
     }
     Runtime.getRuntime().exit(0)
 }
+

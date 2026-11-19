@@ -88,7 +88,13 @@ fun PrefsScreen(
                                 section.headerIndex?.let { headerIndex ->
                                     { prefsScope.getPrefsItem(headerIndex)() }
                                 }
-                            PrefsCard(header = cardHeader) {
+                            PrefsCard(
+                                header = cardHeader,
+                                // 首组的上间距由 LazyColumn 的 contentPadding(16dp) 提供；
+                                // 其余组 = 组间距 8dp + 16dp = 24dp
+                                headerTopSpacing = if (index == 0) 0.dp
+                                else PrefsCardDefaults.HeaderTopSpacing,
+                            ) {
                                 section.itemIndexes.forEachIndexed { rowIndex, itemIndex ->
                                     if (rowIndex > 0 && dividerThickness > 0.dp) {
                                         Divider(
