@@ -2,7 +2,6 @@ package com.huanchengfly.tieba.post.ui.common.prefs.widgets
 
 import android.util.Log
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -13,7 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsDataStore
-import com.huanchengfly.tieba.post.ui.widgets.compose.Switch
+import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
 import kotlinx.coroutines.launch
 
 @ExperimentalMaterialApi
@@ -25,7 +24,7 @@ fun SwitchPref(
     summary: @Composable (value: Boolean) -> String? = { null },
     defaultChecked: Boolean = false,  // only used if it doesn't already exist in the datastore
     onCheckedChange: ((Boolean) -> Unit)? = null,
-    textColor: Color = MaterialTheme.colors.onBackground,
+    textColor: Color = glassColors().textPrimary,
     enabled: Boolean = true,
     leadingIcon: @Composable (() -> Unit)? = null
 ) {
@@ -65,7 +64,7 @@ fun SwitchPref(
             edit(checked)
         }
     ) {
-        Switch(
+        PrefsSwitch(
             checked = checked,
             enabled = enabled,
             onCheckedChange = { edit(it) },
@@ -74,7 +73,7 @@ fun SwitchPref(
 }
 
 /**
- * Simple preference with a trailing [Switch]
+ * Simple preference with a trailing [PrefsSwitch]（Glasmio 液态玻璃开关）
  *
  * @param key Key used to identify this Pref in the DataStore
  * @param title Main text which describes the Pref
@@ -97,7 +96,7 @@ fun SwitchPref(
     summaryOff: String? = null,
     defaultChecked: Boolean = false,  // only used if it doesn't already exist in the datastore
     onCheckedChange: ((Boolean) -> Unit)? = null,
-    textColor: Color = MaterialTheme.colors.onBackground,
+    textColor: Color = glassColors().textPrimary,
     enabled: Boolean = true,
     leadingIcon: @Composable (() -> Unit)? = null
 ) {
@@ -138,7 +137,7 @@ fun SwitchPref(
             edit(checked)
         }
     ) {
-        Switch(
+        PrefsSwitch(
             checked = checked,
             enabled = enabled,
             onCheckedChange = { edit(it) },

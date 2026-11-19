@@ -231,6 +231,9 @@ dependencies {
 
     // 真·液态玻璃（Glasmio）：backdrop 录制 + 折射/模糊材质
     implementation(libs.glasmio.glass)
+    // Glasmio 的上层组件（设置页开关用）。glasmio-glass 的 POM 只依赖 core + icons，
+    // 不含 ui，所以这里必须并列声明同一个版本，否则 compileClasspath 看不到 GlasmioSwitch。
+    implementation(libs.glasmio.ui)
 
     // Android Studio Preview support
     implementation(libs.compose.ui.tooling.preview)
