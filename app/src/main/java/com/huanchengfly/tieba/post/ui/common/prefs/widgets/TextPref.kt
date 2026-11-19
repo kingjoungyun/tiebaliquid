@@ -2,13 +2,13 @@ package com.huanchengfly.tieba.post.ui.common.prefs.widgets
 
 import androidx.compose.foundation.clickable
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsListItem
 import com.huanchengfly.tieba.post.ui.common.prefs.ifNotNullThen
+import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
 
 //TODO add single line title?
 
@@ -26,6 +26,8 @@ import com.huanchengfly.tieba.post.ui.common.prefs.ifNotNullThen
  * @param textColor Text colour of the [title] and [summary]
  * @param enabled If false, this Pref cannot be checked/unchecked
  * @param leadingIcon Icon which is positioned at the start of the Pref
+ * @param showChevron 是否在右侧画 chevron（FlClash / iOS 的「可进入」提示）。
+ * 默认：可点就画；但如果调用方给了 trailing 内容（开关 / 滑块 / 值），[PrefsListItem] 会跳过它
  * @param trailingContent Composable content which is positioned at the end of the Pref
  */
 @ExperimentalMaterialApi
@@ -37,10 +39,11 @@ fun TextPref(
     darkenOnDisable: Boolean = true,
     minimalHeight: Boolean = false,
     onClick: (() -> Unit)? = null,
-    textColor: Color = MaterialTheme.colors.onBackground,
+    textColor: Color = glassColors().textPrimary,
     enabled: Boolean = onClick != null,
     leadingIcon: @Composable (() -> Unit)? = null,
-    trailingContent: @Composable (() -> Unit)? = null
+    showChevron: Boolean = onClick != null && enabled,
+    trailingContent: @Composable (() -> Unit)? = null,
 ) {
     PrefsListItem(
         text = { Text(title) },
@@ -51,6 +54,8 @@ fun TextPref(
         minimalHeight = minimalHeight,
         icon = leadingIcon,
         secondaryText = summary.ifNotNullThen { Text(summary!!) },
-        trailing = trailingContent
+        trailing = trailingContent,
+        // trailing 已经占了右侧（开关 / 值），再画 chevron 就重复了
+        showChevron = showChevron && trailingContent == null,
     )
 }

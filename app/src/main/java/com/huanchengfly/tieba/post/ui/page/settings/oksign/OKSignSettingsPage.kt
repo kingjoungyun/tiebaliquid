@@ -73,7 +73,6 @@ fun OKSignSettingsPage(
         val snackbarHostState = LocalSnackbarHostState.current
         PrefsScreen(
             dataStore = dataStore,
-            dividerThickness = 0.dp,
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize(),

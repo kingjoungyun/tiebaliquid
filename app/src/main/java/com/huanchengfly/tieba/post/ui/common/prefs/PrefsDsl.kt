@@ -1,15 +1,17 @@
 package com.huanchengfly.tieba.post.ui.common.prefs
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import com.huanchengfly.tieba.post.collectPreferenceAsState
 
 /**
  * Receiver scope which is used by [PrefsScreen].
+ *
+ * 分组的语义完全由这里决定：
+ * - [prefsGroup] 开一张新卡片（可选一个标题），组内所有 [prefsItem] 落在同一张卡片里；
+ * - 组与组之间自动断卡，页面上表现为「组间距 8dp」；
+ * - 两次 [prefsGroup] 之间直接写的 [prefsItem] 会归入一张**隐式卡片**（没有标题），
+ *   所以老页面（只写 `prefsItem { ... }`）不需要改写法也能拿到卡片化渲染。
  */
 interface PrefsScope {
     /**
@@ -36,16 +38,30 @@ interface PrefsScope {
     fun prefsGroup(header: @Composable PrefsScope.() -> Unit, items: PrefsScope.() -> Unit)
 }
 
+/**
+ * 一张分组卡片的数据：可选的分组标题 + 组内各行的下标。
+ *
+ * 下标指 [PrefsScopeImpl.prefsItems]，渲染时按需取下标的 composable 调用，
+ * 这样卡片内部的懒加载粒度和以前一样（每行仍在 LazyColumn 的 item 里……见 [PrefsScreen] 说明）。
+ */
+internal class PrefsSection {
+    /** 分组标题在 `prefsItems` 里的下标；隐式卡片为 null。 */
+    var headerIndex: Int? = null
+
+    /** 组内各行的下标，按顺序。 */
+    val itemIndexes: MutableList<Int> = mutableListOf()
+}
+
 internal class PrefsScopeImpl : PrefsScope {
 
-    private var _headerIndexes: MutableList<Int> = mutableListOf()
-    val headerIndexes: List<Int> get() = _headerIndexes
-
-    private var _footerIndexes: MutableList<Int> = mutableListOf()
-    val footerIndexes: List<Int> get() = _footerIndexes
-
-    private var _prefsItems: MutableList<PrefsItem> = mutableListOf()
+    private val _prefsItems: MutableList<PrefsItem> = mutableListOf()
     val prefsItems: List<PrefsItem> get() = _prefsItems
+
+    private val _sections: MutableList<PrefsSection> = mutableListOf()
+    val sections: List<PrefsSection> get() = _sections
+
+    /** 当前「开着的」卡片；`prefsGroup` 结束后重置，于是组后的裸 item 会另起一张隐式卡片。 */
+    private var openSection: PrefsSection? = null
 
     override fun prefsItem(content: @Composable PrefsScope.() -> Unit) {
         _prefsItems.add(
@@ -53,51 +69,31 @@ internal class PrefsScopeImpl : PrefsScope {
                 content = { @Composable { content() } }
             )
         )
+        val section = openSection ?: PrefsSection().also {
+            _sections.add(it)
+            openSection = it
+        }
+        section.itemIndexes.add(_prefsItems.lastIndex)
     }
 
     override fun prefsGroup(title: String, items: PrefsScope.() -> Unit) {
-        // Exceptions to when divider should be drawn
-        // - if last item
-        // - if next item starts a new group
-        // - if current current item is header of new group
-        // - if current item is end of group
-
-        // add header index so we know where each group starts
-        _headerIndexes.add(this.prefsItems.size)
-
-        this.prefsItem {
-            GroupHeader(title)
-        }
-
-        // add all children to hierarchy
-        this.apply(items)
-
-        this.prefsItem { Spacer(modifier = Modifier.height(16.dp)) }
-
-        // add totalSize -2/-1 to footerIndexes as that is the index of the last item added and the spacer respectively
-        _footerIndexes.add(this.prefsItems.size - 2)
-        _footerIndexes.add(this.prefsItems.size - 1)
+        prefsGroup(header = { GroupHeader(title) }, items = items)
     }
 
     override fun prefsGroup(
         header: @Composable PrefsScope.() -> Unit,
         items: PrefsScope.() -> Unit
     ) {
-        // add header index so we know where each group starts
-        _headerIndexes.add(this.prefsItems.size)
+        val section = PrefsSection().also { _sections.add(it) }
+        openSection = section
 
-        this.prefsItem {
-            header()
-        }
+        _prefsItems.add(PrefsItem(content = { @Composable { header() } }))
+        section.headerIndex = _prefsItems.lastIndex
 
-        // add all children to hierarchy
         this.apply(items)
 
-        this.prefsItem { Spacer(modifier = Modifier.height(16.dp)) }
-
-        // add totalSize -2/-1 to footerIndexes as that is the index of the last item added and the spacer respectively
-        _footerIndexes.add(this.prefsItems.size - 2)
-        _footerIndexes.add(this.prefsItems.size - 1)
+        // 组结束：之后的裸 item 另起一张隐式卡片（不再续写进组外那张卡）
+        openSection = null
     }
 
     fun getPrefsItem(index: Int): @Composable () -> Unit {

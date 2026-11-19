@@ -5,28 +5,34 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.LocalContentColor
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.SecurityUpdateWarning
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.dataStore
@@ -35,6 +41,9 @@ import com.huanchengfly.tieba.post.ui.common.prefs.PrefsScreen
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.SwitchPref
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
+import com.huanchengfly.tieba.post.ui.common.prefs.toTextStyle
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.AccountManagePageDestination
@@ -118,15 +127,28 @@ fun SettingsPage(
     navigator: DestinationsNavigator,
 ) {
     val context = LocalContext.current
+    // 「大标题滚动收进顶栏」：列表滚过标题高度后，顶栏标题从 0 渐变到 1。
+    // 明暗跟随 App 自己的 ExtendedTheme（不是系统），所以颜色都取自 glass 令牌。
+    val listState = rememberLazyListState()
+    val collapseDistancePx = with(LocalDensity.current) { LargeTitleCollapseDistance.toPx() }
+    val collapseProgress by remember(collapseDistancePx) {
+        derivedStateOf {
+            if (listState.firstVisibleItemIndex > 0) 1f
+            else (listState.firstVisibleItemScrollOffset / collapseDistancePx).coerceIn(0f, 1f)
+        }
+    }
     ProvideNavigator(navigator = navigator) {
         Scaffold(
             backgroundColor = Color.Transparent,
             topBar = {
                 TitleCentredToolbar(
                     title = {
+                        // 收起后才出现：17sp / w600（FlClash 的导航栏标题）
                         Text(
                             text = stringResource(id = R.string.title_settings),
-                            fontWeight = FontWeight.Bold, style = MaterialTheme.typography.h6
+                            style = GlassTokens.Typography.headline.toTextStyle(glassColors().textPrimary),
+                            modifier = Modifier.alpha(collapseProgress),
+                            maxLines = 1,
                         )
                     },
                     navigationIcon = {
@@ -137,10 +159,11 @@ fun SettingsPage(
         ) {
             PrefsScreen(
                 dataStore = LocalContext.current.dataStore,
-                dividerThickness = 0.dp,
+                listState = listState,
                 modifier = Modifier
                     .padding(it)
                     .fillMaxSize(),
+                header = { SettingsLargeTitle() },
             ) {
                 prefsItem {
                     NowAccountItem(account = LocalAccount.current)
@@ -296,6 +319,33 @@ fun SettingsPage(
                 }
             }
         }
+    }
+}
+
+/**
+ * 大标题滚出多少距离后，顶栏标题完全显示。
+ * 取 32dp 而不是「标题高度」：手指刚一动顶栏就开始接字，观感更接近 iOS 大标题。
+ */
+private val LargeTitleCollapseDistance = 32.dp
+
+/**
+ * 设置页大标题：FlClash 的 `pageTitle`，24sp / w600，左对齐，跟着列表一起滚走。
+ *
+ * 左右留白由 [PrefsScreen] 的 `contentPadding`（16dp）给，这里只补上下的小间距，
+ * 保证标题与卡片的左边缘对齐。
+ */
+@Composable
+private fun SettingsLargeTitle() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp, bottom = 4.dp)
+    ) {
+        Text(
+            text = stringResource(id = R.string.title_settings),
+            style = GlassTokens.Typography.pageTitle.toTextStyle(glassColors().textPrimary),
+            maxLines = 1,
+        )
     }
 }
 
