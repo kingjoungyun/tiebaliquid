@@ -273,6 +273,8 @@ private fun SearchUserContent(
             .fillMaxSize()
             .padding(contentPadding)
             .padding(horizontal = 16.dp),
+        // 主页 tab 内嵌时，顶栏高度必须走 contentPadding 才能让内容从顶栏下面经过。
+        contentPadding = PaddingValues(top = com.huanchengfly.tieba.post.ui.page.main.LocalMainTabTopInset.current),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item {

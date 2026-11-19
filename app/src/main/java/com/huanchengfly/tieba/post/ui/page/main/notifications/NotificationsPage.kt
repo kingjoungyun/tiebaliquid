@@ -3,7 +3,6 @@ package com.huanchengfly.tieba.post.ui.page.main.notifications
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.Scaffold
 import androidx.compose.material.Tab
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -19,6 +18,8 @@ import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.SearchPageDestination
+import com.huanchengfly.tieba.post.ui.page.main.MainTabScaffold
+import com.huanchengfly.tieba.post.ui.page.main.MainTopBarRow
 import com.huanchengfly.tieba.post.ui.page.main.notifications.list.NotificationsListPage
 import com.huanchengfly.tieba.post.ui.page.main.notifications.list.NotificationsType
 import com.huanchengfly.tieba.post.ui.widgets.compose.ActionItem
@@ -130,11 +131,10 @@ fun NotificationsPage(
         initialPage = initialTab,
     ) { pages.size }
     val coroutineScope = rememberCoroutineScope()
-    Scaffold(
-        backgroundColor = Color.Transparent,
+    MainTabScaffold(
+        modifier = Modifier.fillMaxSize(),
         topBar = {
-            Toolbar(
-                title = stringResource(id = R.string.title_notifications),
+            MainTopBarRow(
                 navigationIcon = accountNavIconIfCompact(),
                 actions = {
                     ActionItem(
@@ -171,7 +171,6 @@ fun NotificationsPage(
                 }
             }
         },
-        modifier = Modifier.fillMaxSize(),
     ) { paddingValues ->
         LazyLoadHorizontalPager(
             state = pagerState,

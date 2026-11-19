@@ -95,6 +95,10 @@ import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.LoginPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.SearchPageDestination
+import com.huanchengfly.tieba.post.ui.page.main.MainCollapsingTitle
+import com.huanchengfly.tieba.post.ui.page.main.MainTabScaffold
+import com.huanchengfly.tieba.post.ui.page.main.MainTopBarRow
+import com.huanchengfly.tieba.post.ui.page.main.LocalMainTabTopInset
 import com.huanchengfly.tieba.post.ui.widgets.compose.ActionItem
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.Button
@@ -104,10 +108,8 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.ErrorScreen
 import com.huanchengfly.tieba.post.ui.widgets.compose.LongClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.MenuState
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyVerticalGrid
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.TextButton
 import com.huanchengfly.tieba.post.ui.widgets.compose.TipScreen
-import com.huanchengfly.tieba.post.ui.widgets.compose.Toolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.toolboxAccountNavIconIfCompact
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
@@ -166,7 +168,7 @@ fun SearchBox(
 ) {
     Box(
         modifier = modifier
-            .background(ExtendedTheme.colors.topBar)
+            // 顶栏本体已经透明（内容从下面流过），这里不能再铺一层 topBar 实色。
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Surface(
@@ -721,56 +723,64 @@ fun HomePage(
         }
     }
 
-    MyScaffold(
-        backgroundColor = Color.Transparent,
-        topBar = {
-            Toolbar(
-                title = stringResource(id = R.string.title_explore),
-                navigationIcon = toolboxAccountNavIconIfCompact(navigator),
-                actions = {
-                    // 安全模式下隐藏「一键签到」入口（签到属写操作，会被网络层拦截）
-                    if (!context.appPreferences.safeMode) {
-                        ActionItem(
-                            icon = ImageVector.vectorResource(id = R.drawable.ic_oksign),
-                            contentDescription = stringResource(id = R.string.title_oksign)
-                        ) {
-                            TiebaUtil.startSign(context)
-                        }
-                    }
-                    // 一个按钮收纳：单列/双列、排序方式、最近访问吧开关
-                    Box {
-                        ActionItem(
-                            icon = Icons.Outlined.ViewAgenda,
-                            contentDescription = stringResource(id = R.string.title_more_options)
-                        ) {
-                            moreMenuExpanded = true
-                        }
-                        HomeMoreMenu(
-                            expanded = moreMenuExpanded,
-                            listSingle = listSingle,
-                            sortType = sortType,
-                            showHistoryForum = showHistoryForumState,
-                            onDismiss = { moreMenuExpanded = false },
-                            onToggleListSingle = {
-                                context.appPreferences.listSingle = !listSingle
-                                listSingle = !listSingle
-                            },
-                            onSelectSort = { type ->
-                                context.appPreferences.homeSortType = type
-                                sortType = type
-                            },
-                            onToggleHistoryForum = {
-                                context.appPreferences.homePageShowHistoryForum =
-                                    !context.appPreferences.homePageShowHistoryForum
-                                showHistoryForumState =
-                                    context.appPreferences.homePageShowHistoryForum
-                            }
-                        )
-                    }
-                }
-            )
-        },
+    MainTabScaffold(
         modifier = Modifier.fillMaxSize(),
+        topBar = {
+            // 顶栏 = 72dp 标题行 + 可收起的搜索框；整块登记给 MainPage 的 overlay host。
+            // 搜索框高度变化会让 host 重新量高度，玻璃层跟着动画走（不写死）。
+            Column {
+                MainTopBarRow(
+                    navigationIcon = toolboxAccountNavIconIfCompact(navigator),
+                    actions = {
+                        // 安全模式下隐藏「一键签到」入口（签到属写操作，会被网络层拦截）
+                        if (!context.appPreferences.safeMode) {
+                            ActionItem(
+                                icon = ImageVector.vectorResource(id = R.drawable.ic_oksign),
+                                contentDescription = stringResource(id = R.string.title_oksign)
+                            ) {
+                                TiebaUtil.startSign(context)
+                            }
+                        }
+                        // 一个按钮收纳：单列/双列、排序方式、最近访问吧开关
+                        Box {
+                            ActionItem(
+                                icon = Icons.Outlined.ViewAgenda,
+                                contentDescription = stringResource(id = R.string.title_more_options)
+                            ) {
+                                moreMenuExpanded = true
+                            }
+                            HomeMoreMenu(
+                                expanded = moreMenuExpanded,
+                                listSingle = listSingle,
+                                sortType = sortType,
+                                showHistoryForum = showHistoryForumState,
+                                onDismiss = { moreMenuExpanded = false },
+                                onToggleListSingle = {
+                                    context.appPreferences.listSingle = !listSingle
+                                    listSingle = !listSingle
+                                },
+                                onSelectSort = { type ->
+                                    context.appPreferences.homeSortType = type
+                                    sortType = type
+                                },
+                                onToggleHistoryForum = {
+                                    context.appPreferences.homePageShowHistoryForum =
+                                        !context.appPreferences.homePageShowHistoryForum
+                                    showHistoryForumState =
+                                        context.appPreferences.homePageShowHistoryForum
+                                }
+                            )
+                        }
+                    },
+                ) {
+                    MainCollapsingTitle(text = stringResource(id = R.string.title_explore))
+                }
+                HomeSearchArea(
+                    visible = searchBarVisible,
+                    onOpenSearch = { navigator.navigate(SearchPageDestination) }
+                )
+            }
+        },
     ) { contentPaddings ->
         val pullRefreshState = rememberPullRefreshState(
             refreshing = isLoading,
@@ -782,10 +792,6 @@ fun HomePage(
                 .padding(contentPaddings)
         ) {
             Column {
-                HomeSearchArea(
-                    visible = searchBarVisible,
-                    onOpenSearch = { navigator.navigate(SearchPageDestination) }
-                )
                 StateScreen(
                     isEmpty = showEmptyState,
                     isError = isError,
@@ -978,7 +984,9 @@ fun HomePage(
             PullRefreshIndicator(
                 refreshing = isLoading,
                 state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter),
+                modifier = Modifier
+                    .padding(top = LocalMainTabTopInset.current)
+                    .align(Alignment.TopCenter),
                 backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
                 contentColor = ExtendedTheme.colors.primary,
             )

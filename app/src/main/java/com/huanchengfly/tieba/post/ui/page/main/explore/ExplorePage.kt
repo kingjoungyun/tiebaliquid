@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
 import androidx.compose.material.Tab
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -32,6 +31,8 @@ import com.huanchengfly.tieba.post.arch.onGlobalEvent
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.SearchPageDestination
+import com.huanchengfly.tieba.post.ui.page.main.MainTabScaffold
+import com.huanchengfly.tieba.post.ui.page.main.MainTopBarRow
 import com.huanchengfly.tieba.post.ui.page.main.explore.concern.ConcernPage
 import com.huanchengfly.tieba.post.ui.page.main.explore.personalized.PersonalizedPage
 import com.huanchengfly.tieba.post.ui.page.searchuser.SearchUserTabPage
@@ -39,7 +40,6 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.ActionItem
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoadHorizontalPager
 import com.huanchengfly.tieba.post.ui.widgets.compose.PagerTabIndicator
 import com.huanchengfly.tieba.post.ui.widgets.compose.TabRow
-import com.huanchengfly.tieba.post.ui.widgets.compose.Toolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.toolboxAccountNavIconIfCompact
 import com.huanchengfly.tieba.post.utils.AccountUtil.LocalAccount
 import kotlinx.collections.immutable.ImmutableList
@@ -143,11 +143,11 @@ fun ExplorePage() {
         coroutineScope.emitGlobalEvent(GlobalEvent.Refresh(pages[pagerState.currentPage].id))
     }
 
-    Scaffold(
-        backgroundColor = Color.Transparent,
+    MainTabScaffold(
+        modifier = Modifier.fillMaxSize(),
         topBar = {
-            Toolbar(
-                title = { ExplorePageTab(pagerState = pagerState, pages = pages) },
+            // 顶栏内容登记给 MainPage 的 overlay host（透明 + 滚动后薄玻璃），这里只排布局。
+            MainTopBarRow(
                 navigationIcon = toolboxAccountNavIconIfCompact(navigator),
                 actions = {
                     ActionItem(
@@ -157,9 +157,10 @@ fun ExplorePage() {
                         navigator.navigate(SearchPageDestination)
                     }
                 },
-            )
+            ) {
+                ExplorePageTab(pagerState = pagerState, pages = pages)
+            }
         },
-        modifier = Modifier.fillMaxSize(),
     ) { paddingValues ->
         LazyLoadHorizontalPager(
             contentPadding = paddingValues,

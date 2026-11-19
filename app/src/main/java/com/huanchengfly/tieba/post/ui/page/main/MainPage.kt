@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -40,6 +41,7 @@ import com.huanchengfly.tieba.post.arch.BaseComposeActivity.Companion.LocalWindo
 import com.huanchengfly.tieba.post.arch.GlobalEvent
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.arch.emitGlobalEvent
+import com.huanchengfly.tieba.post.arch.onGlobalEvent
 import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.rememberPreferenceAsState
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
@@ -276,6 +278,18 @@ fun MainPage(
             GlobalEvent.Refresh(key = navigationItems[it].id)
         )
     }
+    // 主界面顶栏的状态：各 tab 页把顶栏内容登记进来，MainPage 在玻璃 overlay 层渲染当前页那一份。
+    // 放在 navigationItems 之后初始化，这样第一帧就有 key，不会缺一帧顶栏。
+    val topBarState = remember(navigationItems) {
+        MainTopBarState(initialKey = navigationItems[pagerState.currentPage].id)
+    }
+    LaunchedEffect(pagerState.currentPage, navigationItems) {
+        topBarState.setCurrent(navigationItems[pagerState.currentPage].id)
+    }
+    // 双击顶栏 = 回顶：列表收到 GlobalEvent.ScrollToTop 会滚回去，这里同步把玻璃/大标题状态复位。
+    onGlobalEvent<GlobalEvent.ScrollToTop> {
+        topBarState.resetScroll()
+    }
     ProvideNavigator(navigator = navigator) {
         val showDock = navigationType == MainNavigationType.BOTTOM_NAVIGATION
         val onSelectPosition: (Int) -> Unit = {
@@ -326,25 +340,39 @@ fun MainPage(
                             MainPageScaffold(
                                 pagerState = pagerState,
                                 navigationItems = navigationItems,
+                                topBarState = topBarState,
                                 bottomBar = dockPlaceholder,
                             )
                         }
                     },
                     overlayContent = {
+                        // 顶栏在玻璃层：本体透明、内容从下面流过；滚动后才渐显薄玻璃。
+                        MainTopBarHost(
+                            state = topBarState,
+                            modifier = Modifier.align(Alignment.TopCenter),
+                        )
                         dock(Modifier.align(Alignment.BottomCenter))
                     },
                 )
             } else {
                 // 降级 / 宽屏路径：胶囊照旧放回 bottomBar 槽位，玻璃表面自动退回伪玻璃。
-                MainPageScaffold(
-                    pagerState = pagerState,
-                    navigationItems = navigationItems,
-                    bottomBar = {
-                        if (showDock) {
-                            dock(Modifier)
-                        }
-                    },
-                )
+                // 顶栏仍然走同一个 host，只是这里不在 Glasmio host 里，玻璃会自动降级成实底。
+                Box(modifier = Modifier.fillMaxSize()) {
+                    MainPageScaffold(
+                        pagerState = pagerState,
+                        navigationItems = navigationItems,
+                        topBarState = topBarState,
+                        bottomBar = {
+                            if (showDock) {
+                                dock(Modifier)
+                            }
+                        },
+                    )
+                    MainTopBarHost(
+                        state = topBarState,
+                        modifier = Modifier.align(Alignment.TopCenter),
+                    )
+                }
             }
         }
     }
@@ -366,6 +394,7 @@ fun MainPage(
 private fun MainPageScaffold(
     pagerState: PagerState,
     navigationItems: ImmutableList<NavigationItem>,
+    topBarState: MainTopBarState,
     bottomBar: @Composable () -> Unit,
 ) {
     MyScaffold(
@@ -381,7 +410,13 @@ private fun MainPageScaffold(
             verticalAlignment = Alignment.Top,
             userScrollEnabled = false
         ) {
-            navigationItems[it].content()
+            // 顶栏内容按当前 tab 登记：各页的 MainTabScaffold 通过这两个 local 找到 host。
+            CompositionLocalProvider(
+                LocalMainTopBarState provides topBarState,
+                LocalMainTabKey provides navigationItems[it].id,
+            ) {
+                navigationItems[it].content()
+            }
         }
     }
 }
