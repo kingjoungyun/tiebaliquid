@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
@@ -42,13 +43,17 @@ fun rememberPrefsTitleCollapseProgress(listState: LazyListState): Float {
  *
  * 左右留白由 [PrefsScreen] 的 `contentPadding`（16dp）给，这里只补上下的小间距，
  * 保证标题与卡片左边缘对齐。
+ *
+ * [progress] 是顶栏标题的淡入进度（0..1）；大标题按 `1 - progress` 反向淡出，
+ * 免得起飞的大标题被顶栏压住后还留半截残字。
  */
 @Composable
-fun PrefsLargeTitle(text: String) {
+fun PrefsLargeTitle(text: String, progress: Float = 0f) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 4.dp, bottom = 4.dp)
+            .graphicsLayer { alpha = (1f - progress).coerceIn(0f, 1f) }
     ) {
         Text(
             text = text,

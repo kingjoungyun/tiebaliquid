@@ -151,7 +151,12 @@ fun SettingsPage(
                 modifier = Modifier
                     .padding(it)
                     .fillMaxSize(),
-                header = { PrefsLargeTitle(stringResource(id = R.string.title_settings)) },
+                header = {
+                    PrefsLargeTitle(
+                        text = stringResource(id = R.string.title_settings),
+                        progress = collapseProgress,
+                    )
+                },
             ) {
                 // 三张分组卡片：账号 / 安全 / 外观与通用（组间距 8dp 由 PrefsScreen 负责）
                 prefsGroup(title = groupAccount) {

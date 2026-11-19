@@ -79,7 +79,12 @@ fun HabitSettingsPage(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize(),
-            header = { PrefsLargeTitle(stringResource(id = R.string.title_settings_read_habit)) },
+            header = {
+                PrefsLargeTitle(
+                    text = stringResource(id = R.string.title_settings_read_habit),
+                    progress = collapseProgress,
+                )
+            },
         ) {
             prefsItem {
                 ListPref(
