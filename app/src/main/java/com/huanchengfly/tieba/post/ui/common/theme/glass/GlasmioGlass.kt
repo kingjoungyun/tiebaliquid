@@ -1,19 +1,29 @@
 package com.huanchengfly.tieba.post.ui.common.theme.glass
 
 import android.os.Build
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
+import io.github.neoruaa.glasmio.glass.GlassEmphasis
 import io.github.neoruaa.glasmio.glass.GlassSurface as GlasmioGlassSurface
 import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
 
@@ -72,12 +82,21 @@ fun LiquidGlassBackdropHost(
  * - [isLiquidGlassSupported] 为 false —— API < 33，Glasmio 的 shader 起不来。
  *
  * 注意：降级是**整块表面**级的（形状/内容完全一致，只换 background 实现），所以布局不会跳。
+ *
+ * @param navigationSurfaceColor 覆盖 Glasmio 材质的 tint（FlClash 的 regular tint）。null 走 Glasmio 默认；
+ * @param navigationSurfaceAlphaMultiplier Glasmio 的 tint alpha 乘数；我们传的 tint 自带 alpha，用 1f 保持原值；
+ * @param emphasis Regular / Prominent，决定材质走 regular 还是 prominent；
+ * @param innerGlow 自绘 1px 上缘高光 + 微弱内发光（深色下把壳从纯黑背景里拉出来）。
  */
 @Composable
 fun LiquidGlassSurface(
     modifier: Modifier = Modifier,
     shape: Shape = CircleShape,
     material: NavigationGlassMaterial = NavigationGlassMaterial.RegularSmall,
+    navigationSurfaceColor: Color? = null,
+    navigationSurfaceAlphaMultiplier: Float = 1f,
+    emphasis: GlassEmphasis = GlassEmphasis.Regular,
+    innerGlow: Boolean = false,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val hosted = LocalLiquidGlassHosted.current
@@ -87,8 +106,13 @@ fun LiquidGlassSurface(
                 modifier = modifier,
                 shape = shape,
                 material = material,
-                content = content,
-            )
+                navigationSurfaceColor = navigationSurfaceColor,
+                navigationSurfaceAlphaMultiplier = navigationSurfaceAlphaMultiplier,
+                emphasis = emphasis,
+            ) {
+                content()
+                if (innerGlow) GlassInnerGlow(shape)
+            }
         }
     } else {
         val colors = glassColors()
@@ -96,11 +120,69 @@ fun LiquidGlassSurface(
         GlassSurface(
             modifier = modifier,
             shape = shape,
-            fill = colors.glassFill,
-            strokeColor = colors.glassStroke,
-            content = content,
+            fill = navigationSurfaceColor ?: colors.glassFill,
+            strokeColor = if (navigationSurfaceColor != null && colors.isDark) {
+                Color.White.copy(alpha = 0.18f)
+            } else {
+                colors.glassStroke
+            },
+            content = {
+                content()
+                if (innerGlow) GlassInnerGlow(shape)
+            },
         )
     }
+}
+
+/**
+ * 玻璃内缘的高光/内发光：1px 渐变描边（上缘最亮）+ 一条更宽的弱白色内发光。
+ *
+ * 画在 surface 的 content 层之上、并 clip 到形状里，所以不会盖住 content 的命中区（纯绘制）。
+ * 深色下白边更亮，浅色下压低，避免亮玻璃上再出现一道明显的白线。
+ */
+@Composable
+private fun BoxScope.GlassInnerGlow(shape: Shape) {
+    val dark = glassColors().isDark
+    val rimAlpha = if (dark) 0.72f else 0.46f
+    val glowAlpha = if (dark) 0.10f else 0.05f
+    Spacer(
+        modifier = Modifier
+            .matchParentSize()
+            .clip(shape)
+            .drawWithContent {
+                drawContent()
+                val stroke = 1.dp.toPx()
+                val glowStroke = 5.dp.toPx()
+                val rimBrush = Brush.verticalGradient(
+                    0f to Color.White.copy(alpha = rimAlpha),
+                    0.32f to Color.White.copy(alpha = rimAlpha * 0.22f),
+                    1f to Color.White.copy(alpha = 0.02f),
+                )
+                val glowBrush = Brush.verticalGradient(
+                    0f to Color.White.copy(alpha = glowAlpha),
+                    0.55f to Color.White.copy(alpha = glowAlpha * 0.35f),
+                    1f to Color.Transparent,
+                )
+                val inset = stroke / 2f
+                val insetSize = Size(
+                    width = (size.width - stroke).coerceAtLeast(0f),
+                    height = (size.height - stroke).coerceAtLeast(0f),
+                )
+                val outline = shape.createOutline(insetSize, layoutDirection, this)
+                // 弱内发光：宽一点、很淡，只为了在纯黑背景里勾出壳的轮廓
+                translate(inset, inset) {
+                    drawOutline(
+                        outline = outline,
+                        brush = glowBrush,
+                        style = Stroke(width = glowStroke, cap = StrokeCap.Round),
+                    )
+                }
+                // 1px 上缘高光
+                translate(inset, inset) {
+                    drawOutline(outline = outline, brush = rimBrush, style = Stroke(stroke))
+                }
+            }
+    )
 }
 
 /**

@@ -57,6 +57,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassSurface
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
+import com.huanchengfly.tieba.post.ui.common.theme.glass.glassNavigationTint
 import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
 import io.github.neoruaa.glasmio.core.LocalGlassColors as GlasmioLocalGlassColors
 import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
@@ -389,6 +390,10 @@ fun BottomNavigation(
     modifier: Modifier = Modifier,
 ) {
     val glass = glassColors()
+    // FlClash `LiquidGlassStyle.regular` 的 tint：浅色 #8AFDFDFD，深色 container +7 tone / .62。
+    // 传进 Glasmio 的 navigationSurfaceColor，材质会把这层 tint 叠在自身的 fill 上，
+    // 浅色下从「灰板子」变成发亮的玻璃；深色下靠这一步把壳从纯黑里提出来。
+    val navigationTint = glassNavigationTint()
     // 浮动玻璃胶囊。
     // 现在它由 MainPage 放进 GlasmioBackdropHost 的 overlayContent（玻璃层），
     // 不再占 Scaffold 的 bottomBar 槽位；所以这里只管自己浮起来（底部 12dp + 系统栏 inset），
@@ -412,6 +417,9 @@ fun BottomNavigation(
             modifier = Modifier.fillMaxWidth(),
             shape = CircleShape,
             material = NavigationGlassMaterial.RegularSmall,
+            navigationSurfaceColor = navigationTint,
+            navigationSurfaceAlphaMultiplier = 1f,
+            innerGlow = true,
         ) {
             // 前景色跟随「材质自身的明暗」：
             // Glasmio 会按采样到的背景解析材质的明暗（深色模式下既可能是浅灰材质、也可能是深玻璃），

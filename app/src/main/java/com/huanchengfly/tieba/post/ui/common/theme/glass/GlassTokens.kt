@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import kotlin.math.pow
 
 /**
  * 「液态玻璃」设计令牌（P1）。
@@ -73,6 +74,18 @@ object GlassTokens {
         const val pressDurationMs: Int = 200
         const val commonDurationMs: Int = 300
     }
+
+    /** FlClash `LiquidGlassStyle.regular` 的浅色 tint（白 54%）。 */
+    val lightNavigationTint: Color = Color(0x8AFDFDFD)
+
+    /** 深色 tint 的 tone 抬升量；数值来自 FlClash `_darkGlassTintOverCard`。 */
+    const val darkNavigationToneLift: Float = 7f
+
+    /** 深色 tint 的 alpha；数值来自 FlClash `_darkGlassTint(...).withValues(alpha: 0.62)`。 */
+    const val darkNavigationAlpha: Float = 0.62f
+
+    /** 顶栏薄玻璃的 tint 透明度上限（PLAN 第 10 节第 10 条：滚动后必须够可读）。 */
+    const val topBarGlassAlpha: Float = 0.62f
 
     /** 玻璃材质本身的一些数值（伪玻璃阶段用）。 */
     object Glass {
@@ -144,6 +157,53 @@ data class GlassColors(
     /** 选中态胶囊底色。 */
     val selectedPill: Color
         get() = primary.copy(alpha = GlassTokens.Glass.selectedPillAlpha)
+}
+
+/**
+ * 导航玻璃（dock / 顶栏薄玻璃）的 tint，数值取自 FlClash `LiquidGlassStyle.regular`：
+ * - 浅色 `#8AFDFDFD`（白 ≈ 54%）；
+ * - 深色取 container 色（App 的 `card`）抬高 7 级 tone，alpha 0.62。
+ *
+ * 深色这一档是「胶囊能看见」的关键：纯 container 在近黑背景上和背景糊成一片，
+ * 抬 7 级 tone 后才有可辨的壳，再叠 1px 上缘高光（见 `LiquidGlassSurface(innerGlow=)`）。
+ */
+@Composable
+fun glassNavigationTint(): Color {
+    val colors = ExtendedTheme.colors
+    return if (colors.isNightMode) {
+        colors.card.shiftTone(7f).copy(alpha = 0.62f)
+    } else {
+        GlassTokens.lightNavigationTint
+    }
+}
+
+/**
+ * 按 L*（tone）平移颜色，保留色相/彩度。
+ *
+ * FlClash 用 material 的 HCT `shiftTone`；工程里没有 HCT 依赖，这里在 sRGB→线性→L* 上做
+ * 等价的一维平移：先把线性 RGB 按新亮度整体缩放，再编码回 sRGB。
+ */
+fun Color.shiftTone(delta: Float): Color {
+    fun toLinear(c: Float): Float =
+        if (c <= 0.04045f) c / 12.92f else ((c + 0.055f) / 1.055f).pow(2.4f)
+
+    fun toSrgb(c: Float): Float =
+        if (c <= 0.0031308f) c * 12.92f else 1.055f * c.pow(1f / 2.4f) - 0.055f
+
+    val lr = toLinear(red)
+    val lg = toLinear(green)
+    val lb = toLinear(blue)
+    val y = 0.2126f * lr + 0.7152f * lg + 0.0722f * lb
+    val lStar = if (y <= 0.008856f) 903.3f * y else 116f * y.pow(1f / 3f) - 16f
+    val target = (lStar + delta).coerceIn(0f, 100f)
+    val targetY = if (target <= 8f) target / 903.3f else ((target + 16f) / 116f).pow(3f)
+    val scale = if (y <= 0.0001f) 0f else targetY / y
+    return Color(
+        red = toSrgb((lr * scale).coerceIn(0f, 1f)),
+        green = toSrgb((lg * scale).coerceIn(0f, 1f)),
+        blue = toSrgb((lb * scale).coerceIn(0f, 1f)),
+        alpha = alpha,
+    )
 }
 
 /**
