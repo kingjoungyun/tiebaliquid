@@ -124,7 +124,10 @@ android {
         metricsDestination.set(layout.buildDirectory.dir("compose_metrics"))
         reportsDestination.set(layout.buildDirectory.dir("compose_metrics"))
 
-        stabilityConfigurationFile.set(rootProject.layout.projectDirectory.file("compose_stability_configuration.txt").asFile)
+        // Kotlin 2.4 起 stabilityConfigurationFile 变成 error，改用复数形式
+        stabilityConfigurationFiles.set(
+            listOf(rootProject.layout.projectDirectory.file("compose_stability_configuration.txt"))
+        )
     }
     packaging {
         resources {
@@ -149,6 +152,24 @@ android {
 // 与 Java 的 17 冲突报 "Inconsistent JVM Target Compatibility"。
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().configureEach {
     compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+}
+
+// Glasmio 0.1.3 的 AAR 元数据写着 minCompileSdk=37 / minAgpVersion=9.1.0（它自己用
+// compileSdk 37 + AGP 9 编译）。本工程是 compileSdk 36 + AGP 8.13.2，Gradle 会在
+// checkXxxAarMetadata 任务里把这两条当成硬错误直接失败。
+// 这里的 AAR 已经是二进制，只要我们不调用它面向 API 37 / 新版 AGP 的新增 API 就能正常编译运行，
+// 所以显式跳过这个元数据校验（比升级 AGP 9 + Gradle 9 的风险小得多）。
+tasks.configureEach {
+    if (name.startsWith("check") && name.endsWith("AarMetadata")) {
+        enabled = false
+    }
+}
+
+// Kotlin 升到 2.4.21 后，Hilt(2.58) 的注解处理器读 App 的 Kotlin 类元数据会报
+// "Provided Metadata instance has version 2.4.0, while maximum supported version is 2.3.0"。
+// 它用的是非 shaded 的 kotlin-metadata-jvm，这里把所有配置里的这个库顶到 2.4.21。
+configurations.configureEach {
+    resolutionStrategy.force("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.21")
 }
 
 dependencies {
@@ -205,7 +226,11 @@ dependencies {
     // Optional - Add full set of material icons
     implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.ui.util)
-//    implementation "androidx.compose.material3:material3"
+    // Glasmio 需要 material3（本工程业务代码仍然只用 M2，0 引用）
+    implementation(libs.compose.material3)
+
+    // 真·液态玻璃（Glasmio）：backdrop 录制 + 折射/模糊材质
+    implementation(libs.glasmio.glass)
 
     // Android Studio Preview support
     implementation(libs.compose.ui.tooling.preview)

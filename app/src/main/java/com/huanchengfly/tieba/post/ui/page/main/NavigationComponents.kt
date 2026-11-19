@@ -53,9 +53,10 @@ import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedColors
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.White
-import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassSurface
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassSurface
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
+import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
 import com.huanchengfly.tieba.post.ui.utils.MainNavigationContentPosition
 import com.huanchengfly.tieba.post.ui.widgets.compose.AccountNavIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
@@ -381,14 +382,20 @@ fun BottomNavigation(
     navigationItems: ImmutableList<NavigationItem>,
     // 签名保持不变：调用方（MainPage）和宽屏 Rail / Drawer 分支都不受影响。
     // 浮动胶囊用的是 glass 令牌，不再需要这个 M2 色板，这里只为兼容保留。
-    themeColors: ExtendedColors = ExtendedTheme.colors
+    themeColors: ExtendedColors = ExtendedTheme.colors,
+    modifier: Modifier = Modifier,
 ) {
     val glass = glassColors()
-    // 浮动玻璃胶囊：
-    // 仍然占满 bottomBar 槽位，Scaffold 会把「整块高度（62 + 24 + 系统栏）」算进
-    // contentPadding，所以页面内容不会被胶囊压住；胶囊本身靠 margin 浮起来。
+    // 浮动玻璃胶囊。
+    // 现在它由 MainPage 放进 GlasmioBackdropHost 的 overlayContent（玻璃层），
+    // 不再占 Scaffold 的 bottomBar 槽位；所以这里只管自己浮起来（底部 12dp + 系统栏 inset），
+    // 「内容不要被压住」由 MainPage 的 bottomBar 等高占位负责。
+    //
+    // 背景走 LiquidGlassSurface：
+    // - 有 Glasmio backdrop host → 真玻璃（折射 + 模糊，材质 NavigationGlassMaterial.RegularSmall）
+    // - 没有（宽屏分支 / API < 33 / 玻璃层被关掉）→ 自动退回 P2 的伪玻璃
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(
@@ -398,11 +405,10 @@ fun BottomNavigation(
                 bottom = GlassTokens.Spacing.dockMarginBottom,
             )
     ) {
-        GlassSurface(
+        LiquidGlassSurface(
             modifier = Modifier.fillMaxWidth(),
             shape = CircleShape,
-            fill = glass.glassFill,
-            strokeColor = glass.glassStroke,
+            material = NavigationGlassMaterial.RegularSmall,
         ) {
             Row(
                 modifier = Modifier

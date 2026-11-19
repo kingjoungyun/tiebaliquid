@@ -6,10 +6,16 @@ import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
 import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +43,10 @@ import com.huanchengfly.tieba.post.arch.emitGlobalEvent
 import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.rememberPreferenceAsState
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassAppBackground
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassBackdropHost
+import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
 import com.huanchengfly.tieba.post.ui.common.windowsizeclass.WindowHeightSizeClass
 import com.huanchengfly.tieba.post.ui.common.windowsizeclass.WindowWidthSizeClass
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
@@ -267,47 +277,111 @@ fun MainPage(
         )
     }
     ProvideNavigator(navigator = navigator) {
+        val showDock = navigationType == MainNavigationType.BOTTOM_NAVIGATION
+        val onSelectPosition: (Int) -> Unit = {
+            coroutineScope.launch { pagerState.scrollToPage(it) }
+        }
+        // 浮动胶囊本体。签名不变，只是多给一个 Modifier（玻璃叠加层里要 align 到底部）。
+        val dock: @Composable (Modifier) -> Unit = { dockModifier ->
+            BottomNavigation(
+                currentPosition = pagerState.currentPage,
+                onChangePosition = onSelectPosition,
+                onReselected = onReselected,
+                navigationItems = navigationItems,
+                themeColors = themeColors,
+                modifier = dockModifier,
+            )
+        }
+        // 玻璃叠加层里的胶囊不占 Scaffold 的 bottomBar 槽位，所以这里补一个等高占位：
+        // 62dp 胶囊 + 上下各 12dp 边距 + 系统导航栏 inset，否则最后一屏内容会被胶囊压住。
+        val dockPlaceholder: @Composable () -> Unit = {
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .height(
+                        GlassTokens.Spacing.dockHeight +
+                            GlassTokens.Spacing.dockMarginBottom * 2
+                    )
+            )
+        }
+
         NavigationWrapper(
             currentPosition = pagerState.currentPage,
-            onChangePosition = { coroutineScope.launch { pagerState.scrollToPage(it) } },
+            onChangePosition = onSelectPosition,
             onReselected = onReselected,
             navigationItems = navigationItems,
             navigationType = navigationType,
             navigationContentPosition = navigationContentPosition
         ) {
-            MyScaffold(
-                backgroundColor = Color.Transparent,
-                modifier = Modifier.fillMaxSize(),
-                bottomBar = {
-                    AnimatedVisibility(visible = navigationType == MainNavigationType.BOTTOM_NAVIGATION) {
-                        BottomNavigation(
-                            currentPosition = pagerState.currentPage,
-                            onChangePosition = {
-                                coroutineScope.launch { pagerState.scrollToPage(it) }
-                            },
-                            onReselected = onReselected,
-                            navigationItems = navigationItems,
-                            themeColors = themeColors,
-                        )
-                    }
-                }
-            ) { paddingValues ->
-                LazyLoadHorizontalPager(
-                    contentPadding = paddingValues,
-                    state = pagerState,
-                    key = { navigationItems[it].id },
+            // 真玻璃路径（仅底部导航 + API 33+）：
+            // - sampledContent = 渐变底 + 整个页面（顶栏 + 分页内容），玻璃从这里取像素
+            // - overlayContent = 胶囊 dock，画在录制层之上（放进去会自己采样自己）
+            if (showDock && isLiquidGlassSupported()) {
+                LiquidGlassBackdropHost(
                     modifier = Modifier.fillMaxSize(),
-                    verticalAlignment = Alignment.Top,
-                    userScrollEnabled = false
-                ) {
-                    navigationItems[it].content()
-                }
+                    sampledContent = {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            GlassAppBackground(modifier = Modifier.fillMaxSize())
+                            MainPageScaffold(
+                                pagerState = pagerState,
+                                navigationItems = navigationItems,
+                                bottomBar = dockPlaceholder,
+                            )
+                        }
+                    },
+                    overlayContent = {
+                        dock(Modifier.align(Alignment.BottomCenter))
+                    },
+                )
+            } else {
+                // 降级 / 宽屏路径：胶囊照旧放回 bottomBar 槽位，玻璃表面自动退回伪玻璃。
+                MainPageScaffold(
+                    pagerState = pagerState,
+                    navigationItems = navigationItems,
+                    bottomBar = {
+                        if (showDock) {
+                            dock(Modifier)
+                        }
+                    },
+                )
             }
         }
     }
     BackHandler(enabled = pagerState.currentPage != 0) {
         coroutineScope.launch {
             pagerState.scrollToPage(0)
+        }
+    }
+}
+
+/**
+ * 页面骨架：各页自己的顶栏（在 page content 里的 MyScaffold）+ 分页容器。
+ *
+ * [bottomBar] 由调用方决定：
+ * - 真玻璃路径 → 一个等高 `Spacer`（胶囊在玻璃叠加层里）；
+ * - 降级路径 → 胶囊本身。
+ */
+@Composable
+private fun MainPageScaffold(
+    pagerState: PagerState,
+    navigationItems: ImmutableList<NavigationItem>,
+    bottomBar: @Composable () -> Unit,
+) {
+    MyScaffold(
+        backgroundColor = Color.Transparent,
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = bottomBar,
+    ) { paddingValues ->
+        LazyLoadHorizontalPager(
+            contentPadding = paddingValues,
+            state = pagerState,
+            key = { navigationItems[it].id },
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.Top,
+            userScrollEnabled = false
+        ) {
+            navigationItems[it].content()
         }
     }
 }
