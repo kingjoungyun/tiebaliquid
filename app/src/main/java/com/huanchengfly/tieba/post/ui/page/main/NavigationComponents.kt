@@ -4,6 +4,7 @@ import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,8 +23,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.BottomNavigation
-import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
@@ -54,6 +53,9 @@ import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedColors
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.White
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassSurface
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
 import com.huanchengfly.tieba.post.ui.utils.MainNavigationContentPosition
 import com.huanchengfly.tieba.post.ui.widgets.compose.AccountNavIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
@@ -377,59 +379,122 @@ fun BottomNavigation(
     onChangePosition: (position: Int) -> Unit,
     onReselected: (position: Int) -> Unit,
     navigationItems: ImmutableList<NavigationItem>,
+    // 签名保持不变：调用方（MainPage）和宽屏 Rail / Drawer 分支都不受影响。
+    // 浮动胶囊用的是 glass 令牌，不再需要这个 M2 色板，这里只为兼容保留。
     themeColors: ExtendedColors = ExtendedTheme.colors
 ) {
-    Column(modifier = Modifier.navigationBarsPadding()) {
-        BottomNavigationDivider(themeColors)
-        BottomNavigation(
-            backgroundColor = themeColors.bottomBar,
-            elevation = 0.dp,
+    val glass = glassColors()
+    // 浮动玻璃胶囊：
+    // 仍然占满 bottomBar 槽位，Scaffold 会把「整块高度（62 + 24 + 系统栏）」算进
+    // contentPadding，所以页面内容不会被胶囊压住；胶囊本身靠 margin 浮起来。
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(
+                start = GlassTokens.Spacing.dockMarginH,
+                end = GlassTokens.Spacing.dockMarginH,
+                top = GlassTokens.Spacing.dockMarginBottom,
+                bottom = GlassTokens.Spacing.dockMarginBottom,
+            )
+    ) {
+        GlassSurface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CircleShape,
+            fill = glass.glassFill,
+            strokeColor = glass.glassStroke,
         ) {
-            navigationItems.fastForEachIndexed { index, navigationItem ->
-                BottomNavigationItem(
-                    selected = index == currentPosition,
-                    onClick = {
-                        if (index == currentPosition) {
-                            onReselected(index)
-                        } else {
-                            onChangePosition(index)
-                        }
-                        navigationItem.onClick?.invoke()
-                    },
-                    icon = {
-                        Box {
-                            Icon(
-                                painter = rememberAnimatedVectorPainter(
-                                    animatedImageVector = navigationItem.icon(),
-                                    atEnd = index == currentPosition
-                                ),
-                                contentDescription = navigationItem.title(index == currentPosition),
-                                modifier = Modifier.size(24.dp),
-                            )
-                            if (navigationItem.badge) {
-                                Text(
-                                    textAlign = TextAlign.Center,
-                                    fontSize = 10.sp,
-                                    color = White,
-                                    text = navigationItem.badgeText ?: "",
-                                    modifier = Modifier
-                                        .size(14.dp)
-                                        .clip(CircleShape)
-                                        .align(Alignment.TopEnd)
-                                        .background(
-                                            color = MaterialTheme.colors.secondary,
-                                            shape = CircleShape
-                                        ),
-                                )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(GlassTokens.Spacing.dockHeight),
+            ) {
+                navigationItems.fastForEachIndexed { index, navigationItem ->
+                    val selected = index == currentPosition
+                    DockItem(
+                        navigationItem = navigationItem,
+                        selected = selected,
+                        tint = if (selected) glass.primary else glass.textSecondary,
+                        pillColor = glass.selectedPill,
+                        onClick = {
+                            if (index == currentPosition) {
+                                onReselected(index)
+                            } else {
+                                onChangePosition(index)
                             }
-                        }
-                    },
-                    selectedContentColor = MaterialTheme.colors.secondary,
-                    unselectedContentColor = themeColors.unselected,
-                    alwaysShowLabel = false
+                            navigationItem.onClick?.invoke()
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 胶囊里的一项：24dp 图标 + 11sp 文字。
+ * 选中时整块套一层「主色 12%」的胶囊高亮，图标/文字用主色；未选中用文字次色。
+ */
+@OptIn(ExperimentalAnimationGraphicsApi::class)
+@Composable
+private fun DockItem(
+    navigationItem: NavigationItem,
+    selected: Boolean,
+    tint: Color,
+    pillColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val label = navigationItem.title(selected)
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .padding(
+                horizontal = GlassTokens.Spacing.dockInsetH,
+                vertical = GlassTokens.Spacing.dockInsetH * 2,
+            )
+            .clip(CircleShape)
+            .then(if (selected) Modifier.background(pillColor) else Modifier)
+            .clickable(onClick = onClick),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box {
+            Icon(
+                painter = rememberAnimatedVectorPainter(
+                    animatedImageVector = navigationItem.icon(),
+                    atEnd = selected,
+                ),
+                contentDescription = label,
+                tint = tint,
+                modifier = Modifier.size(24.dp),
+            )
+            if (navigationItem.badge) {
+                Text(
+                    textAlign = TextAlign.Center,
+                    fontSize = 10.sp,
+                    color = White,
+                    text = navigationItem.badgeText ?: "",
+                    modifier = Modifier
+                        .size(14.dp)
+                        .clip(CircleShape)
+                        .align(Alignment.TopEnd)
+                        .background(
+                            color = MaterialTheme.colors.secondary,
+                            shape = CircleShape
+                        ),
                 )
             }
         }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            color = tint,
+            fontSize = 11.sp,
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 

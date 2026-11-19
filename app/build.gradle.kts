@@ -58,7 +58,7 @@ android {
     compileSdk = 36
     defaultConfig {
         applicationId = "com.tieba"
-        minSdk = 23
+        minSdk = 33
         //noinspection OldTargetApi
         targetSdk = 36
         versionCode = applicationVersionCode

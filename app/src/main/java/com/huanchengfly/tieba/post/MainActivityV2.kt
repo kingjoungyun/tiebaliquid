@@ -20,7 +20,9 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,6 +35,7 @@ import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.Surface
 import androidx.compose.material.SwipeableDefaults
 import androidx.compose.material.Text
+import androidx.compose.material.contentColorFor
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -47,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -80,6 +84,7 @@ import com.huanchengfly.tieba.post.components.ClipBoardLinkDetector
 import com.huanchengfly.tieba.post.components.ClipBoardThreadLink
 import com.huanchengfly.tieba.post.services.NotifyJobService
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
 import com.huanchengfly.tieba.post.ui.page.NavGraphs
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
@@ -536,9 +541,18 @@ class MainActivityV2 : BaseComposeActivity() {
         modifier: Modifier = Modifier,
         content: @Composable () -> Unit,
     ) {
-        Surface(
-            color = ExtendedTheme.colors.background,
+        // 页面底色从「纯色」换成「垂直渐变」（液态玻璃风格的地基）。
+        // 渐变只在这一层，内部内容不受影响；Surface 退化成透明容器，
+        // 仅仅为了继续提供与原来一致的 contentColor 语义。
+        val glass = glassColors()
+        Box(
             modifier = modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(glass.gradientTop, glass.gradientBottom)
+                    )
+                )
         ) {
             if (ThemeUtil.isTranslucentTheme(ExtendedTheme.colors.theme)) {
                 val backgroundPath by rememberPreferenceAsMutableState(
@@ -553,7 +567,12 @@ class MainActivityV2 : BaseComposeActivity() {
                     contentScale = ContentScale.Crop
                 )
             }
-            content()
+            Surface(
+                color = Color.Transparent,
+                contentColor = contentColorFor(ExtendedTheme.colors.background),
+            ) {
+                content()
+            }
         }
     }
 
