@@ -55,7 +55,10 @@ import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.White
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassSurface
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
+import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
+import io.github.neoruaa.glasmio.core.LocalGlassColors as GlasmioLocalGlassColors
 import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
 import com.huanchengfly.tieba.post.ui.utils.MainNavigationContentPosition
 import com.huanchengfly.tieba.post.ui.widgets.compose.AccountNavIcon
@@ -410,6 +413,17 @@ fun BottomNavigation(
             shape = CircleShape,
             material = NavigationGlassMaterial.RegularSmall,
         ) {
+            // 前景色跟随「材质自身的明暗」：
+            // Glasmio 会按采样到的背景解析材质的明暗（深色模式下既可能是浅灰材质、也可能是深玻璃），
+            // 用 App 色板里固定的 textSecondary 会在这两种情况下糊掉；
+            // GlassSurface 会在 content 里提供按材质解析过的 LocalGlassColors（浅玻璃→黑、深玻璃→白）。
+            // 伪玻璃降级路径没有这层语义，继续用 App 自己的色板。
+            val hosted = LocalLiquidGlassHosted.current && isLiquidGlassSupported()
+            val unselectedTint = if (hosted) {
+                GlasmioLocalGlassColors.current.content.copy(alpha = 0.62f)
+            } else {
+                glass.textSecondary
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -420,7 +434,7 @@ fun BottomNavigation(
                     DockItem(
                         navigationItem = navigationItem,
                         selected = selected,
-                        tint = if (selected) glass.primary else glass.textSecondary,
+                        tint = if (selected) glass.primary else unselectedTint,
                         pillColor = glass.selectedPill,
                         onClick = {
                             if (index == currentPosition) {
