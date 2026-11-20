@@ -16,5 +16,10 @@
             android:name=".debug.GlassSettingsPreviewActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+        <!-- 技术验证页：GlasmioCard 帖子卡（验证 A）+ 跨窗口 GlasmioMenu 采背景（验证 B）。 -->
+        <activity
+            android:name=".debug.GlassFeedPreviewActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
     </application>
 </manifest>
