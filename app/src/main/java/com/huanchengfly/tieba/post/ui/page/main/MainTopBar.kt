@@ -36,10 +36,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -54,14 +55,11 @@ import com.huanchengfly.tieba.post.arch.GlobalEvent
 import com.huanchengfly.tieba.post.arch.emitGlobalEvent
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
-import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassSurface
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
-import com.huanchengfly.tieba.post.ui.common.theme.glass.glassNavigationTint
 import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.utils.ThemeUtil
-import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
 
 /**
  * 主界面顶栏的运行状态。
@@ -132,8 +130,34 @@ val LocalMainTabTopInset = compositionLocalOf { 0.dp }
 /** 顶栏收起距离：滚过这么多内容后大标题完全收进栏里。 */
 private val CollapseDistance = 48.dp
 
-/** 玻璃开始显现的滚动阈值。 */
+/** scrim 开始显现的滚动阈值。 */
 private val GlassStartDistance = 8.dp
+
+/**
+ * 顶栏 scrim 的渐变：从顶部较实到底部完全透明。
+ *
+ * FlClash 的顶栏**本身不是玻璃条**（参考设置页：顶栏没有玻璃条，内容从标题下直接穿过、
+ * 顶部是柔和淡出）。所以这里不铺材质，只画一层同色的垂直渐变，边界天然没有硬直线。
+ * 数值是「相对 scrim 高度的位置 -> alpha」，最后一段收在 0，保证下沿看不到分界。
+ */
+private val ScrimStops = arrayOf(
+    0.00f to 0.94f,
+    0.30f to 0.88f,
+    0.55f to 0.62f,
+    0.80f to 0.26f,
+    1.00f to 0.00f,
+)
+
+/** 无玻璃时（AMOLED / 半透明主题）的降级渐变：几乎实底，只在底部柔和收掉。 */
+private val SolidScrimStops = arrayOf(
+    0.00f to 0.98f,
+    0.55f to 0.94f,
+    0.85f to 0.58f,
+    1.00f to 0.00f,
+)
+
+/** scrim 在「状态栏 + 顶栏」之外再往下多渐隐这么多，避免下沿成为一条看得见的边界。 */
+private val ScrimTail = 16.dp
 
 /**
  * 主界面四个 tab 的 Scaffold 包装。
@@ -215,7 +239,8 @@ fun MainTabScaffold(
 /**
  * 主界面顶栏（overlay 层）。
  *
- * 形态对齐 FlClash：本体透明、内容从下面流过；静止时无底，向下滚动后渐显一层薄玻璃。
+ * 形态对齐 FlClash：本体透明、内容从下面流过；静止时**什么都不画**，
+ * 向下滚动后只渐显一层同色的柔和渐变遮罩（见 [ScrimStops]），没有玻璃条、没有硬边。
  * 双击整条顶栏 = 回顶（沿用 `TopAppBarContainer` 的 `GlobalEvent.ScrollToTop`）。
  */
 @OptIn(ExperimentalFoundationApi::class)
@@ -226,19 +251,20 @@ fun MainTopBarHost(
 ) {
     val slot = state.slots[state.currentKey]
     val colors = ExtendedTheme.colors
+    val glass = glassColors()
     val density = LocalDensity.current
     val glassStart = with(density) { GlassStartDistance.toPx() }
     val collapseDistance = with(density) { CollapseDistance.toPx() }
 
     val collapse = (state.offsetFor(state.currentKey) / collapseDistance).coerceIn(0f, 1f)
-    val glassTarget = if (state.offsetFor(state.currentKey) > glassStart) 1f else 0f
-    val glassAlpha by animateFloatAsState(
-        targetValue = glassTarget,
+    val scrimTarget = if (state.offsetFor(state.currentKey) > glassStart) 1f else 0f
+    val scrimAlpha by animateFloatAsState(
+        targetValue = scrimTarget,
         animationSpec = tween(durationMillis = 220),
-        label = "mainTopBarGlass",
+        label = "mainTopBarScrim",
     )
 
-    // PLAN 第 10 节 7/8：纯黑（AMOLED）与半透明主题下玻璃不可见 / 会发脏，退回半透明实底。
+    // PLAN 第 10 节 7/8：纯黑（AMOLED）与半透明主题下玻璃不可见 / 会发脏，退回不带材质的实底。
     // 注意不能用「深色主题的 background 很暗」来判断：普通深色主题的 background 也很暗，
     // 只有 AMOLED / 真·纯黑才需要放弃玻璃。
     val translucent = ThemeUtil.isTranslucentTheme(colors.theme)
@@ -249,11 +275,36 @@ fun MainTopBarHost(
         !translucent &&
         !amoled
 
+    // scrim 用页面渐变底的顶部色：淡出处与底图同色，不会出现一条色带。
+    // 降级路径改用自己的 topBar 色 + 更实的 stops（半透明主题下仍要能读清标题）。
+    val scrimColor = if (glassAvailable) glass.gradientTop else colors.topBar
+    val scrimStops = if (glassAvailable) ScrimStops else SolidScrimStops
+
+    val statusBarPx = WindowInsets.statusBars.getTop(density).toFloat()
+    val scrimHeightPx = statusBarPx +
+        with(density) { GlassTokens.Spacing.barHeight.toPx() } +
+        with(density) { ScrimTail.toPx() }
+
     val coroutineScope = rememberCoroutineScope()
     Box(
         modifier = modifier
             .fillMaxWidth()
             .onSizeChanged { if (slot != null) state.barHeightPx = it.height }
+            .drawBehind {
+                if (scrimAlpha <= 0.01f) return@drawBehind
+                val height = scrimHeightPx.coerceAtMost(size.height)
+                if (height <= 0f) return@drawBehind
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colorStops = scrimStops.map { (fraction, alpha) ->
+                            fraction to scrimColor.copy(alpha = alpha * scrimAlpha)
+                        }.toTypedArray(),
+                        startY = 0f,
+                        endY = height,
+                    ),
+                    size = Size(size.width, height),
+                )
+            }
             .combinedClickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -264,33 +315,6 @@ fun MainTopBarHost(
                 },
             )
     ) {
-        if (glassAlpha > 0.01f) {
-            if (glassAvailable) {
-                // 薄玻璃：矩形薄材质，tint 用 FlClash regular 那组值（浅 .54 / 深 .62），
-                // 整层 alpha 跟随顶部滚动量淡入，不写死高度（含首页搜索框收起动画）。
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .graphicsLayer { alpha = glassAlpha }
-                ) {
-                    LiquidGlassSurface(
-                        modifier = Modifier.fillMaxSize(),
-                        shape = RectangleShape,
-                        material = NavigationGlassMaterial.RegularSmall,
-                        navigationSurfaceColor = glassNavigationTint(),
-                        navigationSurfaceAlphaMultiplier = 1f,
-                    ) {}
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .graphicsLayer { alpha = glassAlpha }
-                        .background(colors.topBar.copy(alpha = 0.94f))
-                )
-            }
-        }
-
         Column(Modifier.fillMaxWidth()) {
             Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
             if (slot != null) {
