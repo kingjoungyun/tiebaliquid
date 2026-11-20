@@ -66,6 +66,8 @@ import com.huanchengfly.tieba.post.ui.page.destinations.ForumSearchPostPageDesti
 import com.huanchengfly.tieba.post.ui.page.destinations.LoginPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ToolboxPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
+import com.huanchengfly.tieba.post.ui.page.main.LocalMainTopBarGlassAction
+import com.huanchengfly.tieba.post.ui.page.main.MainTopBarGlassActionItem
 import com.huanchengfly.tieba.post.utils.AccountUtil
 import com.huanchengfly.tieba.post.utils.AccountUtil.LocalAccount
 import com.huanchengfly.tieba.post.utils.StringUtil
@@ -206,6 +208,16 @@ fun ActionItem(
     contentDescription: String,
     onClick: () -> Unit
 ) {
+    // 在主界面顶栏里（MainTopBarRow 的 actions 槽）画成 44dp 悬浮玻璃圆钮；
+    // 其它地方（设置页等）保持原来的 IconButton，不受液态玻璃改造影响。
+    if (LocalMainTopBarGlassAction.current) {
+        MainTopBarGlassActionItem(
+            icon = icon,
+            contentDescription = contentDescription,
+            onClick = onClick,
+        )
+        return
+    }
     var lastClickTime by remember { mutableLongStateOf(0L) }
     ProvideContentColor(color = ExtendedTheme.colors.onTopBar) {
         IconButton(onClick = {

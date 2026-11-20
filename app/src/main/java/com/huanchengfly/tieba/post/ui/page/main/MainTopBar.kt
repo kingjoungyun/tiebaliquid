@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -17,8 +18,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -36,12 +40,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -55,11 +61,14 @@ import com.huanchengfly.tieba.post.arch.GlobalEvent
 import com.huanchengfly.tieba.post.arch.emitGlobalEvent
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassSurface
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
+import com.huanchengfly.tieba.post.ui.common.theme.glass.glassNavigationTint
 import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.utils.ThemeUtil
+import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
 
 /**
  * 主界面顶栏的运行状态。
@@ -117,6 +126,14 @@ val LocalMainTopBarState = staticCompositionLocalOf<MainTopBarState?> { null }
  * 在 [MainTopBarHost] 里注入，登记进来的顶栏内容直接读。
  */
 val LocalMainTopBarCollapse = compositionLocalOf { 0f }
+
+/**
+ * 当前这层 `actions` 是不是画在主界面顶栏里。
+ *
+ * 是 → `ActionItem` 画成 44dp 悬浮玻璃圆钮（FlClash 右上角「🖊」）；
+ * 否 → 保持原来的 48dp IconButton，设置页 / 其它页面不受影响。
+ */
+val LocalMainTopBarGlassAction = staticCompositionLocalOf { false }
 
 /**
  * 内容需要让给顶栏的高度（含状态栏）。
@@ -329,6 +346,9 @@ fun MainTopBarHost(
 /**
  * 72dp 的顶栏内容行：左导航、中间标题、右操作。
  * 与旧的 `TopAppBar` 56dp 对齐 FlClash 的 72dp（不含状态栏）。
+ *
+ * 行内的操作项被标记成「悬浮玻璃按钮」（[LocalMainTopBarGlassAction]），
+ * 所以各 tab 页继续写 `ActionItem(...)` 就会得到 FlClash 那种 44dp 圆钮，不需要改页面。
  */
 @Composable
 fun MainTopBarRow(
@@ -358,7 +378,57 @@ fun MainTopBarRow(
         ) {
             title()
         }
-        Row(verticalAlignment = Alignment.CenterVertically, content = actions)
+        CompositionLocalProvider(LocalMainTopBarGlassAction provides true) {
+            Row(verticalAlignment = Alignment.CenterVertically, content = actions)
+        }
+    }
+}
+
+/**
+ * 顶栏上的悬浮液态玻璃按钮，形态对齐 FlClash 右上角「🖊」：
+ * 44dp 圆形、20dp 图标、浮在内容上（不坐在一条玻璃条里），深色下靠内发光描边把壳拉出来。
+ *
+ * 手势：**只处理 tap**。双击回顶留在顶栏容器的 `combinedClickable` 上（PLAN 第 10 节第 2 条），
+ * 这里不注册 `combinedClickable`，避免把容器的手势吃掉。
+ */
+@Composable
+fun MainTopBarGlassActionItem(
+    icon: ImageVector,
+    contentDescription: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val glass = glassColors()
+    Box(
+        modifier = modifier.padding(horizontal = GlassTokens.Spacing.topBarActionGap),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(GlassTokens.Spacing.topBarActionSize)
+                .clip(CircleShape)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            LiquidGlassSurface(
+                modifier = Modifier.matchParentSize(),
+                shape = CircleShape,
+                material = NavigationGlassMaterial.RegularSmall,
+                navigationSurfaceColor = glassNavigationTint(),
+                navigationSurfaceAlphaMultiplier = GlassTokens.topBarActionTintMultiplier,
+                innerGlow = true,
+            ) {}
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                tint = glass.textPrimary,
+                modifier = Modifier.size(GlassTokens.Spacing.topBarActionIconSize),
+            )
+        }
     }
 }
 

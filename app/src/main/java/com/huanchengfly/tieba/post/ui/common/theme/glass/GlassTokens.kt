@@ -47,6 +47,13 @@ object GlassTokens {
         val dockInsetH: Dp = 4.dp
         val dockMarginH: Dp = 16.dp
         val dockMarginBottom: Dp = 12.dp
+
+        /** 顶栏上的悬浮玻璃按钮：FlClash 右上角「🖊」是 44dp 圆形，图标 20dp。 */
+        val topBarActionSize: Dp = 44.dp
+        val topBarActionIconSize: Dp = 20.dp
+
+        /** 相邻玻璃按钮之间的一半间距（按钮自身左右各让这么多，合起来 8dp）。 */
+        val topBarActionGap: Dp = 4.dp
     }
 
     /**
@@ -86,6 +93,14 @@ object GlassTokens {
 
     /** 顶栏薄玻璃的 tint 透明度上限（PLAN 第 10 节第 10 条：滚动后必须够可读）。 */
     const val topBarGlassAlpha: Float = 0.62f
+
+    /**
+     * 顶栏 44dp 玻璃圆钮的 tint alpha 乘数。
+     *
+     * 圆钮尺寸小、下面压着内容，tint 用满会糊成一块实心圆盘；0.8 让 FlClash regular 那组
+     * tint（浅白 58% / 深 container+7 tone 62%）留一点透，同时深色下仍能看出壳。
+     */
+    const val topBarActionTintMultiplier: Float = 0.8f
 
     /** 玻璃材质本身的一些数值（伪玻璃阶段用）。 */
     object Glass {
