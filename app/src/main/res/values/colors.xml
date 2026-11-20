@@ -99,7 +99,14 @@
     <color name="theme_color_accent_grey_dark">@color/tieba</color>
     <color name="theme_color_accent_amoled_dark">@color/tieba</color>
 
-    <color name="theme_color_new_primary_light">#FF000000</color>
+    <!--
+      theme_color_new_primary_* 是默认主题（THEME_DEFAULT）下 `colorNewPrimary` 的取值，
+      也就是 Compose 侧 `ExtendedTheme.colors.primary`（全局 accent 的兜底来源）。
+      浅色档历史上是纯黑，导致「全新安装、没进过主题页」时玻璃 accent / 开关 / 图标全黑。
+      这里直接改成品牌蓝 #0A84FF：改资源值即可，不新增存储、不写默认 accent，
+      用户一旦在主题页选过色，仍然走 `custom_primary_color` 覆盖分支（优先级更高）。
+    -->
+    <color name="theme_color_new_primary_light">#FF0A84FF</color>
     <color name="theme_color_new_primary_night">#FF5588D7</color>
 
     <color name="theme_color_chip_light">#FFF8F8F8</color>
