@@ -9,12 +9,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -32,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import com.huanchengfly.tieba.post.LocalDevicePosture
@@ -63,6 +61,7 @@ import com.huanchengfly.tieba.post.ui.utils.MainNavigationContentPosition
 import com.huanchengfly.tieba.post.ui.utils.MainNavigationType
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoadHorizontalPager
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
+import com.huanchengfly.tieba.post.utils.AccountUtil.LocalAccount
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
@@ -70,7 +69,6 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
-import com.huanchengfly.tieba.post.utils.AccountUtil.LocalAccount
 
 @Composable
 private fun NavigationWrapper(
@@ -306,19 +304,14 @@ fun MainPage(
                 modifier = dockModifier,
             )
         }
-        // 玻璃叠加层里的胶囊不占 Scaffold 的 bottomBar 槽位，所以这里补一个等高占位：
-        // 62dp 胶囊 + 上下各 12dp 边距 + 系统导航栏 inset，否则最后一屏内容会被胶囊压住。
-        val dockPlaceholder: @Composable () -> Unit = {
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .height(
-                        GlassTokens.Spacing.dockHeight +
-                            GlassTokens.Spacing.dockMarginBottom * 2
-                    )
-            )
-        }
+        // 玻璃叠加层里的胶囊不占 Scaffold 的 bottomBar 槽位：
+        // 内容要能从胶囊**下面**滚过去（FlClash 就是这样），所以不能把这段高度做成 bottomBar
+        // （那会把列表 viewport 切在胶囊上沿，胶囊后面永远是纯背景）。
+        // 改成把「胶囊高度 + 底部边距」作为 contentPadding.bottom 交给各页的列表
+        // （LocalMainTabBottomInset，MyLazyColumn / MyLazyVerticalGrid 自动消费）：
+        // 最后一项能被滚到胶囊上方，滚到中途时内容正好从玻璃后面经过。
+        val dockBottomMargin = navigationDockBottomMargin()
+        val dockInset = GlassTokens.Spacing.dockHeight + dockBottomMargin
 
         NavigationWrapper(
             currentPosition = pagerState.currentPage,
@@ -341,12 +334,13 @@ fun MainPage(
                                 pagerState = pagerState,
                                 navigationItems = navigationItems,
                                 topBarState = topBarState,
-                                bottomBar = dockPlaceholder,
+                                bottomInset = dockInset,
+                                bottomBar = {},
                             )
                         }
                     },
                     overlayContent = {
-                        // 顶栏在玻璃层：本体透明、内容从下面流过；滚动后才渐显薄玻璃。
+                        // 顶栏在玻璃层：本体透明、内容从下面流过；滚动后才渐显柔和 scrim。
                         MainTopBarHost(
                             state = topBarState,
                             modifier = Modifier.align(Alignment.TopCenter),
@@ -362,6 +356,7 @@ fun MainPage(
                         pagerState = pagerState,
                         navigationItems = navigationItems,
                         topBarState = topBarState,
+                        bottomInset = 0.dp,
                         bottomBar = {
                             if (showDock) {
                                 dock(Modifier)
@@ -387,14 +382,18 @@ fun MainPage(
  * 页面骨架：各页自己的顶栏（在 page content 里的 MyScaffold）+ 分页容器。
  *
  * [bottomBar] 由调用方决定：
- * - 真玻璃路径 → 一个等高 `Spacer`（胶囊在玻璃叠加层里）；
+ * - 真玻璃路径 → 空（胶囊在玻璃叠加层里，内容从它下面滚过去）；
  * - 降级路径 → 胶囊本身。
+ *
+ * [bottomInset] 是真玻璃路径下「胶囊高度 + 底部边距」，塞进各页列表的 contentPadding.bottom，
+ * 保证最后一项能滚到胶囊上方，同时中途的内容可以从玻璃后面经过。
  */
 @Composable
 private fun MainPageScaffold(
     pagerState: PagerState,
     navigationItems: ImmutableList<NavigationItem>,
     topBarState: MainTopBarState,
+    bottomInset: Dp,
     bottomBar: @Composable () -> Unit,
 ) {
     MyScaffold(
@@ -414,6 +413,7 @@ private fun MainPageScaffold(
             CompositionLocalProvider(
                 LocalMainTopBarState provides topBarState,
                 LocalMainTabKey provides navigationItems[it].id,
+                LocalMainTabBottomInset provides bottomInset,
             ) {
                 navigationItems[it].content()
             }

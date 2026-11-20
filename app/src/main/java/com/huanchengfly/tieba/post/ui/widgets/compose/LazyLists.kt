@@ -22,23 +22,26 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.arch.GlobalEvent
 import com.huanchengfly.tieba.post.arch.onGlobalEvent
+import com.huanchengfly.tieba.post.ui.page.main.LocalMainTabBottomInset
 import com.huanchengfly.tieba.post.ui.page.main.LocalMainTabTopInset
 
 /**
- * 主界面顶栏是 overlay 绘制的：列表必须铺到 y=0、把顶栏高度放进 `contentPadding.top`，
- * 滚动内容才会从顶栏下面经过（否则 viewport 从顶栏下沿开始，什么都不可能画到顶栏后面）。
- * 其它页面没有提供 [LocalMainTabTopInset]，默认 0，行为不变。
+ * 主界面顶栏与底部 dock 都是 overlay 绘制的：列表必须铺到 y=0 / 铺到屏幕底，
+ * 把顶栏高度和胶囊高度分别放进 `contentPadding` 的 top / bottom，滚动内容才会从它们**下面**经过
+ * （否则 viewport 从顶栏下沿开始、到胶囊上沿结束，什么都不可能画到玻璃后面）。
+ * 其它页面没有提供这两个 local，默认 0，行为不变。
  */
 @Composable
-private fun PaddingValues.withMainTabTopInset(): PaddingValues {
-    val inset = LocalMainTabTopInset.current
-    if (inset.value == 0f) return this
+private fun PaddingValues.withMainTabInsets(): PaddingValues {
+    val topInset = LocalMainTabTopInset.current
+    val bottomInset = LocalMainTabBottomInset.current
+    if (topInset.value == 0f && bottomInset.value == 0f) return this
     val layoutDirection = LocalLayoutDirection.current
     return PaddingValues(
         start = calculateStartPadding(layoutDirection),
-        top = calculateTopPadding() + inset,
+        top = calculateTopPadding() + topInset,
         end = calculateEndPadding(layoutDirection),
-        bottom = calculateBottomPadding(),
+        bottom = calculateBottomPadding() + bottomInset,
     )
 }
 
@@ -62,7 +65,7 @@ fun MyLazyColumn(
     LazyColumn(
         modifier = modifier,
         state = state,
-        contentPadding = contentPadding.withMainTabTopInset(),
+        contentPadding = contentPadding.withMainTabInsets(),
         reverseLayout = reverseLayout,
         verticalArrangement = verticalArrangement,
         horizontalAlignment = horizontalAlignment,
@@ -94,7 +97,7 @@ fun MyLazyVerticalGrid(
         columns = columns,
         modifier = modifier,
         state = state,
-        contentPadding = contentPadding.withMainTabTopInset(),
+        contentPadding = contentPadding.withMainTabInsets(),
         reverseLayout = reverseLayout,
         verticalArrangement = verticalArrangement,
         horizontalArrangement = horizontalArrangement,

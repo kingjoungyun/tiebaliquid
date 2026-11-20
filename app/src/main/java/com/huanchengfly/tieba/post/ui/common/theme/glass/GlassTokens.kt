@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
 import kotlin.math.pow
 
 /**
@@ -46,7 +47,9 @@ object GlassTokens {
         val dockHeight: Dp = 62.dp
         val dockInsetH: Dp = 4.dp
         val dockMarginH: Dp = 16.dp
-        val dockMarginBottom: Dp = 12.dp
+
+        /** 胶囊距屏幕底 21dp（FlClash `navigation_dock.dart:26` `_edgeMargin`）。 */
+        val dockMarginBottom: Dp = 21.dp
 
         /** 顶栏上的悬浮玻璃按钮：FlClash 右上角「🖊」是 44dp 圆形，图标 20dp。 */
         val topBarActionSize: Dp = 44.dp
@@ -101,6 +104,23 @@ object GlassTokens {
      * tint（浅白 58% / 深 container+7 tone 62%）留一点透，同时深色下仍能看出壳。
      */
     const val topBarActionTintMultiplier: Float = 0.8f
+
+    /**
+     * dock 用的玻璃材质。
+     *
+     * 先用 FlClash 同档的 `RegularSmall`（有 5dp 霜化，胶囊才像玻璃而不是一块半透明色板）；
+     * 它的 fill 本身已经有厚度，所以真正的透明度靠 [dockTintMultiplier] 调。
+     */
+    val dockMaterial: NavigationGlassMaterial = NavigationGlassMaterial.RegularSmall
+
+    /**
+     * dock 的 tint alpha 乘数。
+     *
+     * 浅色不传 1f：FlClash 的 `#8AFDFDFD` 是它自己管线的**最终**不透明度，Glasmio 会在其之上
+     * 再叠材质 fill，照搬会叠到 ~0.75（参考图里能看见胶囊后面的卡片，我们却是一块板子）。
+     * 深色本来就只有一层 17% 的亮度 fill，乘数可以接近 1 才不至于糊在纯黑里。
+     */
+    fun dockTintMultiplier(dark: Boolean): Float = if (dark) 1.3f else 0.35f
 
     /** 玻璃材质本身的一些数值（伪玻璃阶段用）。 */
     object Glass {

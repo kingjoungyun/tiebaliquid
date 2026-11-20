@@ -45,6 +45,10 @@ import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
 import androidx.compose.ui.unit.sp
@@ -377,6 +381,22 @@ fun BottomNavigationDivider(
     }
 }
 
+/**
+ * 浮动胶囊距屏幕底的距离，抄 FlClash `navigation_dock.dart:329`：
+ * `max(_edgeMargin = 21dp, 系统导航栏 inset)`。
+ *
+ * 关键点是「取大」而不是「相加」：手势条本身已经占了 inset 那一段，再加 12dp 就会在
+ * 手势条上方多出一条纯背景的带。
+ */
+@Composable
+fun navigationDockBottomMargin(): Dp {
+    val density = LocalDensity.current
+    val navInset = WindowInsets.navigationBars.getBottom(density)
+    return with(density) {
+        maxOf(GlassTokens.Spacing.dockMarginBottom, navInset.toDp())
+    }
+}
+
 @OptIn(ExperimentalAnimationGraphicsApi::class)
 @Composable
 fun BottomNavigation(
@@ -394,10 +414,13 @@ fun BottomNavigation(
     // 传进 Glasmio 的 navigationSurfaceColor，材质会把这层 tint 叠在自身的 fill 上，
     // 浅色下从「灰板子」变成发亮的玻璃；深色下靠这一步把壳从纯黑里提出来。
     val navigationTint = glassNavigationTint()
-    // 浮动玻璃胶囊。
-    // 现在它由 MainPage 放进 GlasmioBackdropHost 的 overlayContent（玻璃层），
-    // 不再占 Scaffold 的 bottomBar 槽位；所以这里只管自己浮起来（底部 12dp + 系统栏 inset），
-    // 「内容不要被压住」由 MainPage 的 bottomBar 等高占位负责。
+    // 浮动玻璃胶囊，由 MainPage 放进 GlasmioBackdropHost 的 overlayContent（玻璃层）绘制。
+    //
+    // 位置对齐 FlClash `navigation_dock.dart:329`：
+    //   _bottomMarginOf = max(_edgeMargin(21), MediaQuery.padding.bottom)
+    // 也就是「距屏幕底 21dp，系统导航栏更高时以 inset 为准」，**不是** inset + 12dp 的叠加
+    // （叠加会在手势条上面多留一条纯背景的带）。所以这里不再用 navigationBarsPadding()，
+    // 而是把 inset 的**高度值**取出来参与 offset 计算。
     //
     // 背景走 LiquidGlassSurface：
     // - 有 Glasmio backdrop host → 真玻璃（折射 + 模糊，材质 NavigationGlassMaterial.RegularSmall）
@@ -405,20 +428,22 @@ fun BottomNavigation(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
             .padding(
                 start = GlassTokens.Spacing.dockMarginH,
                 end = GlassTokens.Spacing.dockMarginH,
                 top = GlassTokens.Spacing.dockMarginBottom,
-                bottom = GlassTokens.Spacing.dockMarginBottom,
+                bottom = navigationDockBottomMargin(),
             )
     ) {
         LiquidGlassSurface(
             modifier = Modifier.fillMaxWidth(),
             shape = CircleShape,
-            material = NavigationGlassMaterial.RegularSmall,
+            material = GlassTokens.dockMaterial,
             navigationSurfaceColor = navigationTint,
-            navigationSurfaceAlphaMultiplier = 1f,
+            // FlClash 的 58% 是它自己管线里的**最终**不透明度；Glasmio 会在这层 tint 之上
+            // 再叠材质自身的 fill，照搬 1f 会叠到 ~0.75，胶囊后面什么都看不见。
+            // 压到 dockTintMultiplier 后内容能隐约透出（滚动时看得出底下有图/文字在动）。
+            navigationSurfaceAlphaMultiplier = GlassTokens.dockTintMultiplier(dark = glass.isDark),
             innerGlow = true,
         ) {
             // 前景色跟随「材质自身的明暗」：

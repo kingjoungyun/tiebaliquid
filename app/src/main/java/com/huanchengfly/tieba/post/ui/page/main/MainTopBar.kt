@@ -144,6 +144,16 @@ val LocalMainTopBarGlassAction = staticCompositionLocalOf { false }
  */
 val LocalMainTabTopInset = compositionLocalOf { 0.dp }
 
+/**
+ * 内容需要让给底部 dock 的高度（= 胶囊高度 + 底部边距）。
+ *
+ * 和 [LocalMainTabTopInset] 同理，要塞进滚动容器的 `contentPadding.bottom`，不能做成
+ * Scaffold 的 bottomBar：后者会把列表 viewport 切在胶囊上沿，滚动时内容永远到不了胶囊后面，
+ * 玻璃就成了一块实心板（FlClash 的胶囊下面是有内容滚过去的）。
+ * `MyLazyColumn` / `MyLazyVerticalGrid` 会自动消费这个值。
+ */
+val LocalMainTabBottomInset = compositionLocalOf { 0.dp }
+
 /** 顶栏收起距离：滚过这么多内容后大标题完全收进栏里。 */
 private val CollapseDistance = 48.dp
 
@@ -158,10 +168,10 @@ private val GlassStartDistance = 8.dp
  * 数值是「相对 scrim 高度的位置 -> alpha」，最后一段收在 0，保证下沿看不到分界。
  */
 private val ScrimStops = arrayOf(
-    0.00f to 0.94f,
-    0.30f to 0.88f,
-    0.55f to 0.62f,
-    0.80f to 0.26f,
+    0.00f to 0.96f,
+    0.42f to 0.90f,
+    0.68f to 0.62f,
+    0.86f to 0.22f,
     1.00f to 0.00f,
 )
 
