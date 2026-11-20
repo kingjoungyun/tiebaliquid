@@ -128,6 +128,8 @@ fun SettingsPage(
     val groupAccount = stringResource(id = R.string.settings_group_account)
     val groupSecurity = stringResource(id = R.string.settings_group_security)
     val groupAppearance = stringResource(id = R.string.settings_group_appearance)
+    // 安全模式的长解释（5 行）不再塞在行内，改作组尾 footnote：行内只剩「标题 + 开关」。
+    val safeModeSummary = stringResource(id = R.string.summary_safe_mode)
     ProvideNavigator(navigator = navigator) {
         Scaffold(
             backgroundColor = Color.Transparent,
@@ -164,14 +166,14 @@ fun SettingsPage(
                         NowAccountItem(account = LocalAccount.current)
                     }
                 }
-                prefsGroup(title = groupSecurity) {
+                prefsGroup(title = groupSecurity, footer = safeModeSummary) {
                     // 安全模式（只读）总开关：影响全局入口显隐与所有写操作拦截，
                     // 属于最常用的开关之一，故直接放在设置主页，不再埋进二级页面。
                     prefsItem {
                         SwitchPref(
                             key = "safeMode",
                             title = stringResource(id = R.string.title_safe_mode),
-                            summary = stringResource(id = R.string.summary_safe_mode),
+                            // 解释性长文案：组尾 footnote（prefsGroup 的 footer），行内不放
                             defaultChecked = true,
                             onCheckedChange = { checked ->
                                 // 关闭安全模式时重置「不再提示」，下次重新开启时仍会提醒一次

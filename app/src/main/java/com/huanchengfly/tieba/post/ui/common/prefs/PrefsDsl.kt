@@ -25,17 +25,24 @@ interface PrefsScope {
      * Adds a group of Prefs with a title.
      *
      * @param title Group header text. Will be shown above the list of Prefs
+     * @param footer 组尾 footnote（灰小字，渲染在卡片下方、组内最后）。Apple 的设置页把
+     * 解释性长文案放在这里，行内只留「标题 + 控件」。`null` = 没有 footnote。
      * @param items All the prefs in this group
      */
-    fun prefsGroup(title: String, items: PrefsScope.() -> Unit)
+    fun prefsGroup(title: String, footer: String? = null, items: PrefsScope.() -> Unit)
 
     /**
      * Adds a group of Prefs. This overload is intended for passing in a [GroupHeader] if you want more control over the header.
      *
      * @param header Group header. Will be shown above the list of Prefs
+     * @param footer 组尾 footnote，语义同上一个重载
      * @param items All the prefs in this group
      */
-    fun prefsGroup(header: @Composable PrefsScope.() -> Unit, items: PrefsScope.() -> Unit)
+    fun prefsGroup(
+        header: @Composable PrefsScope.() -> Unit,
+        footer: String? = null,
+        items: PrefsScope.() -> Unit
+    )
 }
 
 /**
@@ -47,6 +54,9 @@ interface PrefsScope {
 internal class PrefsSection {
     /** 分组标题在 `prefsItems` 里的下标；隐式卡片为 null。 */
     var headerIndex: Int? = null
+
+    /** 组尾 footnote（显式传入的那条）；隐式卡片为 null。 */
+    var footer: String? = null
 
     /** 组内各行的下标，按顺序。 */
     val itemIndexes: MutableList<Int> = mutableListOf()
@@ -76,15 +86,17 @@ internal class PrefsScopeImpl : PrefsScope {
         section.itemIndexes.add(_prefsItems.lastIndex)
     }
 
-    override fun prefsGroup(title: String, items: PrefsScope.() -> Unit) {
-        prefsGroup(header = { GroupHeader(title) }, items = items)
+    override fun prefsGroup(title: String, footer: String?, items: PrefsScope.() -> Unit) {
+        prefsGroup(header = { GroupHeader(title) }, footer = footer, items = items)
     }
 
     override fun prefsGroup(
         header: @Composable PrefsScope.() -> Unit,
+        footer: String?,
         items: PrefsScope.() -> Unit
     ) {
         val section = PrefsSection().also { _sections.add(it) }
+        section.footer = footer
         openSection = section
 
         _prefsItems.add(PrefsItem(content = { @Composable { header() } }))
