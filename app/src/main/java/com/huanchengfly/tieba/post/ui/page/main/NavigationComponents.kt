@@ -478,9 +478,11 @@ private fun DockItem(
     Column(
         modifier = modifier
             .fillMaxHeight()
+            // FlClash `navigation_dock.dart:25`：_barPadding = 4 是「上下左右」同一个值，
+            // 滑块高度 = 62 - 4*2 = 54dp，与胶囊内缘只留 4dp。
             .padding(
                 horizontal = GlassTokens.Spacing.dockInsetH,
-                vertical = GlassTokens.Spacing.dockInsetH * 2,
+                vertical = GlassTokens.Spacing.dockInsetH,
             )
             .clip(CircleShape)
             .then(if (selected) Modifier.background(pillColor) else Modifier)
