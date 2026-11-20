@@ -254,7 +254,12 @@ private fun LoginTipCard(
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+/**
+ * 「我的」页入口。
+ *
+ * 两条渲染路径由 [UserPageUi.DefaultStyle] 决定；默认走 Glasmio 版（账户头卡片 + 分组列表），
+ * 出问题时把它改回 [UserPageUiStyle.LEGACY] 即可整页回退，`MainPage` 一行都不用动。
+ */
 @Composable
 fun UserPage(
     viewModel: UserViewModel = pageViewModel<UserUiIntent, UserViewModel>(
@@ -263,6 +268,21 @@ fun UserPage(
         )
     )
 ) {
+    when (UserPageUi.DefaultStyle) {
+        UserPageUiStyle.GLASSMIO -> GlasmioUserPage(viewModel = viewModel)
+        UserPageUiStyle.LEGACY -> LegacyUserPage(viewModel = viewModel)
+    }
+}
+
+/**
+ * 迁移前的 Material 版「我的」页（**原样保留**，供 [UserPageUiStyle.LEGACY] 切回）。
+ *
+ * 版式：`InfoCard`（名字/签名/头像）+ `StatCard`（三格统计）+ `ListMenuItem` 列表。
+ * 新的 Glasmio 版在 `UserPageGlasmio.kt`，入口分派见上面的 [UserPage]。
+ */
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun LegacyUserPage(viewModel: UserViewModel) {
     val context = LocalContext.current
     val navigator = LocalNavigator.current
     val isLoading by viewModel.uiState.collectPartialAsState(

@@ -3,6 +3,13 @@
     <string name="title_notifications">消息</string>
     <string name="title_explore">进吧</string>
     <string name="title_user">我</string>
+    <!-- 「我的」页（Glasmio 版）：大标题 / 账户卡 / 分组标题 / 未登录态 -->
+    <string name="mine_title">我的</string>
+    <string name="mine_click_to_login">点击登录</string>
+    <string name="mine_my_posts">我的帖子</string>
+    <string name="mine_stat_replies">回帖</string>
+    <string name="mine_group_general">通用</string>
+    <string name="mine_group_more">更多</string>
     <string name="title_search">搜索</string>
     <string name="hint_search">发现更多</string>
     <string name="hint_search_in_ba">在 %1$s 吧内搜索</string>
