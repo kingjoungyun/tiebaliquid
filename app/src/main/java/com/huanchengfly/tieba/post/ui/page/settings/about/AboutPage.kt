@@ -116,6 +116,15 @@ fun AboutPage(
                     launchUrl(context, navigator, "https://github.com/makise2060/FluxTie")
                 }
                 Spacer(modifier = Modifier.height(8.dp))
+                // 字体声明：HarmonyOS Sans 允许免费商用，但要求在使用处署名。
+                Text(
+                    text = stringResource(id = R.string.thanks_harmony_sans),
+                    style = MaterialTheme.typography.caption,
+                    textAlign = TextAlign.Center,
+                    color = ExtendedTheme.colors.textSecondary,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(id = R.string.tip_about, BuildConfig.VERSION_NAME),
                     style = MaterialTheme.typography.caption,

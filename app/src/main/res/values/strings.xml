@@ -493,6 +493,7 @@
     <string name="tip_thanks">本应用基于以下开源项目构建，在此致谢</string>
     <string name="thanks_tieba_lite">贴吧 Lite（TiebaLite）</string>
     <string name="thanks_flux_tie">FluxTie</string>
+    <string name="thanks_harmony_sans">字体：HarmonyOS Sans SC（华为鸿蒙字体，免费商用）</string>
     <string name="summary_now_account">已登录账号 %s</string>
     <string name="summary_not_logged_in">未登录，点击登录</string>
     <string name="title_settings_more">更多</string>

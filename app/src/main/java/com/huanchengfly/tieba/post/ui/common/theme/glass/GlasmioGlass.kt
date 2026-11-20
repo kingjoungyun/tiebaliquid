@@ -196,6 +196,9 @@ private fun BoxScope.GlassInnerGlow(shape: Shape) {
 fun LiquidGlassTheme(content: @Composable () -> Unit) {
     GlasmioTheme(
         isDark = ExtendedTheme.colors.isNightMode,
+        // Glasmio 的语义排版表（iOS Dynamic Type 的 12 档）默认用系统字族；
+        // 这里整表换成鸿蒙，字号/行高/字重仍由 Glasmio 决定。
+        typography = HarmonyGlasmioTypography,
         content = content,
     )
 }
