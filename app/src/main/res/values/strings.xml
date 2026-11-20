@@ -674,4 +674,15 @@
     <string name="release_to_load_latest_posts">松开加载最新回复</string>
     <string name="pull_to_load_latest_posts">继续上拉加载最新回复</string>
     <string name="settings_home_page_show_history_forum">首页显示最近逛的吧</string>
+    <string name="title_theme_color">主题色</string>
+    <string name="title_theme_dark_section">深色</string>
+    <string name="title_theme_dark">深色模式</string>
+    <string name="summary_theme_dark">纯黑背景，卡片保持深灰</string>
+    <string name="summary_theme_color_follow">当前</string>
+    <string name="theme_accent_blue">蓝</string>
+    <string name="theme_accent_cyan">青</string>
+    <string name="theme_accent_green">绿</string>
+    <string name="theme_accent_orange">橙</string>
+    <string name="theme_accent_pink">粉</string>
+    <string name="theme_accent_purple">紫</string>
 </resources>
