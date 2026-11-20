@@ -37,6 +37,7 @@ import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Tab
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.rounded.Add
@@ -44,6 +45,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.NoAccounts
 import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -89,9 +91,16 @@ import com.huanchengfly.tieba.post.models.PhotoViewData
 import com.huanchengfly.tieba.post.models.PicItem
 import com.huanchengfly.tieba.post.models.database.Block
 import com.huanchengfly.tieba.post.toastShort
+import com.huanchengfly.tieba.post.ui.common.prefs.GroupHeader
+import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsRowIndex
+import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsUiStyle
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCard
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsIcon
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsUiStyle
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.common.windowsizeclass.WindowWidthSizeClass
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.settings.LeadingIcon
@@ -126,9 +135,15 @@ import com.huanchengfly.tieba.post.utils.BlockManager
 import com.huanchengfly.tieba.post.utils.StringUtil
 import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
 import com.huanchengfly.tieba.post.utils.TiebaUtil
+import io.github.neoruaa.glasmio.core.GlasmioTheme
+import io.github.neoruaa.glasmio.icons.GlasmioIconResolver
+import io.github.neoruaa.glasmio.icons.LocalGlasmioIconResolver
+import io.github.neoruaa.glasmio.icons.MaterialGlasmioIconResolver
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
+import com.huanchengfly.tieba.post.ui.page.destinations.FansListPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.FollowListPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.SearchUserPageDestination
+import com.huanchengfly.tieba.post.ui.page.destinations.UserPostListPageDestination
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.collections.immutable.ImmutableList
@@ -652,7 +667,7 @@ private fun UserProfileContentNormal(
                             .height(containerHeight)
                             .clipToBounds()
                     ) {
-                        Box(
+                        Column(
                             modifier = Modifier
                                 .wrapContentHeight(
                                     align = Alignment.Bottom,
@@ -692,6 +707,17 @@ private fun UserProfileContentNormal(
                                     navigator.navigate(SearchUserPageDestination(initialUid = id))
                                 }
                             )
+
+                            // 「我的」页搬过来的三个入口：只在自己的主页显示。
+                            // 别人主页上「帖子 / 关注吧」本来就有 tab，标签也不该叫「我的帖子」。
+                            if (isSelf) {
+                                UserProfileAccountSection(
+                                    uid = user.get { id },
+                                    concernNum = user.get { concern_num }.getShortNumString(),
+                                    fansNum = user.get { fans_num }.getShortNumString(),
+                                    postsNum = user.get { post_num }.getShortNumString(),
+                                )
+                            }
                         }
                     }
 
@@ -813,37 +839,50 @@ private fun UserProfileContentExpanded(
                     }
                     val pagerState = rememberPagerState { pages.size }
 
-                    UserProfileDetail(
-                        user = user,
+                    Column(
                         modifier = Modifier
                             .weight(1f)
-                            .align(Alignment.Top),
-                        showBtn = showActionBtn,
-                        isSelf = isSelf,
-                        onBtnClick = {
-                            if (disableButton || !showActionBtn) {
-                                return@UserProfileDetail
+                            .align(Alignment.Top)
+                    ) {
+                        UserProfileDetail(
+                            user = user,
+                            modifier = Modifier,
+                            showBtn = showActionBtn,
+                            isSelf = isSelf,
+                            onBtnClick = {
+                                if (disableButton || !showActionBtn) {
+                                    return@UserProfileDetail
+                                }
+                                if (isSelf) {
+                                    context.goToActivity<EditProfileActivity>()
+                                } else if (user.get { has_concerned } == 0) {
+                                    onFollow()
+                                } else {
+                                    onUnfollow()
+                                }
+                            },
+                            onCopyIdClick = {
+                                val id = user.get { id }.toString()
+                                // 与 Chip 显示保持一致：显示的就是 user_id，复制的也是 user_id。
+                                // 复制贴吧 ID 到剪贴板，同时跳转到「查人」页并粘贴该 ID 自动查询。
+                                TiebaUtil.copyText(
+                                    context,
+                                    id,
+                                    context.getString(R.string.toast_copy_user_id)
+                                )
+                                navigator.navigate(SearchUserPageDestination(initialUid = id))
                             }
-                            if (isSelf) {
-                                context.goToActivity<EditProfileActivity>()
-                            } else if (user.get { has_concerned } == 0) {
-                                onFollow()
-                            } else {
-                                onUnfollow()
-                            }
-                        },
-                        onCopyIdClick = {
-                            val id = user.get { id }.toString()
-                            // 与 Chip 显示保持一致：显示的就是 user_id，复制的也是 user_id。
-                            // 复制贴吧 ID 到剪贴板，同时跳转到「查人」页并粘贴该 ID 自动查询。
-                            TiebaUtil.copyText(
-                                context,
-                                id,
-                                context.getString(R.string.toast_copy_user_id)
+                        )
+
+                        if (isSelf) {
+                            UserProfileAccountSection(
+                                uid = user.get { id },
+                                concernNum = user.get { concern_num }.getShortNumString(),
+                                fansNum = user.get { fans_num }.getShortNumString(),
+                                postsNum = user.get { post_num }.getShortNumString(),
                             )
-                            navigator.navigate(SearchUserPageDestination(initialUid = id))
                         }
-                    )
+                    }
 
                     Column(
                         modifier = Modifier.weight(2f)
@@ -1196,6 +1235,100 @@ private fun UserProfileDetail(
                 )
             )
         }
+    }
+}
+
+/**
+ * 个人主页的「账号」组：关注 / 粉丝 / 我的帖子。
+ *
+ * 这三行原先在「我的」页的账户卡下面，与账户卡点进来的这页重复；现在只在这里出现。
+ * 视觉完全复用设置页的渲染层（[PrefsCard] + [GroupHeader] + [TextPref] + [PrefsIcon]），
+ * 用 [LiquidGlassTheme] + [LocalPrefsUiStyle] 把这一小块切到 Glasmio 路径 —— 整页其它
+ * Material 部分（顶栏、大头像、资料、tab、列表）保持原样，不做 Glasmio 化。
+ *
+ * 个人主页的底色是纯白，而设置页的卡片是「灰底白卡」；所以这里给整个组铺一条
+ * `groupedBackground` 灰底，卡片边界才和第 9 节的分组列表一致。
+ *
+ * 数字放在行尾右侧（Apple 的 value 位），点击行为与「我的」页时一致：
+ * 关注 → 关注列表、粉丝 → 粉丝列表、我的帖子 → 回帖列表。
+ */
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun UserProfileAccountSection(
+    uid: Long,
+    concernNum: String,
+    fansNum: String,
+    postsNum: String,
+) {
+    val navigator = LocalNavigator.current
+    val groupTitle = stringResource(id = R.string.settings_group_account)
+    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+        val colors = GlasmioTheme.colors
+        CompositionLocalProvider(
+            LocalPrefsUiStyle provides PrefsUiStyle.GLASSMIO,
+            LocalGlasmioIconResolver provides UserProfileIconResolver,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.groupedBackground)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+            ) {
+                PrefsCard(header = { GroupHeader(title = groupTitle) }) {
+                    UserProfileAccountRow(index = 0) {
+                        TextPref(
+                            title = stringResource(id = R.string.text_stat_follow),
+                            leadingIcon = { PrefsIcon("person.badge.plus") },
+                            trailingValue = concernNum,
+                            onClick = {
+                                navigator.navigate(FollowListPageDestination(uid))
+                            },
+                        )
+                    }
+                    UserProfileAccountRow(index = 1) {
+                        TextPref(
+                            title = stringResource(id = R.string.text_stat_fans),
+                            leadingIcon = { PrefsIcon("person.2") },
+                            trailingValue = fansNum,
+                            onClick = {
+                                navigator.navigate(FansListPageDestination(uid))
+                            },
+                        )
+                    }
+                    UserProfileAccountRow(index = 2) {
+                        TextPref(
+                            title = stringResource(id = R.string.mine_my_posts),
+                            leadingIcon = { PrefsIcon("doc.text") },
+                            trailingValue = postsNum,
+                            onClick = {
+                                navigator.navigate(
+                                    UserPostListPageDestination(uid = uid, isThread = false)
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** 组内行的下标注入（Glasmio 行自己画分隔线，并吞掉组内第一行那条线）。 */
+@Composable
+private fun UserProfileAccountRow(index: Int, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalPrefsRowIndex provides index) {
+        content()
+    }
+}
+
+/**
+ * 本页的图标解析只多认一个 `doc.text`（我的帖子 → 文章图标），其余仍交给 Glasmio 自带表；
+ * 这不是换图标体系，`PrefsIcon` 仍是 23dp、accent 着色。
+ */
+private val UserProfileIconResolver = GlasmioIconResolver { systemName ->
+    when {
+        systemName.startsWith("doc.text") -> Icons.AutoMirrored.Rounded.Article
+        else -> MaterialGlasmioIconResolver.resolve(systemName)
     }
 }
 

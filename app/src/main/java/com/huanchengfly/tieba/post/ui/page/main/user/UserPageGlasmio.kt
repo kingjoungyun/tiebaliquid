@@ -21,8 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -60,13 +58,10 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.AboutPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.AppThemePageDestination
-import com.huanchengfly.tieba.post.ui.page.destinations.FansListPageDestination
-import com.huanchengfly.tieba.post.ui.page.destinations.FollowListPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.HistoryPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.LoginPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.SettingsPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadStorePageDestination
-import com.huanchengfly.tieba.post.ui.page.destinations.UserPostListPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.WebViewPageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
@@ -80,9 +75,6 @@ import com.huanchengfly.tieba.post.utils.appPreferences
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.core.IosTypography
 import io.github.neoruaa.glasmio.core.systemGray5
-import io.github.neoruaa.glasmio.icons.GlasmioIconResolver
-import io.github.neoruaa.glasmio.icons.LocalGlasmioIconResolver
-import io.github.neoruaa.glasmio.icons.MaterialGlasmioIconResolver
 import io.github.neoruaa.glasmio.icons.SfIcon
 import io.github.neoruaa.glasmio.ui.GlasmioGroupedList
 
@@ -97,12 +89,6 @@ import io.github.neoruaa.glasmio.ui.GlasmioGroupedList
  * │ (60dp 头像)  名字 22sp          › │     ← 一张分组卡片（GlasmioGroupedList）
  * │              关注 12 · 粉丝 34 · 回帖 56 │
  * └────────────────────────────────┘
- * 账号                                   ← 分组标题（GlasmioPreferenceGroupTitle）
- * ┌────────────────────────────────┐
- * │ 关注    12                    › │
- * │ 粉丝    34                    › │
- * │ 我的帖子 56                    › │
- * └────────────────────────────────┘
  * 通用
  * ┌────────────────────────────────┐
  * │ 浏览记录                       › │
@@ -115,6 +101,9 @@ import io.github.neoruaa.glasmio.ui.GlasmioGroupedList
  * │ 关于                           › │
  * └────────────────────────────────┘
  * ```
+ *
+ * 账户卡上的统计数字只做摘要；「关注 / 粉丝 / 我的帖子」三个入口在账户卡点进去的
+ * 个人主页里（`UserProfilePage`），与本页的账户卡不重复。
  *
  * 头部卡片没有现成的 Glasmio 组件，所以用它的基础件自己拼：
  * - 卡片壳 = `GlasmioGroupedList`（26dp 连续圆角 + `elevatedBackground`）；
@@ -192,10 +181,9 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
     LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
         // 设置页的两层前置条件在这里手动补齐（这个页面不是 PrefsScreen 的子树）：
         // GLASSMIO 决定 PrefsCard / TextPref / PrefsLargeTitle 走 Glasmio 渲染层；
-        // 自定义 resolver 只多认几个本页用到的符号（`doc.text` → 文章图标），其余仍走 Glasmio 自带表。
+        // 图标仍走 Glasmio 自带的 `SfIcon` → Material 解析表（本页没有自定义符号）。
         CompositionLocalProvider(
             LocalPrefsUiStyle provides PrefsUiStyle.GLASSMIO,
-            LocalGlasmioIconResolver provides UserPageIconResolver,
         ) {
             val colors = GlasmioTheme.colors
             Box(
@@ -247,50 +235,6 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
                         }
                     }
 
-                    if (currentAccount != null) {
-                        val selfUid = currentAccount.uid.toLong()
-                        item(key = "mine-group-account") {
-                            UserPrefsGroup(title = stringResource(id = R.string.settings_group_account)) {
-                                UserRow(index = 0) {
-                                    TextPref(
-                                        title = stringResource(id = R.string.text_stat_follow),
-                                        leadingIcon = { PrefsIcon("person.badge.plus") },
-                                        // 状态/数值放行尾右侧（Apple 的 value 位），不塞进行内副标题
-                                        trailingValue = "$concernNum",
-                                        onClick = {
-                                            navigator.navigate(FollowListPageDestination())
-                                        },
-                                    )
-                                }
-                                UserRow(index = 1) {
-                                    TextPref(
-                                        title = stringResource(id = R.string.text_stat_fans),
-                                        leadingIcon = { PrefsIcon("person.2") },
-                                        trailingValue = "$fansNum",
-                                        onClick = {
-                                            navigator.navigate(FansListPageDestination(selfUid))
-                                        },
-                                    )
-                                }
-                                UserRow(index = 2) {
-                                    TextPref(
-                                        title = stringResource(id = R.string.mine_my_posts),
-                                        leadingIcon = { PrefsIcon("doc.text") },
-                                        trailingValue = "$postsNum",
-                                        onClick = {
-                                            navigator.navigate(
-                                                UserPostListPageDestination(
-                                                    uid = selfUid,
-                                                    isThread = false,
-                                                )
-                                            )
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                    }
-
                     item(key = "mine-group-general") {
                         UserPrefsGroup(title = stringResource(id = R.string.mine_group_general)) {
                             UserRow(index = 0) {
@@ -330,7 +274,7 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
                     item(key = "mine-group-more") {
                         UserPrefsGroup(title = stringResource(id = R.string.mine_group_more)) {
                             // 收藏 / 服务中心只有登录后才存在（原版同样如此），放在「更多」里，
-                            // 让「账号」组只承载三个统计数字。
+                            // 避免挤占「通用」组；三个统计入口已移到个人主页。
                             if (currentAccount != null) {
                                 UserRow(index = 0) {
                                     TextPref(
@@ -394,8 +338,9 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
 /**
  * 头部卡片：60dp 圆头像 + 名字（22sp semibold）+ 一行统计 / 「点击登录」+ 右侧 chevron。
  *
- * 整卡可点：已登录 → 个人主页；未登录 → 登录页。统计数字与账号分组里的行尾数字同源，
- * 都是 [Account] 上由 `UserViewModel` 拉回来的真实字段（`concernNum` / `fansNum` / `postNum`）。
+ * 整卡可点：已登录 → 个人主页；未登录 → 登录页。统计数字与个人主页「账号」组里的
+ * 行尾数字同源，都是 [Account] 上由 `UserViewModel` 拉回来的真实字段
+ * （`concernNum` / `fansNum` / `postNum`）。
  */
 @Composable
 private fun AccountHeaderCard(
@@ -607,19 +552,5 @@ private fun UserPrefsGroup(
 private fun UserRow(index: Int, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalPrefsRowIndex provides index) {
         content()
-    }
-}
-
-/**
- * 本页额外的符号解析：只补 `doc.text`（我的帖子）这一个 Glasmio 自带表里没有的名称，
- * 其余仍交给 [MaterialGlasmioIconResolver]。
- *
- * 注意这不是「换一套图标」：所有图标依然从 `SfIcon` / `PrefsIcon` 走，尺寸 23dp、
- * tint 跟 `GlasmioTheme.colors.accent`（= `ExtendedTheme.colors.primary`）。
- */
-private val UserPageIconResolver = GlasmioIconResolver { systemName ->
-    when {
-        systemName.startsWith("doc.text") -> Icons.AutoMirrored.Rounded.Article
-        else -> MaterialGlasmioIconResolver.resolve(systemName)
     }
 }
