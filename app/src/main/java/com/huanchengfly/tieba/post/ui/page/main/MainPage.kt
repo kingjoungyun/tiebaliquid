@@ -294,15 +294,36 @@ fun MainPage(
             coroutineScope.launch { pagerState.scrollToPage(it) }
         }
         // 浮动胶囊本体。签名不变，只是多给一个 Modifier（玻璃叠加层里要 align 到底部）。
+        //
+        // DockStyle 是转正开关：GLASMIO = GlasmioNavigationBar（镜头/形变/收缩），
+        // LEGACY = 原来的自绘胶囊。两条分支吃同一份参数、同一个槽位，回滚只改 DockStyle.kt。
+        //
+        // 滚动→收起的数据源复用顶栏那套：MainTopBarState 已经把每个 tab 的累计滚动量记下来了
+        // （顶栏用它淡入 scrim、收大标题），这里只读当前 tab 的那一个，不额外挂 nestedScroll。
+        // 注意 lambda 形式传下去：读数发生在 dock 自己的组合里，不会让 MainPage 每帧重组。
+        val dockScrollOffset: () -> Float = remember(topBarState) {
+            { topBarState.offsetFor(topBarState.currentKey) }
+        }
         val dock: @Composable (Modifier) -> Unit = { dockModifier ->
-            BottomNavigation(
-                currentPosition = pagerState.currentPage,
-                onChangePosition = onSelectPosition,
-                onReselected = onReselected,
-                navigationItems = navigationItems,
-                themeColors = themeColors,
-                modifier = dockModifier,
-            )
+            when (DefaultDockStyle) {
+                DockStyle.GLASMIO -> GlasmioDock(
+                    currentPosition = pagerState.currentPage,
+                    onChangePosition = onSelectPosition,
+                    onReselected = onReselected,
+                    navigationItems = navigationItems,
+                    modifier = dockModifier,
+                    scrollOffsetPx = dockScrollOffset,
+                )
+
+                DockStyle.LEGACY -> BottomNavigation(
+                    currentPosition = pagerState.currentPage,
+                    onChangePosition = onSelectPosition,
+                    onReselected = onReselected,
+                    navigationItems = navigationItems,
+                    themeColors = themeColors,
+                    modifier = dockModifier,
+                )
+            }
         }
         // 玻璃叠加层里的胶囊不占 Scaffold 的 bottomBar 槽位：
         // 内容要能从胶囊**下面**滚过去（FlClash 就是这样），所以不能把这段高度做成 bottomBar
