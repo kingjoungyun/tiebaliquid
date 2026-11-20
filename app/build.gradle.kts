@@ -234,6 +234,9 @@ dependencies {
     // Glasmio 的上层组件（设置页开关用）。glasmio-glass 的 POM 只依赖 core + icons，
     // 不含 ui，所以这里必须并列声明同一个版本，否则 compileClasspath 看不到 GlasmioSwitch。
     implementation(libs.glasmio.ui)
+    // 设置页组件（GlasmioPreferenceEntry / GlasmioSwitchPreference / GlasmioPreferenceGroupTitle）：
+    // 与上面同版本、同仓库的 Glasmio 模块，只有 debug 预览页用，故走 debugImplementation，不进 release。
+    debugImplementation(libs.glasmio.preference)
 
     // Android Studio Preview support
     implementation(libs.compose.ui.tooling.preview)

@@ -11,5 +11,10 @@
             android:name=".debug.GlassPlaygroundActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+        <!-- B 版设置页（纯 Glasmio），A/B 对照用；导出以便 adb shell am start 直接拉起。 -->
+        <activity
+            android:name=".debug.GlassSettingsPreviewActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
     </application>
 </manifest>
