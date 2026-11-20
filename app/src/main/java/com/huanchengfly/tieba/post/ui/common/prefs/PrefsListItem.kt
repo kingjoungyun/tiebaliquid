@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
@@ -217,13 +216,13 @@ private fun GlasmioPrefsRow(
         icon = icon?.let { iconContent ->
             {
                 Box(
-                    modifier = Modifier.size(PrefsGlasmioDefaults.IconSlot),
+                    modifier = Modifier.sizeIn(
+                        minWidth = PrefsGlasmioDefaults.IconSlot,
+                        minHeight = PrefsGlasmioDefaults.IconSlot,
+                    ),
                     contentAlignment = Alignment.Center,
                 ) {
-                    // requiredSize：不让 28dp 的槽把 App 的 36dp 图标压小（溢出部分靠不裁剪绘制）
-                    Box(modifier = Modifier.requiredSize(PrefsGlasmioDefaults.IconContent)) {
-                        iconContent()
-                    }
+                    iconContent()
                 }
             }
         },

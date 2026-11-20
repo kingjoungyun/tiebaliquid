@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.BrandingWatermark
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.automirrored.rounded.Sort
@@ -31,6 +30,7 @@ import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.dataStore
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCollapsedTitle
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsLargeTitle
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsIcon
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsScreen
 import com.huanchengfly.tieba.post.ui.common.prefs.rememberPrefsTitleCollapseProgress
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.ListPref
@@ -99,13 +99,7 @@ fun HabitSettingsPage(
                     useSelectedAsSummary = true,
                     defaultValue = "0",
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.Outlined.PhotoSizeSelectActual,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("photo")
                     },
                 )
             }
@@ -121,13 +115,7 @@ fun HabitSettingsPage(
                     useSelectedAsSummary = true,
                     defaultValue = "2",
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.AutoMirrored.Outlined.BrandingWatermark,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("textformat")
                     },
                 )
             }
@@ -137,13 +125,7 @@ fun HabitSettingsPage(
                     title = stringResource(id = R.string.settings_image_darken_when_night_mode),
                     defaultChecked = true,
                 ) {
-                    LeadingIcon {
-                        AvatarIcon(
-                            icon = Icons.Outlined.NightsStay,
-                            size = Sizes.Small,
-                            contentDescription = null,
-                        )
-                    }
+                    PrefsIcon("moon")
                 }
             }
             prefsItem {
@@ -157,13 +139,7 @@ fun HabitSettingsPage(
                     useSelectedAsSummary = true,
                     defaultValue = "0",
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.Outlined.CalendarViewDay,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("arrow.up.arrow.down")
                     },
                 )
             }
@@ -173,13 +149,7 @@ fun HabitSettingsPage(
                     title = stringResource(id = R.string.settings_forum_fab_function),
                     defaultValue = "post",
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.AutoMirrored.Outlined.ExitToApp,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("plus.circle")
                     },
                     useSelectedAsSummary = true,
                     entries = mapOf(
@@ -196,13 +166,7 @@ fun HabitSettingsPage(
                     title = stringResource(id = R.string.settings_default_start),
                     defaultValue = 0,
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.Default.TabletAndroid,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("house")
                     },
                     useSelectedAsSummary = true,
                     entries = mapOf(
@@ -218,13 +182,7 @@ fun HabitSettingsPage(
                     title = stringResource(id = R.string.settings_incognito_mode),
                     defaultChecked = false
                 ) {
-                    LeadingIcon {
-                        AvatarIcon(
-                            icon = Icons.Outlined.AddModerator,
-                            size = Sizes.Small,
-                            contentDescription = null,
-                        )
-                    }
+                    PrefsIcon("eye.slash")
                 }
             }
             prefsItem {
@@ -233,13 +191,7 @@ fun HabitSettingsPage(
                     title = stringResource(id = R.string.title_hide_media),
                     defaultChecked = false
                 ) {
-                    LeadingIcon {
-                        AvatarIcon(
-                            icon = ImageVector.vectorResource(R.drawable.ic_outline_collapse_all),
-                            size = Sizes.Small,
-                            contentDescription = null,
-                        )
-                    }
+                    PrefsIcon("chevron.down.circle")
                 }
             }
 //            prefsItem {
@@ -266,13 +218,7 @@ fun HabitSettingsPage(
                     title = stringResource(id = R.string.settings_collect_thread_see_lz),
                     defaultChecked = true,
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.Outlined.StarOutline,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("person.fill")
                     },
                     summaryOn = stringResource(id = R.string.tip_collect_thread_see_lz_on),
                     summaryOff = stringResource(id = R.string.tip_collect_thread_see_lz)
@@ -284,13 +230,7 @@ fun HabitSettingsPage(
                     title = stringResource(id = R.string.settings_collect_thread_desc_sort),
                     defaultChecked = false,
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.AutoMirrored.Rounded.Sort,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("arrow.up.arrow.down")
                     },
                     summaryOn = stringResource(id = R.string.tip_collect_thread_desc_sort_on),
                     summaryOff = stringResource(id = R.string.tip_collect_thread_desc_sort)
@@ -302,13 +242,7 @@ fun HabitSettingsPage(
                     title = stringResource(id = R.string.title_show_both_username_and_nickname),
                     defaultChecked = false,
                 ) {
-                    LeadingIcon {
-                        AvatarIcon(
-                            icon = Icons.Outlined.Verified,
-                            size = Sizes.Small,
-                            contentDescription = null,
-                        )
-                    }
+                    PrefsIcon("character")
                 }
             }
             prefsItem {
@@ -317,13 +251,7 @@ fun HabitSettingsPage(
                     title = stringResource(id = R.string.settings_home_page_show_history_forum),
                     defaultChecked = true,
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.Outlined.WatchLater,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("clock")
                     },
                 )
             }
@@ -342,13 +270,7 @@ fun HabitSettingsPage(
                     },
                     defaultChecked = false,
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.Outlined.ImageSearch,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("photo.on.rectangle")
                     },
                     enabled = isPhotoPickerAvailable()
                 )

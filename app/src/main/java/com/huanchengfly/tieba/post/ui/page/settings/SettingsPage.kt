@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Scaffold
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.SecurityUpdateWarning
 import androidx.compose.material.icons.rounded.AccountCircle
@@ -21,16 +20,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.dataStore
 import com.huanchengfly.tieba.post.models.database.Account
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCollapsedTitle
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsLargeTitle
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsIcon
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsScreen
 import com.huanchengfly.tieba.post.ui.common.prefs.rememberPrefsTitleCollapseProgress
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.SwitchPref
@@ -46,7 +44,6 @@ import com.huanchengfly.tieba.post.ui.page.destinations.LoginPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.MoreSettingsPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.OKSignSettingsPageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
-import com.huanchengfly.tieba.post.ui.widgets.compose.AvatarIcon
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
@@ -80,13 +77,12 @@ fun NowAccountItem(
             enabled = true,
             onClick = { navigator.navigate(AccountManagePageDestination) },
             leadingIcon = {
-                LeadingIcon {
-                    Avatar(
-                        data = StringUtil.getAvatarUrl(account.portrait),
-                        size = Sizes.Small,
-                        contentDescription = null
-                    )
-                }
+                // 唯一保留「图片」的图标位：已登录时显示真实头像（不是图标）
+                Avatar(
+                    data = StringUtil.getAvatarUrl(account.portrait),
+                    size = Sizes.Small,
+                    contentDescription = null
+                )
             },
             modifier = modifier,
         )
@@ -96,17 +92,8 @@ fun NowAccountItem(
             summary = stringResource(id = R.string.summary_not_logged_in),
             enabled = true,
             onClick = { navigator.navigate(LoginPageDestination) },
-            leadingIcon = {
-                LeadingIcon {
-                    AvatarIcon(
-                        icon = Icons.Rounded.AccountCircle,
-                        size = Sizes.Small,
-                        contentDescription = stringResource(id = R.string.title_new_account),
-                        color = ExtendedTheme.colors.onChip,
-                        backgroundColor = ExtendedTheme.colors.chip,
-                    )
-                }
-            },
+            // 未登录时没有头像可用 → 用 Glasmio 的人形图标（不再画灰底圆形占位）
+            leadingIcon = { PrefsIcon("person.fill") },
             modifier = modifier,
         )
     }
@@ -190,13 +177,7 @@ fun SettingsPage(
                                 }, 800)
                             },
                         ) {
-                            LeadingIcon {
-                                AvatarIcon(
-                                    icon = Icons.Outlined.SecurityUpdateWarning,
-                                    size = Sizes.Small,
-                                    contentDescription = null,
-                                )
-                            }
+                            PrefsIcon("lock.fill")
                         }
                     }
                     // 「不再提示」的恢复入口：仅当用户此前点过「不再提示」时才显示，
@@ -217,13 +198,7 @@ fun SettingsPage(
                                     ).show()
                                 },
                             ) {
-                                LeadingIcon {
-                                    AvatarIcon(
-                                        icon = Icons.Outlined.Campaign,
-                                        size = Sizes.Small,
-                                        contentDescription = null,
-                                    )
-                                }
+                                PrefsIcon("bell.fill")
                             }
                         }
                     }
@@ -232,13 +207,7 @@ fun SettingsPage(
                             title = stringResource(id = R.string.title_block_settings),
                             summary = stringResource(id = R.string.summary_block_settings),
                             leadingIcon = {
-                                LeadingIcon {
-                                    AvatarIcon(
-                                        icon = ImageVector.vectorResource(id = R.drawable.ic_settings_block),
-                                        size = Sizes.Small,
-                                        contentDescription = null,
-                                    )
-                                }
+                                PrefsIcon("eye.slash")
                             },
                             darkenOnDisable = false,
                             onClick = { navigator.navigate(BlockSettingsPageDestination) }
@@ -251,13 +220,7 @@ fun SettingsPage(
                             title = stringResource(id = R.string.title_settings_custom),
                             summary = stringResource(id = R.string.summary_settings_custom),
                             leadingIcon = {
-                                LeadingIcon {
-                                    AvatarIcon(
-                                        icon = ImageVector.vectorResource(id = R.drawable.ic_brush_black_24dp),
-                                        size = Sizes.Small,
-                                        contentDescription = null,
-                                    )
-                                }
+                                PrefsIcon("paintpalette")
                             },
                             darkenOnDisable = false,
                             onClick = { navigator.navigate(CustomSettingsPageDestination) }
@@ -268,13 +231,7 @@ fun SettingsPage(
                             title = stringResource(id = R.string.title_settings_read_habit),
                             summary = stringResource(id = R.string.summary_settings_habit),
                             leadingIcon = {
-                                LeadingIcon {
-                                    AvatarIcon(
-                                        icon = ImageVector.vectorResource(id = R.drawable.ic_dashboard_customize_black_24),
-                                        size = Sizes.Small,
-                                        contentDescription = null,
-                                    )
-                                }
+                                PrefsIcon("slider.horizontal.3")
                             },
                             darkenOnDisable = false,
                             onClick = { navigator.navigate(HabitSettingsPageDestination) }
@@ -287,13 +244,7 @@ fun SettingsPage(
                                 title = stringResource(id = R.string.title_oksign),
                                 summary = stringResource(id = R.string.summary_settings_oksign),
                                 leadingIcon = {
-                                    LeadingIcon {
-                                        AvatarIcon(
-                                            icon = ImageVector.vectorResource(id = R.drawable.ic_rocket_launch_black_24),
-                                            size = Sizes.Small,
-                                            contentDescription = null,
-                                        )
-                                    }
+                                    PrefsIcon("checkmark.circle")
                                 },
                                 darkenOnDisable = false,
                                 onClick = {
@@ -307,13 +258,7 @@ fun SettingsPage(
                             title = stringResource(id = R.string.title_settings_more),
                             summary = stringResource(id = R.string.summary_settings_more),
                             leadingIcon = {
-                                LeadingIcon {
-                                    AvatarIcon(
-                                        icon = ImageVector.vectorResource(id = R.drawable.ic_more_horiz_black_24),
-                                        size = Sizes.Small,
-                                        contentDescription = null,
-                                    )
-                                }
+                                PrefsIcon("ellipsis")
                             },
                             darkenOnDisable = false,
                             onClick = {

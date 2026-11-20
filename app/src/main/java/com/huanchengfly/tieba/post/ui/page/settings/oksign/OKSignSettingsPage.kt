@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BatteryAlert
 import androidx.compose.material.icons.outlined.BrowseGallery
 import androidx.compose.material.icons.outlined.Cancel
@@ -30,18 +29,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.dataStore
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsIcon
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsScreen
 import com.huanchengfly.tieba.post.ui.common.prefs.depend
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.SwitchPref
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TimePickerPerf
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
-import com.huanchengfly.tieba.post.ui.page.settings.LeadingIcon
-import com.huanchengfly.tieba.post.ui.widgets.compose.AvatarIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
-import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.utils.isIgnoringBatteryOptimizations
 import com.huanchengfly.tieba.post.utils.powerManager
@@ -80,13 +77,7 @@ fun OKSignSettingsPage(
             prefsItem {
                 SwitchPref(
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.Outlined.BrowseGallery,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("clock.arrow.circlepath")
                     },
                     key = "oksign_slow_mode",
                     title = stringResource(id = R.string.title_oksign_slow_mode),
@@ -98,13 +89,7 @@ fun OKSignSettingsPage(
             prefsItem {
                 SwitchPref(
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.Outlined.Speed,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("checkmark.seal")
                     },
                     key = "oksign_use_official_oksign",
                     title = stringResource(id = R.string.title_oksign_use_official_oksign),
@@ -115,13 +100,7 @@ fun OKSignSettingsPage(
             prefsItem {
                 SwitchPref(
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.Outlined.Cancel,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("xmark.octagon")
                     },
                     key = "oksign_fail_auto_stop",
                     title = stringResource(id = R.string.title_oksign_fail_auto_stop),
@@ -132,13 +111,7 @@ fun OKSignSettingsPage(
             prefsItem {
                 SwitchPref(
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.Outlined.OfflinePin,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("calendar.badge.clock")
                     },
                     key = "auto_sign",
                     title = stringResource(id = R.string.title_auto_sign),
@@ -150,13 +123,7 @@ fun OKSignSettingsPage(
             prefsItem {
                 TimePickerPerf(
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.Outlined.WatchLater,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("clock")
                     },
                     key = "auto_sign_time",
                     title = stringResource(id = R.string.title_auto_sign_time),
@@ -169,13 +136,7 @@ fun OKSignSettingsPage(
             prefsItem {
                 TextPref(
                     leadingIcon = {
-                        LeadingIcon {
-                            AvatarIcon(
-                                icon = Icons.Outlined.BatteryAlert,
-                                size = Sizes.Small,
-                                contentDescription = null,
-                            )
-                        }
+                        PrefsIcon("exclamationmark.triangle")
                     },
                     title = stringResource(id = R.string.title_ignore_battery_optimization),
                     enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !context.isIgnoringBatteryOptimizations(),

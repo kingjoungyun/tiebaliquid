@@ -120,18 +120,16 @@ object PrefsGlasmioDefaults {
     val GroupGap: Dp = 10.dp
 
     /**
-     * 行左侧图标槽。
+     * 行左侧图标槽的最小尺寸：28dp。
      *
-     * App 现有的图标入口（`LeadingIcon { AvatarIcon(size = Sizes.Small) }`）是 36dp 的圆形
-     * 图标 + 一个用于占位的 56dp Spacer。Glasmio 的行高是写死的 52dp（= 12dp 上下内边距 +
-     * 28dp 内容），所以槽宽取 28dp，图标本体用 [IconContent]（36dp）溢出槽位绘制：
-     * 既保住 App 现在的图标尺寸，也让行高回到 Glasmio 的 52dp。
+     * Glasmio 的行高是写死的 52dp（= 12dp 上下内边距 + 28dp 内容），而 [PrefsIcon] 画的是
+     * 23dp 的 `SfIcon`，正好落在 28dp 的槽里 → 行高回到 52dp。
+     * 槽是「最小尺寸」不是固定尺寸：真实头像（36dp 的 `Avatar`，唯一保留图片的例外）
+     * 会把这一行撑到 60dp，但只有那一行。
+     *
      * 文字起点 = 16(行内边距) + 4 + 28 + 4 + 12(槽后间距) = 64dp。
      */
     val IconSlot: Dp = 28.dp
-
-    /** 图标本体的尺寸（沿用 App 的 `Sizes.Small`）。 */
-    val IconContent: Dp = 36.dp
 
     /** 行左右内边距（Glasmio 写死 16dp，仅用于宽度估算）。 */
     val RowHorizontalPadding: Dp = 16.dp
