@@ -51,6 +51,48 @@ object ThemeUtil {
 
     const val TAG = "ThemeUtil"
 
+    /**
+     * 全局 accent（主题色）的唯一状态源。
+     *
+     * 复用 `custom_primary_color`（旧自定义主题的写法不变），但语义升级为「覆盖所有主题的 accent」：
+     * - [App.ThemeDelegate] 解析 `colorPrimary` / `colorNewPrimary` / `colorAccent` 时优先读它；
+     * - Compose 侧读它属于 snapshot state 读取，所以写入后 `TiebaLiteTheme` 会自动重组；
+     * - 半透明主题与动态取色走各自独立分支，不被覆盖。
+     *
+     * 初始值在进程启动时从 DataStore 同步读取（`themeState` 也是这么做的）。
+     */
+    val accentState: MutableState<String?> by lazy(mode = LazyThreadSafetyMode.SYNCHRONIZED) {
+        mutableStateOf(
+            if (App.isInitialized) dataStore.getString(KEY_CUSTOM_PRIMARY_COLOR) else null
+        )
+    }
+
+    /**
+     * 写入全局 accent。`null` = 清除覆盖，回到各主题 XML 自带的颜色。
+     *
+     * 写入仍走 `appPreferences.customPrimaryColor`（同一个 DataStore 键），不新造存储；
+     * 同时更新 [accentState] 让已组合的界面立即重组（DataStore 写入本身是异步的）。
+     */
+    fun setCustomAccent(color: String?) {
+        if (App.isInitialized) {
+            INSTANCE.appPreferences.customPrimaryColor = color
+            accentState.value = color
+        }
+    }
+
+    /** 解析当前全局 accent；未设置或格式非法时返回 null。 */
+    fun getCustomAccentColor(): Int? {
+        val raw = accentState.value ?: return null
+        return try {
+            Color.parseColor(raw)
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+    }
+
+    /** 当前是否设置了全局 accent 覆盖。 */
+    fun hasCustomAccent(): Boolean = getCustomAccentColor() != null
+
     const val KEY_THEME = "theme"
     const val KEY_DARK_THEME = "dark_theme"
     const val KEY_OLD_THEME = "old_theme"
@@ -61,6 +103,9 @@ object ThemeUtil {
     const val KEY_CUSTOM_TOOLBAR_PRIMARY_COLOR = "custom_toolbar_primary_color"
     const val KEY_TRANSLUCENT_THEME_BACKGROUND_PATH = "translucent_theme_background_path"
     const val KEY_USE_DYNAMIC_COLOR_THEME = "useDynamicColorTheme"
+
+    /** 全局 accent 的存储键；沿用旧「自定义主题」的键，不新造一套存储。 */
+    const val KEY_CUSTOM_PRIMARY_COLOR = "custom_primary_color"
 
     const val THEME_TRANSLUCENT = "translucent"
     const val THEME_TRANSLUCENT_LIGHT = "translucent_light"

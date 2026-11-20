@@ -261,10 +261,23 @@ class App : Application(), SketchFactory {
             }
         }
 
+        /** 感知亮度判断：亮色 accent（如橙/青）配黑字，暗色 accent 配白字。 */
+        private fun isLightColor(color: Int): Boolean {
+            val luminance =
+                0.299f * Color.red(color) + 0.587f * Color.green(color) + 0.114f * Color.blue(color)
+            return luminance / 255f > 0.62f
+        }
+
         @SuppressLint("DiscouragedApi")
         fun getColorByAttr(context: Context, attrId: Int, theme: String): Int {
             if (!isInitialized) return context.getColorCompat(getDefaultColorResId(attrId))
             val resources = context.resources
+            // 全局 accent 覆盖（6 个预设色）：App 的主题色只有一个来源。
+            // 半透明主题（背景图）与动态取色各有独立分支，不能被覆盖，否则会破坏它们。
+            val accentOverride =
+                if (ThemeUtil.isTranslucentTheme(theme) ||
+                    (ThemeUtil.isDynamicTheme(theme) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+                ) null else ThemeUtil.getCustomAccentColor()
             when (attrId) {
                 R.attr.colorPrimary -> {
                     if (ThemeUtil.isDynamicTheme(theme) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -274,6 +287,8 @@ class App : Application(), SketchFactory {
                         } else {
                             dynamicTonalPalette.primary40.toArgb()
                         }
+                    } else if (accentOverride != null) {
+                        return accentOverride
                     } else if (ThemeUtil.THEME_CUSTOM == theme) {
                         val customPrimaryColorStr = context.appPreferences.customPrimaryColor
                         return if (customPrimaryColorStr != null) {
@@ -302,6 +317,8 @@ class App : Application(), SketchFactory {
                         } else {
                             dynamicTonalPalette.primary40.toArgb()
                         }
+                    } else if (accentOverride != null) {
+                        accentOverride
                     } else if (ThemeUtil.isNightMode(theme)) {
                         context.getColorCompat(R.color.theme_color_new_primary_night)
                     } else if (theme == ThemeUtil.THEME_DEFAULT) {
@@ -321,6 +338,8 @@ class App : Application(), SketchFactory {
                         } else {
                             dynamicTonalPalette.secondary40.toArgb()
                         }
+                    } else if (accentOverride != null) {
+                        accentOverride
                     } else if (ThemeUtil.THEME_CUSTOM == theme || ThemeUtil.isTranslucentTheme(theme)) {
                         getColorByAttr(context, R.attr.colorPrimary, theme)
                     } else {
@@ -335,6 +354,10 @@ class App : Application(), SketchFactory {
                 }
 
                 R.attr.colorOnAccent -> {
+                    if (accentOverride != null) {
+                        // 6 个预设色都是中等明度；按感知亮度决定黑/白前景，避免橙/青上白字糊掉。
+                        return if (isLightColor(accentOverride)) Color.BLACK else Color.WHITE
+                    }
                     return if (ThemeUtil.isNightMode(theme) || ThemeUtil.isTranslucentTheme(theme)) {
                         context.getColorCompat(
                             resources.getIdentifier(

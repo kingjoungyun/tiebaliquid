@@ -19,9 +19,12 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import io.github.neoruaa.glasmio.core.GlasmioTheme
+import io.github.neoruaa.glasmio.core.defaultGlassColors
+import io.github.neoruaa.glasmio.core.glasmioColorScheme
 import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
 import io.github.neoruaa.glasmio.glass.GlassEmphasis
 import io.github.neoruaa.glasmio.glass.GlassSurface as GlasmioGlassSurface
@@ -101,7 +104,7 @@ fun LiquidGlassSurface(
 ) {
     val hosted = LocalLiquidGlassHosted.current
     if (hosted && isLiquidGlassSupported()) {
-        LiquidGlassTheme {
+        LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
             GlasmioGlassSurface(
                 modifier = modifier,
                 shape = shape,
@@ -189,13 +192,50 @@ private fun BoxScope.GlassInnerGlow(shape: Shape) {
  * Glasmio 的主题跟随：用 App 自己的 `isNightMode`（不是系统的 `isSystemInDarkTheme()`，
  * 这个 App 默认不跟随系统），Glasmio 据此解析 light/dark 材质配方与语义前景色。
  *
+ * **accent 注入（唯一来源）**：调用方传 App 的 `ExtendedTheme.colors.primary`，这里把它同时写进
+ * - Glasmio 的 M3 `ColorScheme`（primary / secondary / onPrimary），Glasmio 控件读
+ *   `MaterialTheme.colorScheme.primary` 或 `GlasmioTheme.colors.accent` 都会拿到它；
+ * - Glasmio 的 `GlassColors.accent`（图标、列表勾选、开关默认 tint 的来源）。
+ *
+ * 没有传/传了 `Color.Unspecified`（预览兜底）时退回 Glasmio 默认蓝，避免出现「透明 accent」。
+ *
+ * 深色背景固定纯黑、卡片固定 `#1C1C1E`：A2 的「深色统一纯黑」在**适配层**落地，
+ * 这样不依赖 Glasmio 内部默认值（升级 AAR 也不会漂移）。
+ *
  * 只包玻璃这一小块：Glasmio 内部会装一个 M3 `MaterialTheme`，包太大有污染现有 M2 页面的风险；
  * 玻璃控件之外的内容保持原样。
  */
 @Composable
-fun LiquidGlassTheme(content: @Composable () -> Unit) {
+fun LiquidGlassTheme(
+    accent: Color = ExtendedTheme.colors.primary,
+    content: @Composable () -> Unit,
+) {
+    val isDark = ExtendedTheme.colors.isNightMode
+    val resolvedAccent = if (accent == Color.Unspecified) {
+        if (isDark) Color(0xFF0091FF) else Color(0xFF0088FF)
+    } else {
+        accent
+    }
+    val onAccent = if (resolvedAccent.luminance() > 0.6f) Color.Black else Color.White
+
+    val colorScheme = glasmioColorScheme(isDark, resolvedAccent).copy(
+        primary = resolvedAccent,
+        onPrimary = onAccent,
+        secondary = resolvedAccent,
+        onSecondary = onAccent,
+        surfaceTint = resolvedAccent,
+    )
+    val glassColors = defaultGlassColors(isDark, resolvedAccent).copy(
+        accent = resolvedAccent,
+        // A2：深色统一纯黑；卡片保持 Glasmio 的 #1C1C1E。
+        groupedBackground = if (isDark) Color.Black else Color(0xFFF2F2F7),
+        elevatedBackground = if (isDark) Color(0xFF1C1C1E) else Color.White,
+    )
+
     GlasmioTheme(
-        isDark = ExtendedTheme.colors.isNightMode,
+        isDark = isDark,
+        colorScheme = colorScheme,
+        colors = glassColors,
         // Glasmio 的语义排版表（iOS Dynamic Type 的 12 档）默认用系统字族；
         // 这里整表换成鸿蒙，字号/行高/字重仍由 Glasmio 决定。
         typography = HarmonyGlasmioTypography,

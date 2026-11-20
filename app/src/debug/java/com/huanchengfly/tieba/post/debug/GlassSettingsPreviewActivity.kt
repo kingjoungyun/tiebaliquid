@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -39,7 +40,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
-import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyGlasmioTypography
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
+import com.huanchengfly.tieba.post.utils.ThemeUtil
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.core.IosTypography
 import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
@@ -47,9 +49,9 @@ import io.github.neoruaa.glasmio.icons.SfIcon
 import io.github.neoruaa.glasmio.icons.SfSymbol
 import io.github.neoruaa.glasmio.preference.GlasmioPreferenceEntry
 import io.github.neoruaa.glasmio.preference.GlasmioPreferenceGroupTitle
-import io.github.neoruaa.glasmio.preference.GlasmioSwitchPreference
 import io.github.neoruaa.glasmio.ui.GlasmioGroupedList
 import io.github.neoruaa.glasmio.ui.GlasmioGroupedTableFooter
+import io.github.neoruaa.glasmio.ui.GlasmioSwitch
 
 /**
  * B 版设置页：**纯 Glasmio 组件 + 纯 Glasmio 参数**，仅用于 A/B 对照。
@@ -71,6 +73,20 @@ import io.github.neoruaa.glasmio.ui.GlasmioGroupedTableFooter
 class GlassSettingsPreviewActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ---- 截图/验收钩子（仅 debug 源集）----
+        // 直接写生产 DataStore（`ThemeUtil.setCustomAccent` 与主题选择页共用同一条写入链路），
+        // 所以这里截出来的颜色不是 Activity 内部假造的，而是 App 真正的主题色。
+        //   adb shell am start -n com.tieba/...GlassSettingsPreviewActivity \
+        //     --es accent "#FF34C759" --ez dark false
+        intent.getStringExtra(EXTRA_ACCENT)?.let { ThemeUtil.setCustomAccent(it) }
+        if (intent.hasExtra(EXTRA_DARK)) {
+            val wantDark = intent.getBooleanExtra(EXTRA_DARK, false)
+            if (wantDark != ThemeUtil.isNightMode()) {
+                ThemeUtil.switchNightMode()
+            }
+        }
+
         // edge-to-edge：页面底色（Glasmio 的 groupedBackground）铺到状态栏/导航栏下面
         WindowCompat.setDecorFitsSystemWindows(window, false)
         @Suppress("DEPRECATION")
@@ -82,6 +98,11 @@ class GlassSettingsPreviewActivity : ComponentActivity() {
                 GlassSettingsPreview(window = window, onBack = { finish() })
             }
         }
+    }
+
+    companion object {
+        const val EXTRA_ACCENT = "accent"
+        const val EXTRA_DARK = "dark"
     }
 }
 
@@ -96,12 +117,11 @@ private fun GlassSettingsPreview(window: Window, onBack: () -> Unit) {
         }
     }
 
-    GlasmioTheme(
-        isDark = isDark,
-        // 鸿蒙字族 + Glasmio 自己的语义排版表（字号/行高/字重全部来自 Glasmio）
-        typography = HarmonyGlasmioTypography,
-    ) {
+    // 主题色唯一来源：ExtendedTheme.colors.primary。LiquidGlassTheme 把它注入 Glasmio 的
+    // ColorScheme 与 GlassColors.accent，所以下面所有玻璃控件读到的 accent 都是同一个值。
+    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
         val colors = GlasmioTheme.colors
+        val accent = colors.accent
         // 只读预览状态：不写 DataStore，不影响生产设置
         var safeMode by remember { mutableStateOf(true) }
 
@@ -162,12 +182,20 @@ private fun GlassSettingsPreview(window: Window, onBack: () -> Unit) {
                 // ================= 安全 =================
                 GlasmioPreferenceGroupTitle(stringResource(id = R.string.settings_group_security))
                 GlasmioGroupedList {
-                    GlasmioSwitchPreference(
+                    // GlasmioSwitchPreference 内部把开关写死成 iOS 绿，没有 onTintColor 入口；
+                    // 这里用 GlasmioPreferenceEntry + GlasmioSwitch 手动组一行，让开关跟 accent 走。
+                    GlasmioPreferenceEntry(
                         title = { Text(stringResource(id = R.string.title_safe_mode)) },
                         description = stringResource(id = R.string.summary_safe_mode),
                         icon = { EntryIcon("lock") },
-                        checked = safeMode,
-                        onCheckedChange = { safeMode = it },
+                        trailingContent = {
+                            GlasmioSwitch(
+                                checked = safeMode,
+                                onCheckedChange = { safeMode = it },
+                                onTintColor = accent,
+                            )
+                        },
+                        onClick = { safeMode = !safeMode },
                         showTopSeparator = false,
                     )
                     GlasmioPreferenceEntry(
@@ -215,6 +243,7 @@ private fun GlassSettingsPreview(window: Window, onBack: () -> Unit) {
 
 /**
  * Glasmio 分组行左侧图标：23dp、accent 着色（与 `GlasmioListRow` 的 systemName 槽一致）。
+ * accent 来自 `LiquidGlassTheme(accent = ExtendedTheme.colors.primary)`，会跟着 6 个主题色变。
  * 没有 SF Symbols 字体时，`SfIcon` 会退回 Glasmio 自带的 Material 矢量图。
  */
 @Composable
@@ -230,7 +259,11 @@ private fun EntryIcon(systemName: String) {
     )
 }
 
-/** Glasmio `GlasmioListRow` 的 disclosure 槽：22dp、tertiaryContent 着色。 */
+/**
+ * Glasmio `GlasmioListRow` 的 disclosure 槽：22dp。
+ * 按本轮验收要求显式用 accent 着色（iOS 原生是 tertiary grey），这样主题色切换时
+ * 图标 / 开关 / chevron 三处能同时被肉眼确认。
+ */
 @Composable
 private fun DisclosureChevron() {
     SfIcon(
@@ -238,6 +271,6 @@ private fun DisclosureChevron() {
         contentDescription = null,
         size = 22.dp,
         mirrored = true,
-        tint = GlasmioTheme.colors.tertiaryContent,
+        tint = GlasmioTheme.colors.accent,
     )
 }

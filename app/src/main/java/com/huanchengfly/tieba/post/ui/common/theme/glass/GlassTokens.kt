@@ -158,8 +158,10 @@ object GlassTokens {
         textSecondary = Color(0xFF98989F),
         glassFill = Color(0xFF1C1C1E).copy(alpha = 0.72f),
         glassStroke = Color.White.copy(alpha = 0.12f),
-        gradientTop = Color(0xFF0A0A0C),
-        gradientBottom = Color(0xFF17171A),
+        // A2：深色统一纯黑。原来这里是 #0A0A0C→#17171A 的渐变，会在屏幕底部留一条深灰；
+        // 现在两段都用 #000000（玻璃靠 tint + 1px 内发光而不是背景亮度来勾轮廓）。
+        gradientTop = Color(0xFF000000),
+        gradientBottom = Color(0xFF000000),
         shadow = Color.Black.copy(alpha = Glass.shadowAlpha),
     )
 
@@ -249,12 +251,16 @@ fun Color.shiftTone(delta: Float): Color {
  * 玻璃层若跟着系统变深会出现「黑字压深底」看不清。用 App 主题的明暗才和页面文字一致，
  * 也等价于改造前 `Surface(color = ExtendedTheme.colors.background)` 的行为。
  *
- * 注意：这里只借用 `isNightMode` 这一个布尔值，**颜色全部来自 glass 令牌**，
- * 不读 M2 色板，因此不会污染既有主题。
+ * **accent 唯一来源**：`primary` 不再用令牌里写死的 `#0A84FF`，改为 `ExtendedTheme.colors.primary`。
+ * dock 选中态、`selectedPill`、设置页开关等所有读 `glassColors().primary` 的地方因此一起跟随主题色。
+ * 其余材质色（玻璃 tint / 描边 / 文字）仍来自 glass 令牌，不读 M2 色板。
  */
 @Composable
-fun glassColors(): GlassColors =
-    if (ExtendedTheme.colors.isNightMode) GlassTokens.darkColors else GlassTokens.lightColors
+fun glassColors(): GlassColors {
+    val base = if (ExtendedTheme.colors.isNightMode) GlassTokens.darkColors else GlassTokens.lightColors
+    val accent = ExtendedTheme.colors.primary
+    return if (accent == Color.Unspecified) base else base.copy(primary = accent)
+}
 
 /** 显式指定明暗的取色入口（预览 / 需要强制明暗的地方用）。 */
 fun glassColors(dark: Boolean): GlassColors =

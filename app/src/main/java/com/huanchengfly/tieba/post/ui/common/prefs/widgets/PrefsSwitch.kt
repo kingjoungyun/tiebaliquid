@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCardDefaults
+import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
 import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
@@ -36,14 +38,17 @@ fun PrefsSwitch(
     enabled: Boolean = true,
 ) {
     val colors = glassColors()
+    // accent 的唯一来源是 App 主题色。glassColors() 已经把 primary 换成它，这里再显式兜底一次，
+    // 避免预览/未初始化主题时拿到 Color.Unspecified 导致开关轨道透明。
+    val accent = ExtendedTheme.colors.primary.let { if (it == Color.Unspecified) colors.primary else it }
     if (isLiquidGlassSupported()) {
         val switch: @Composable () -> Unit = {
             GlasmioSwitch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
                 enabled = enabled,
-                // Glasmio 默认是 iOS 的系统绿；本 App 主色是蓝，令牌里也是 #0A84FF
-                onTintColor = colors.primary,
+                // 不再用 Glasmio 默认的 iOS 系统绿：跟随 App 主题色。
+                onTintColor = accent,
             )
         }
         if (LocalLiquidGlassHosted.current) {

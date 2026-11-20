@@ -410,6 +410,8 @@ fun BottomNavigation(
     modifier: Modifier = Modifier,
 ) {
     val glass = glassColors()
+    // 选中态 accent 的唯一来源：App 主题色（glassColors().primary 已同步，这里显式取名便于阅读）。
+    val accent = ExtendedTheme.colors.primary.let { if (it == Color.Unspecified) glass.primary else it }
     // FlClash `LiquidGlassStyle.regular` 的 tint：浅色 #8AFDFDFD，深色 container +7 tone / .62。
     // 传进 Glasmio 的 navigationSurfaceColor，材质会把这层 tint 叠在自身的 fill 上，
     // 浅色下从「灰板子」变成发亮的玻璃；深色下靠这一步把壳从纯黑里提出来。
@@ -467,8 +469,8 @@ fun BottomNavigation(
                     DockItem(
                         navigationItem = navigationItem,
                         selected = selected,
-                        tint = if (selected) glass.primary else unselectedTint,
-                        pillColor = glass.selectedPill,
+                        tint = if (selected) accent else unselectedTint,
+                        pillColor = accent.copy(alpha = GlassTokens.Glass.selectedPillAlpha),
                         onClick = {
                             if (index == currentPosition) {
                                 onReselected(index)
