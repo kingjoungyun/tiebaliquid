@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,6 +21,8 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTextStyle
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.SquircleShape
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
+import io.github.neoruaa.glasmio.ui.GlasmioGroupedList
+import io.github.neoruaa.glasmio.ui.GlasmioGroupedTableFooter
 
 /**
  * 设置页分组卡片的视觉常量（FlClash `prism_ui` 的 settings 组）。
@@ -87,25 +91,98 @@ object PrefsCardDefaults {
         if (glassColors().isDark) Color(0x1FFFFFFF) else Color(0x14000000)
 }
 
+/**
+ * Glasmio 分组列表（B 版）的几何常量。
+ *
+ * 这些数字**不是**我们定的：`GlasmioGroupedList` / `GlasmioPreferenceEntry` /
+ * `GlasmioGroupedTableFooter` 内部就写死了 26dp 连续圆角、行左右 16dp、行高 52/68dp、
+ * footnote 左右 16dp + 上间距 8dp。这里只记录「页面这一层」需要配合的四个量，
+ * 方便和 [PrefsCardDefaults] 对照，不要另起一套视觉体系。
+ */
+object PrefsGlasmioDefaults {
+
+    /**
+     * 页面左右留白：16dp（与 B 版样板页一致）。
+     *
+     * 注意这是**页面这一层**的留白：分组卡片的圆角要能看见、不能贴屏幕边，
+     * 行内容再在卡片内部吃 16dp（`GlasmioPreferenceEntry` 自带），所以行内文字距屏幕
+     * 32dp、组标题与 footnote 同理对齐 32dp —— 这正是 iOS「inset grouped」的层级。
+     */
+    val PageHorizontalPadding: Dp = 16.dp
+
+    /** 列表顶部留白（大标题之后由 LazyColumn 的 item 间距接管）。 */
+    val PageTopPadding: Dp = 4.dp
+
+    /** 列表底部留白，保证最后一条 footnote 不贴屏幕底。 */
+    val PageBottomPadding: Dp = 24.dp
+
+    /** 组与组的间距：Glasmio 自己的分组列表节奏。 */
+    val GroupGap: Dp = 10.dp
+
+    /**
+     * 行左侧图标槽。
+     *
+     * App 现有的图标入口（`LeadingIcon { AvatarIcon(size = Sizes.Small) }`）是 36dp 的圆形
+     * 图标 + 一个用于占位的 56dp Spacer。Glasmio 的行高是写死的 52dp（= 12dp 上下内边距 +
+     * 28dp 内容），所以槽宽取 28dp，图标本体用 [IconContent]（36dp）溢出槽位绘制：
+     * 既保住 App 现在的图标尺寸，也让行高回到 Glasmio 的 52dp。
+     * 文字起点 = 16(行内边距) + 4 + 28 + 4 + 12(槽后间距) = 64dp。
+     */
+    val IconSlot: Dp = 28.dp
+
+    /** 图标本体的尺寸（沿用 App 的 `Sizes.Small`）。 */
+    val IconContent: Dp = 36.dp
+
+    /** 行左右内边距（Glasmio 写死 16dp，仅用于宽度估算）。 */
+    val RowHorizontalPadding: Dp = 16.dp
+}
+
 /** 卡片形状：16dp 连续圆角（超椭圆）。 */
 private val PrefsCardShape: Shape by lazy { SquircleShape(PrefsCardDefaults.CornerRadius) }
 
 /**
  * 一张分组卡片。
  *
- * - 卡片本体：表层色 + 16dp 连续圆角 + **无阴影**（FlClash settings 组就是平铺卡片）；
- * - 可选分组标题：渲染在卡片**上方**（FlClash / iOS 的分组标题不在卡片里）；
- *   [headerTopSpacing] 是标题到「上一张卡片/页面顶部」的距离，由 [PrefsScreen] 按
- *   「首组 16dp、其余组 24dp（已扣掉组间距 8dp）」传入；
- * - 卡片内部的分割线由调用方（[PrefsScreen]）插在行与行之间。
+ * 两种渲染路径：
+ * - `PrefsUiStyle.GLASSMIO`（默认）：组标题 = `GlasmioPreferenceGroupTitle`，
+ *   卡片 = `GlasmioGroupedList`（26dp 连续圆角 + `elevatedBackground` + 行内建分隔线），
+ *   组尾 = `GlasmioGroupedTableFooter`（13sp 次级色、左右 16dp、上间距 8dp）。
+ * - `PrefsUiStyle.LEGACY`：迁移前的 FlClash 卡片（16dp 超椭圆 + 不透明表层色 + 1dp 分割线），
+ *   组尾 footnote 用同字号（13sp）的次级文字手绘，保证「切回 A 版」时 footer 语义不丢。
+ *
+ * 组尾 footnote 有**两个来源**，按顺序渲染：
+ * 1. `footer`：DSL 里 `prefsGroup(title, footer = ...)` 显式给的（组级说明）；
+ * 2. `PrefsFootnoteState` 里自动登记的：行内 `summary` 超过 1 行时，行会把它挪到这里
+ *    （见 [PrefsListItem]），顺序 = 行顺序。
  */
 @Composable
 internal fun PrefsCard(
     modifier: Modifier = Modifier,
     headerTopSpacing: Dp = 0.dp,
     header: (@Composable () -> Unit)? = null,
+    footer: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    // 自动转义的 footnote（行登记进来的，组尾统一渲染）
+    val autoFootnotes = LocalPrefsFootnotes.current?.ordered().orEmpty()
+    val explicitFooter = footer?.takeIf { it.isNotBlank() }
+
+    if (LocalPrefsUiStyle.current == PrefsUiStyle.GLASSMIO) {
+        Column(modifier = modifier.fillMaxWidth()) {
+            if (header != null) {
+                if (headerTopSpacing > 0.dp) {
+                    Spacer(modifier = Modifier.height(headerTopSpacing))
+                }
+                header()
+            }
+            GlasmioGroupedList(content = content)
+            // 显式 footer 在自动 footnote 之前：前者是「这一组是什么」，后者是「某一行补充什么」
+            explicitFooter?.let { GlasmioGroupedTableFooter(it) }
+            autoFootnotes.forEach { GlasmioGroupedTableFooter(it) }
+        }
+        return
+    }
+
     Column(modifier = modifier.fillMaxWidth()) {
         if (header != null) {
             if (headerTopSpacing > 0.dp) {
@@ -122,7 +199,22 @@ internal fun PrefsCard(
         ) {
             Column(content = content)
         }
+        // A 版没有 Glasmio 的 footnotes 组件，用同字号手绘：13sp / 次级色 / 左右 16dp / 上间距 8dp
+        explicitFooter?.let { PrefsFootnote(it) }
+        autoFootnotes.forEach { PrefsFootnote(it) }
     }
+}
+
+/** LEGACY 路径的组尾 footnote：与 Glasmio 的 `GlasmioGroupedTableFooter` 同参数。 */
+@Composable
+private fun PrefsFootnote(text: String) {
+    Text(
+        text = text,
+        style = GlassTokens.Typography.footnote.toTextStyle(glassColors().textSecondary),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp),
+    )
 }
 
 /**

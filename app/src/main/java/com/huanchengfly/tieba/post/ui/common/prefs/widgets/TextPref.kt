@@ -1,6 +1,5 @@
 package com.huanchengfly.tieba.post.ui.common.prefs.widgets
 
-import androidx.compose.foundation.clickable
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -46,7 +45,10 @@ fun TextPref(
 ) {
     PrefsListItem(
         text = { Text(title) },
-        modifier = if (onClick != null && enabled) modifier.clickable { onClick() } else modifier,
+        // 点击不再挂在 modifier 上：Glasmio 的行内部自带 clickable，外层 clickable 会被它
+        // 消费掉（整行点不动），所以把 onClick 作为参数传下去，由渲染层挂在正确的点击源上。
+        onClick = if (onClick != null && enabled) onClick else null,
+        modifier = modifier,
         enabled = enabled,
         darkenOnDisable = darkenOnDisable,
         textColor = textColor,

@@ -9,24 +9,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
+import io.github.neoruaa.glasmio.preference.GlasmioPreferenceGroupTitle
 
 /**
- * 分组标题：渲染在卡片**上方**（FlClash / iOS 的系统分组列表风格）。
+ * 分组标题。
  *
- * 规格：17sp / w600 / 次级文字色，单行省略；左缩进 16dp 与卡片内容的文字起点对齐
- * （卡片本身已经吃了页面 16dp 留白）。
+ * - `PrefsUiStyle.GLASSMIO`：直接交给 `GlasmioPreferenceGroupTitle`（= `GlasmioSectionTitle`：
+ *   39dp 高、17sp w590、次级色、底部 9dp、左右 16dp），与卡片同一条基线。
+ * - `PrefsUiStyle.LEGACY`：FlClash / iOS 的系统分组列表风格（17sp / w600 / 次级文字色，
+ *   单行省略；左缩进 16dp 与卡片内容的文字起点对齐）。
  *
- * 上间距（首组 16dp、其余组 24dp）不在这里做，而是由 [PrefsCard] 的 `headerTopSpacing`
- * 统一处理 —— 这样「组间距 8dp」和「标题上间距」不会叠成两份。
+ * 上间距不在这里做：Glasmio 由 `LazyColumn` 的组间距负责，A 版由 [PrefsCard] 的
+ * `headerTopSpacing` 统一处理 —— 这样「组间距」和「标题上间距」不会叠成两份。
  */
 @Composable
 fun GroupHeader(
     title: String,
     color: Color = glassColors().textSecondary
 ) {
+    if (LocalPrefsUiStyle.current == PrefsUiStyle.GLASSMIO) {
+        GlasmioPreferenceGroupTitle(title)
+        return
+    }
     Box(
         Modifier
             .padding(start = PrefsCardDefaults.ContentPadding)
