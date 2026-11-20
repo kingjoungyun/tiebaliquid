@@ -57,6 +57,9 @@ private val CompactExitDistance = 8.dp
 private val BadgeHeight = 14.dp
 private val BadgeMinWidth = 14.dp
 
+/** 小红点圆心相对图标右上角的内缩量（旧 dock 的 14dp 圆贴在 24dp 图标右上角 = 内缩 7dp）。 */
+private val BadgeCornerInset = 7.dp
+
 /** 小红点的定位锚框（固定 28dp，好让「以图标右上角为中心」的偏移量算得出来）。 */
 private val BadgeAnchorSize = 28.dp
 
@@ -187,15 +190,18 @@ fun GlasmioDock(
                 }
             }
             // 小红点画在玻璃之上；收起成圆球时淡出（圆球上没有 label，也没有第二排位置放它）。
-            val badgeAlpha = {
-                (1f - compactProgress.value * 2f).coerceIn(0f, 1f)
+            // alpha 走 graphicsLayer 的延迟读取，收缩动画期间不会逐帧重组这一块。
+            val badgeAlpha = remember(compactProgress) {
+                { (1f - compactProgress.value * 2f).coerceIn(0f, 1f) }
             }
+            val badgeInsetPx = with(density) { BadgeCornerInset.toPx() }
             badges.forEach { (index, text) ->
                 val bounds = iconBounds[index] ?: return@forEach
-                // 旧 dock 是「14dp 圆贴着 24dp 图标的右上角」，即圆心 ≈ 图标右上角内缩 7dp。
+                // 旧 dock 是「14dp 圆贴着 24dp 图标的右上角，圆心内缩 7dp」；这里把同一个锚点
+                // 用在 Glasmio 的 28dp 图标槽上（槽比旧版大 4dp，所以圆点整体外移约 2dp）。
                 val anchor = Offset(
-                    x = bounds.right - dockOrigin.value.x - with(density) { 7.dp.toPx() },
-                    y = bounds.top - dockOrigin.value.y + with(density) { 7.dp.toPx() },
+                    x = bounds.right - dockOrigin.value.x - badgeInsetPx,
+                    y = bounds.top - dockOrigin.value.y + badgeInsetPx,
                 )
                 DockBadge(text = text, anchor = anchor, color = badgeColor, alpha = badgeAlpha)
             }
