@@ -4,9 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Info
@@ -19,24 +17,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.BuildConfig
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.dataStore
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsIcon
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsLargeTitle
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsScreen
 import com.huanchengfly.tieba.post.ui.common.prefs.dependNot
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.SwitchPref
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.page.destinations.AboutPageDestination
-import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
-import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.utils.ImageCacheUtil
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.ramcosta.composedestinations.annotation.Destination
@@ -51,22 +44,6 @@ fun MoreSettingsPage(
     navigator: DestinationsNavigator,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    MyScaffold(
-        backgroundColor = Color.Transparent,
-        topBar = {
-            TitleCentredToolbar(
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.title_settings_more),
-                        fontWeight = FontWeight.Bold, style = MaterialTheme.typography.h6
-                    )
-                },
-                navigationIcon = {
-                    BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
-                }
-            )
-        },
-    ) { paddingValues ->
         val snackbarHostState = LocalSnackbarHostState.current
         val context = LocalContext.current
         var cacheSize by remember { mutableStateOf("0.0B") }
@@ -75,100 +52,103 @@ fun MoreSettingsPage(
                 cacheSize = ImageCacheUtil.getCacheSize(context)
             }
         }
-        PrefsScreen(
-            dataStore = LocalContext.current.dataStore,
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize(),
-        ) {
-            if (context.appPreferences.showExperimentalFeatures) {
-                prefsItem {
-                    SwitchPref(
-                        leadingIcon = {
-                            PrefsIcon("arrow.clockwise")
-                        },
-                        key = "checkCIUpdate",
-                        title = stringResource(id = R.string.title_check_ci_update),
-                        defaultChecked = false,
-                        summary = stringResource(id = R.string.tip_check_ci_update)
+    PrefsScreen(
+        dataStore = LocalContext.current.dataStore,
+        modifier = Modifier.fillMaxSize(),
+        onBack = { navigator.navigateUp() },
+        header = {
+            PrefsLargeTitle(
+                text = stringResource(id = R.string.title_settings_more),
+            )
+        },
+    ) {
+        if (context.appPreferences.showExperimentalFeatures) {
+            prefsItem {
+                SwitchPref(
+                    leadingIcon = {
+                        PrefsIcon("arrow.clockwise")
+                    },
+                    key = "checkCIUpdate",
+                    title = stringResource(id = R.string.title_check_ci_update),
+                    defaultChecked = false,
+                    summary = stringResource(id = R.string.tip_check_ci_update)
+                )
+            }
+        }
+        prefsItem {
+            SwitchPref(
+                leadingIcon = {
+                    PrefsIcon("safari")
+                },
+                key = "use_webview",
+                title = stringResource(id = R.string.title_use_webview),
+                defaultChecked = true,
+                summary = {
+                    if (it) stringResource(id = R.string.tip_use_webview_on)
+                    else stringResource(id = R.string.tip_use_webview)
+                },
+            )
+        }
+        prefsItem {
+            SwitchPref(
+                leadingIcon = {
+                    PrefsIcon("rectangle.3.group")
+                },
+                enabled = dependNot(key = "use_webview"),
+                key = "use_custom_tabs",
+                title = stringResource(id = R.string.title_use_custom_tabs),
+                defaultChecked = true,
+                summary = {
+                    if (it) stringResource(id = R.string.tip_use_custom_tab_on)
+                    else stringResource(id = R.string.tip_use_custom_tab)
+                },
+            )
+        }
+        prefsItem {
+            TextPref(
+                leadingIcon = {
+                    PrefsIcon("trash")
+                },
+                enabled = true,
+                title = stringResource(id = R.string.title_clear_picture_cache),
+                onClick = {
+                    coroutineScope.launch {
+                        ImageCacheUtil.clearImageAllCache(context)
+                        cacheSize = "0.0B"
+                        snackbarHostState.showSnackbar(context.getString(R.string.toast_clear_picture_cache_success))
+                    }
+                },
+                summary = stringResource(id = R.string.tip_cache, cacheSize)
+            )
+        }
+        prefsItem {
+            TextPref(
+                leadingIcon = {
+                    PrefsIcon("square.and.arrow.up")
+                },
+                enabled = true,
+                title = stringResource(id = R.string.title_open_by_default),
+                onClick = {
+                    context.startActivity(
+                        Intent(Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS, Uri.parse("package:${context.packageName}"))
+                        .addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
                     )
-                }
-            }
-            prefsItem {
-                SwitchPref(
-                    leadingIcon = {
-                        PrefsIcon("safari")
-                    },
-                    key = "use_webview",
-                    title = stringResource(id = R.string.title_use_webview),
-                    defaultChecked = true,
-                    summary = {
-                        if (it) stringResource(id = R.string.tip_use_webview_on)
-                        else stringResource(id = R.string.tip_use_webview)
-                    },
-                )
-            }
-            prefsItem {
-                SwitchPref(
-                    leadingIcon = {
-                        PrefsIcon("rectangle.3.group")
-                    },
-                    enabled = dependNot(key = "use_webview"),
-                    key = "use_custom_tabs",
-                    title = stringResource(id = R.string.title_use_custom_tabs),
-                    defaultChecked = true,
-                    summary = {
-                        if (it) stringResource(id = R.string.tip_use_custom_tab_on)
-                        else stringResource(id = R.string.tip_use_custom_tab)
-                    },
-                )
-            }
-            prefsItem {
-                TextPref(
-                    leadingIcon = {
-                        PrefsIcon("trash")
-                    },
-                    enabled = true,
-                    title = stringResource(id = R.string.title_clear_picture_cache),
-                    onClick = {
-                        coroutineScope.launch {
-                            ImageCacheUtil.clearImageAllCache(context)
-                            cacheSize = "0.0B"
-                            snackbarHostState.showSnackbar(context.getString(R.string.toast_clear_picture_cache_success))
-                        }
-                    },
-                    summary = stringResource(id = R.string.tip_cache, cacheSize)
-                )
-            }
-            prefsItem {
-                TextPref(
-                    leadingIcon = {
-                        PrefsIcon("square.and.arrow.up")
-                    },
-                    enabled = true,
-                    title = stringResource(id = R.string.title_open_by_default),
-                    onClick = {
-                        context.startActivity(
-                            Intent(Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS, Uri.parse("package:${context.packageName}"))
-                            .addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-                        )
-                    },
-                    summary = stringResource(id = R.string.tip_open_by_default)
-                )
-            }
-            prefsItem {
-                TextPref(
-                    leadingIcon = {
-                        PrefsIcon("info.circle")
-                    },
-                    enabled = true,
-                    title = stringResource(id = R.string.title_about),
-                    onClick = {
-                        navigator.navigate(AboutPageDestination)
-                    },
-                    summary = stringResource(id = R.string.tip_about, BuildConfig.VERSION_NAME)
-                )
-            }
+                },
+                summary = stringResource(id = R.string.tip_open_by_default)
+            )
+        }
+        prefsItem {
+            TextPref(
+                leadingIcon = {
+                    PrefsIcon("info.circle")
+                },
+                enabled = true,
+                title = stringResource(id = R.string.title_about),
+                onClick = {
+                    navigator.navigate(AboutPageDestination)
+                },
+                summary = stringResource(id = R.string.tip_about, BuildConfig.VERSION_NAME)
+            )
         }
     }
 }

@@ -42,6 +42,10 @@ import com.huanchengfly.tieba.post.utils.appPreferences
 import com.huanchengfly.tieba.post.utils.launchUrl
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsBackButtonOverlay
 
 @Destination
 @Composable
@@ -51,25 +55,12 @@ fun AboutPage(
     var lastClickTime by remember { mutableLongStateOf(0L) }
     var clickCount by remember { mutableIntStateOf(0) }
 
-    MyScaffold(
-        backgroundColor = Color.Transparent,
-        topBar = {
-            TitleCentredToolbar(
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.title_about),
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.h6
-                    )
-                },
-                navigationIcon = {
-                    BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
-                }
-            )
-        }
-    ) {
+    // 二级页范式：不再有 M2 顶栏，页面从状态栏下方起排，返回是左上角悬浮的玻璃圆钮
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(
@@ -156,6 +147,7 @@ fun AboutPage(
             }
             Spacer(modifier = Modifier.height(48.dp))
         }
+        PrefsBackButtonOverlay(onBack = { navigator.navigateUp() })
     }
 }
 

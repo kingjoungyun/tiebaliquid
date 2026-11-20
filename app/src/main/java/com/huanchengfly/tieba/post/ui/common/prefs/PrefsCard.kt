@@ -116,6 +116,26 @@ object PrefsGlasmioDefaults {
     /** 列表底部留白，保证最后一条 footnote 不贴屏幕底。 */
     val PageBottomPadding: Dp = 24.dp
 
+    /** 悬浮返回钮尺寸：44dp（与主界面顶栏的玻璃圆钮同规格）。 */
+    val BackButtonSize: Dp = 44.dp
+
+    /** 返回钮里的图标：20dp。 */
+    val BackButtonIconSize: Dp = 20.dp
+
+    /** 返回钮左边距（与卡片的 16dp 页面留白视觉对齐，浮起时略微内收）。 */
+    val BackButtonStart: Dp = 12.dp
+
+    /** 返回钮相对状态栏的下边距。 */
+    val BackButtonTop: Dp = 6.dp
+
+    /**
+     * 列表内容在状态栏之下的起始留白 = 返回钮（6 + 44）+ 大标题前的 12dp 间隙。
+     *
+     * 悬浮返回钮占位但不吃布局：内容整体从这个位置起排，所以按钮不会压住大标题，
+     * 也不会在顶栏位置留一条空白带。
+     */
+    val BackButtonTopSpace: Dp = 62.dp
+
     /** 组与组的间距：Glasmio 自己的分组列表节奏。 */
     val GroupGap: Dp = 10.dp
 

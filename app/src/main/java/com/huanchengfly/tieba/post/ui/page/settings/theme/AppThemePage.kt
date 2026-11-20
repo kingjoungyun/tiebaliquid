@@ -50,6 +50,12 @@ import com.huanchengfly.tieba.post.utils.appPreferences
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import java.util.Locale
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsBackButtonOverlay
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsGlasmioDefaults
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyFontFamily
 
 /**
  * 主题色预设（iOS 系统色）。App 的主题色只有这 6 个可选值。
@@ -110,40 +116,35 @@ fun AppThemePage(
         it.color.toArgb() == effectiveAccent.toArgb()
     }
 
-    MyScaffold(
-        backgroundColor = Color.Transparent,
-        topBar = {
-            TitleCentredToolbar(
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.title_theme),
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.h6,
-                    )
-                },
-                navigationIcon = {
-                    BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
-                },
-            )
-        },
-    ) { paddingValues ->
-        // 浅色主题里 windowBackground/background 都是纯白，和卡片同色会看不出分组；
-        // 用 chip（浅灰）当页面底。深色下 chip 仍是深灰，会破坏 A2 的纯黑，所以深色固定黑。
-        // 半透明主题用 background（transparent），让背景图透出来，避免深灰 chip 配深色文字。
-        val pageBackground = when {
-            ThemeUtil.isTranslucentTheme(currentTheme) -> ExtendedTheme.colors.background
-            isDark -> ExtendedTheme.colors.background
-            else -> ExtendedTheme.colors.chip
-        }
+    // 浅色主题里 windowBackground/background 都是纯白，和卡片同色会看不出分组；
+    // 用 chip（浅灰）当页面底。深色下 chip 仍是深灰，会破坏 A2 的纯黑，所以深色固定黑。
+    // 半透明主题用 background（transparent），让背景图透出来，避免深灰 chip 配深色文字。
+    val pageBackground = when {
+        ThemeUtil.isTranslucentTheme(currentTheme) -> ExtendedTheme.colors.background
+        isDark -> ExtendedTheme.colors.background
+        else -> ExtendedTheme.colors.chip
+    }
+    // 二级页范式：无 M2 顶栏（否则白底顶栏会和分组底色撞成一条白带），
+    // 背景铺到状态栏下面，返回是左上角浮起的玻璃圆钮，大标题静态起排。
+    Box(modifier = Modifier.fillMaxSize().background(pageBackground)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(pageBackground)
-                .padding(paddingValues)
+                .windowInsetsPadding(WindowInsets.safeDrawing)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            // 给悬浮返回钮留位（6 + 44 + 12）
+            Spacer(modifier = Modifier.height(PrefsGlasmioDefaults.BackButtonTopSpace))
+            Text(
+                text = stringResource(id = R.string.title_theme),
+                fontSize = 34.sp,
+                lineHeight = 41.sp,
+                fontWeight = FontWeight(700),
+                fontFamily = HarmonyFontFamily,
+                color = ExtendedTheme.colors.text,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
 
             // ---------------- 主题色 ----------------
             Row(
@@ -246,6 +247,7 @@ fun AppThemePage(
 
             Spacer(modifier = Modifier.height(32.dp))
         }
+        PrefsBackButtonOverlay(onBack = { navigator.navigateUp() })
     }
 }
 
