@@ -250,19 +250,20 @@ private fun getDarkDynamicColor(tonalPalette: TonalPalette): ExtendedColors {
         onPrimary = tonalPalette.primary10,
         accent = tonalPalette.secondary80,
         onAccent = tonalPalette.secondary20,
-        topBar = tonalPalette.neutralVariant10,
+        // A2：动态取色的深色也统一纯黑（卡片仍是 tonal 容器色）。
+        topBar = Color.Black,
         onTopBar = tonalPalette.neutralVariant90,
         onTopBarSecondary = tonalPalette.neutralVariant70,
         onTopBarActive = tonalPalette.neutralVariant100,
         topBarSurface = tonalPalette.neutralVariant20,
         onTopBarSurface = tonalPalette.neutralVariant70,
-        bottomBar = tonalPalette.neutralVariant10,
+        bottomBar = Color.Black,
         bottomBarSurface = tonalPalette.neutralVariant20,
         onBottomBarSurface = tonalPalette.neutralVariant70,
         text = tonalPalette.neutralVariant90,
         textSecondary = tonalPalette.neutralVariant70,
         textDisabled = tonalPalette.neutralVariant50,
-        background = tonalPalette.neutralVariant10,
+        background = Color.Black,
         chip = tonalPalette.neutralVariant20,
         onChip = tonalPalette.neutralVariant60,
         unselected = tonalPalette.neutralVariant40,
@@ -271,7 +272,7 @@ private fun getDarkDynamicColor(tonalPalette: TonalPalette): ExtendedColors {
         divider = tonalPalette.neutralVariant20,
         shadow = tonalPalette.neutralVariant20,
         indicator = tonalPalette.neutralVariant10,
-        windowBackground = tonalPalette.neutralVariant10,
+        windowBackground = Color.Black,
         placeholder = tonalPalette.neutralVariant50,
     )
 }
@@ -319,7 +320,7 @@ private fun getThemeColorForTheme(theme: String): ExtendedColors {
         Color(App.ThemeDelegate.getColorByAttr(context, R.attr.colorText, nowTheme))
     val bottomBarColor =
         Color(App.ThemeDelegate.getColorByAttr(context, R.attr.colorNavBar, nowTheme))
-    return ExtendedColors(
+    val extended = ExtendedColors(
         theme = nowTheme,
         isNightMode = ThemeUtil.isNightMode(nowTheme),
         primary = Color(
@@ -446,6 +447,18 @@ private fun getThemeColorForTheme(theme: String): ExtendedColors {
             )
         ),
     )
+    // A2：深色统一纯黑。只归零「页面/窗口/栏」这类背景 token，卡片（card/floorCard/chip）、
+    // 文字、分割线保持主题语义，否则卡片会和背景糊成一片。半透明主题有背景图，走独立分支不处理。
+    return if (extended.isNightMode && !ThemeUtil.isTranslucentTheme(nowTheme)) {
+        extended.copy(
+            background = Color.Black,
+            windowBackground = Color.Black,
+            topBar = Color.Black,
+            bottomBar = Color.Black,
+        )
+    } else {
+        extended
+    }
 }
 
 @Composable
