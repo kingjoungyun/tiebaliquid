@@ -83,11 +83,11 @@ fun ListPref(
 
     TextPref(
         title = title,
-        summary = when {
-            useSelectedAsSummary && selected != null -> entries[selected]
-            useSelectedAsSummary && selected == null -> "Not Set"
-            else -> summary
-        },
+        // 当前选项是「状态」：挪到行尾右侧，不再作为行内副标题
+        summary = if (useSelectedAsSummary) null else summary,
+        trailingValue = if (useSelectedAsSummary) {
+            if (selected != null) entries[selected] else "Not Set"
+        } else null,
         leadingIcon = leadingIcon,
         modifier = modifier,
         textColor = textColor,
@@ -215,11 +215,11 @@ fun ListPrefInt(
 
     TextPref(
         title = title,
-        summary = when {
-            useSelectedAsSummary && selected != null -> entries[selected]
-            useSelectedAsSummary && selected == null -> "Not Set"
-            else -> summary
-        },
+        // 当前选项是「状态」：挪到行尾右侧，不再作为行内副标题
+        summary = if (useSelectedAsSummary) null else summary,
+        trailingValue = if (useSelectedAsSummary) {
+            if (selected != null) entries[selected] else "Not Set"
+        } else null,
         leadingIcon = leadingIcon,
         modifier = modifier,
         textColor = textColor,

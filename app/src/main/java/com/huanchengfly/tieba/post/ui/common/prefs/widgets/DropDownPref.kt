@@ -40,6 +40,7 @@ fun DropDownPref(
     summary: String? = null,
     defaultValue: String? = null,
     onValueChange: ((String) -> Unit)? = null,
+    trailingValue: String? = null,
     useSelectedAsSummary: Boolean = false,
     dropdownBackgroundColor: Color? = null,
     textColor: Color = MaterialTheme.colors.onBackground,
@@ -76,11 +77,10 @@ fun DropDownPref(
         TextPref(
             title = title,
             modifier = modifier,
-            summary = when {
-                useSelectedAsSummary && value != null -> entries[value]
-                useSelectedAsSummary && value == null -> "Not Set"
-                else -> summary
-            },
+            summary = if (useSelectedAsSummary) null else summary,
+            trailingValue = if (useSelectedAsSummary) {
+                if (value != null) entries[value] else "Not Set"
+            } else trailingValue,
             textColor = textColor,
             leadingIcon = leadingIcon,
             enabled = enabled,

@@ -50,6 +50,8 @@ fun TimePickerPerf(
     title: String,
     modifier: Modifier = Modifier,
     summary: @Composable (value: String) -> String? = { null },
+    /** 行尾右侧的状态值（通常是当前时间），例如 `09:00` */
+    trailingValue: @Composable (value: String) -> String? = { null },
     dialogTitle: String? = null,
     dialogMessage: String? = null,
     defaultValue: String = "07:00",
@@ -102,6 +104,7 @@ fun TimePickerPerf(
         title = title,
         modifier = modifier,
         summary = summary(value),
+        trailingValue = trailingValue(value),
         textColor = textColor,
         enabled = enabled,
         leadingIcon = leadingIcon,

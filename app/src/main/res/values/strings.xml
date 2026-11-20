@@ -496,6 +496,14 @@
     <string name="thanks_harmony_sans">字体：HarmonyOS Sans SC（华为鸿蒙字体，免费商用）</string>
     <string name="summary_now_account">已登录账号 %s</string>
     <string name="summary_not_logged_in">未登录，点击登录</string>
+    <!--
+      设置行的「行尾状态值」（Apple 的 value 位）：状态类信息放这里，不再用行内灰色副标题。
+    -->
+    <string name="status_not_logged_in">未登录</string>
+    <string name="status_not_set">未设置</string>
+    <string name="status_restart_to_apply">重启生效</string>
+    <string name="status_ignored">已忽略</string>
+    <string name="status_unsupported">不支持</string>
     <string name="title_settings_more">更多</string>
     <string name="summary_block_settings">眼不见心不烦</string>
     <string name="summary_settings_custom">个性你的 UI 界面</string>

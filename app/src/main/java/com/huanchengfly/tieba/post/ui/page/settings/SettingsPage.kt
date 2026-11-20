@@ -65,7 +65,8 @@ fun NowAccountItem(
     if (account != null) {
         TextPref(
             title = stringResource(id = R.string.title_account_manage),
-            summary = stringResource(id = R.string.summary_now_account, account.nameShow ?: account.name),
+            // 已登录账号名是「状态」→ 行尾右侧，不再占行内副标题
+            trailingValue = account.nameShow ?: account.name,
             enabled = true,
             onClick = { navigator.navigate(AccountManagePageDestination) },
             leadingIcon = {
@@ -81,7 +82,7 @@ fun NowAccountItem(
     } else {
         TextPref(
             title = stringResource(id = R.string.title_account_manage),
-            summary = stringResource(id = R.string.summary_not_logged_in),
+            trailingValue = stringResource(id = R.string.status_not_logged_in),
             enabled = true,
             onClick = { navigator.navigate(LoginPageDestination) },
             // 未登录时没有头像可用 → 用 Glasmio 的人形图标（不再画灰底圆形占位）
@@ -174,7 +175,6 @@ fun SettingsPage(
                 prefsItem {
                     TextPref(
                         title = stringResource(id = R.string.title_block_settings),
-                        summary = stringResource(id = R.string.summary_block_settings),
                         leadingIcon = {
                             PrefsIcon("eye.slash")
                         },
@@ -187,7 +187,6 @@ fun SettingsPage(
                 prefsItem {
                     TextPref(
                         title = stringResource(id = R.string.title_settings_custom),
-                        summary = stringResource(id = R.string.summary_settings_custom),
                         leadingIcon = {
                             PrefsIcon("paintpalette")
                         },
@@ -198,7 +197,6 @@ fun SettingsPage(
                 prefsItem {
                     TextPref(
                         title = stringResource(id = R.string.title_settings_read_habit),
-                        summary = stringResource(id = R.string.summary_settings_habit),
                         leadingIcon = {
                             PrefsIcon("slider.horizontal.3")
                         },
@@ -211,7 +209,6 @@ fun SettingsPage(
                     prefsItem {
                         TextPref(
                             title = stringResource(id = R.string.title_oksign),
-                            summary = stringResource(id = R.string.summary_settings_oksign),
                             leadingIcon = {
                                 PrefsIcon("checkmark.circle")
                             },
@@ -225,7 +222,6 @@ fun SettingsPage(
                 prefsItem {
                     TextPref(
                         title = stringResource(id = R.string.title_settings_more),
-                        summary = stringResource(id = R.string.summary_settings_more),
                         leadingIcon = {
                             PrefsIcon("ellipsis")
                         },

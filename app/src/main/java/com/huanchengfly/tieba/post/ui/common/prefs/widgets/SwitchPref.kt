@@ -22,6 +22,7 @@ fun SwitchPref(
     title: String,
     modifier: Modifier = Modifier,
     summary: @Composable (value: Boolean) -> String? = { null },
+    trailingValue: String? = null,
     defaultChecked: Boolean = false,  // only used if it doesn't already exist in the datastore
     onCheckedChange: ((Boolean) -> Unit)? = null,
     textColor: Color = glassColors().textPrimary,
@@ -56,6 +57,7 @@ fun SwitchPref(
         modifier = modifier,
         textColor = textColor,
         summary = summary(checked),
+        trailingValue = trailingValue,
         darkenOnDisable = true,
         leadingIcon = leadingIcon,
         enabled = enabled,
@@ -94,6 +96,7 @@ fun SwitchPref(
     summary: String? = null,
     summaryOn: String? = null,
     summaryOff: String? = null,
+    trailingValue: String? = null,
     defaultChecked: Boolean = false,  // only used if it doesn't already exist in the datastore
     onCheckedChange: ((Boolean) -> Unit)? = null,
     textColor: Color = glassColors().textPrimary,
@@ -129,6 +132,7 @@ fun SwitchPref(
         modifier = modifier,
         textColor = textColor,
         summary = (if (checked) summaryOn else summaryOff) ?: summary,
+        trailingValue = trailingValue,
         darkenOnDisable = true,
         leadingIcon = leadingIcon,
         enabled = enabled,

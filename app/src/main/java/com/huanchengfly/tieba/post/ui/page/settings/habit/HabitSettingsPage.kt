@@ -226,14 +226,12 @@ fun HabitSettingsPage(
             SwitchPref(
                 key = "doNotUsePhotoPicker",
                 title = stringResource(id = R.string.title_do_not_use_photo_picker),
-                summary = {
-                    if (!isPhotoPickerAvailable()) {
-                        context.getString(R.string.summary_photo_picker_not_supported)
-                    } else if (it) {
-                        context.getString(R.string.summary_do_not_use_photo_picker)
-                    } else {
-                        context.getString(R.string.summary_use_photo_picker)
-                    }
+                // 开关状态自己会说话：不再写「将使用原生选择器」这类说明；
+                // 只有系统不支持时才在行尾标一个状态
+                trailingValue = if (isPhotoPickerAvailable()) {
+                    null
+                } else {
+                    context.getString(R.string.status_unsupported)
                 },
                 defaultChecked = false,
                 leadingIcon = {

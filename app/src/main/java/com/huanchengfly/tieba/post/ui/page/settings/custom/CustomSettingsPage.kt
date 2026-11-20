@@ -202,7 +202,8 @@ fun CustomSettingsPage(
                 leadingIcon = {
                     PrefsIcon("paintpalette.fill")
                 },
-                summary = stringResource(id = R.string.tip_toolbar_primary_color_summary),
+                // 「重启生效」是前置状态，不是说明文 → 行尾右侧
+                    trailingValue = stringResource(id = R.string.status_restart_to_apply),
             )
         }
         prefsItem {

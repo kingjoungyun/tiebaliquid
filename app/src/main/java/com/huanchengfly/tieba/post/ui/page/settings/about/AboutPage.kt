@@ -46,6 +46,9 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsBackButtonOverlay
+import androidx.compose.ui.unit.sp
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsGlasmioDefaults
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyFontFamily
 
 @Destination
 @Composable
@@ -63,6 +66,20 @@ fun AboutPage(
                 .windowInsetsPadding(WindowInsets.safeDrawing),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            // 悬浮返回钮留位 + 大标题（与其它设置页同一套二级页范式）
+            Spacer(modifier = Modifier.height(PrefsGlasmioDefaults.BackButtonTopSpace))
+            Text(
+                text = stringResource(id = R.string.title_about),
+                fontSize = 34.sp,
+                lineHeight = 41.sp,
+                fontWeight = FontWeight(700),
+                fontFamily = HarmonyFontFamily,
+                color = ExtendedTheme.colors.text,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            )
+            Spacer(modifier = Modifier.height(12.dp))
             Box(
                 modifier = Modifier.weight(1f)
             ) {

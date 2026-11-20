@@ -54,6 +54,8 @@ fun EditTextPref(
     title: String,
     modifier: Modifier = Modifier,
     summary: String? = null,
+    /** 行尾右侧的状态值（例如「我的小尾巴」的当前内容）；`summary` 仍然是行内说明 */
+    trailingValue: String? = null,
     dialogTitle: String? = null,
     dialogMessage: String? = null,
     defaultValue: String = "",
@@ -113,6 +115,7 @@ fun EditTextPref(
         title = title,
         modifier = modifier,
         summary = summary,
+        trailingValue = trailingValue,
         textColor = textColor,
         enabled = enabled,
         leadingIcon = leadingIcon,

@@ -70,6 +70,8 @@ fun PrefsListItem(
     darkenOnDisable: Boolean = true,
     icon: @Composable (() -> Unit)? = null,
     summary: String? = null,
+    /** 行尾右侧的「状态/数值」（小号次级色）：当前选项、缓存大小、未登录… 不再占行内副标题 */
+    trailingValue: String? = null,
     trailing: @Composable (() -> Unit)? = null,
     textColor: Color = glassColors().textPrimary,
     minimalHeight: Boolean = false,
@@ -84,6 +86,7 @@ fun PrefsListItem(
             darkenOnDisable = darkenOnDisable,
             icon = icon,
             summary = summary,
+            trailingValue = trailingValue,
             trailing = trailing,
             textColor = textColor,
             showChevron = showChevron,
@@ -97,6 +100,7 @@ fun PrefsListItem(
             darkenOnDisable = darkenOnDisable,
             icon = icon,
             summary = summary,
+            trailingValue = trailingValue,
             trailing = trailing,
             textColor = textColor,
             minimalHeight = minimalHeight,
@@ -130,6 +134,7 @@ private fun GlasmioPrefsRow(
     darkenOnDisable: Boolean,
     icon: (@Composable () -> Unit)?,
     summary: String?,
+    trailingValue: String?,
     trailing: (@Composable () -> Unit)?,
     textColor: Color,
     showChevron: Boolean,
@@ -227,17 +232,32 @@ private fun GlasmioPrefsRow(
             }
         },
         trailingContent = when {
-            trailing != null -> {
+            trailing != null || trailingValue != null || showChevron -> {
                 {
-                    CompositionLocalProvider(
-                        LocalTextStyle provides bodyStyle,
-                        LocalContentColor provides colors.secondaryContent,
-                    ) { trailing() }
-                }
-            }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        // 状态/数值：小号次级色，排在 chevron 左边（Apple 的 value 位）
+                        if (trailingValue != null) {
+                            Text(
+                                text = trailingValue,
+                                style = subheadlineStyle,
+                                color = colors.secondaryContent,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        when {
+                            trailing != null -> CompositionLocalProvider(
+                                LocalTextStyle provides bodyStyle,
+                                LocalContentColor provides colors.secondaryContent,
+                            ) { trailing() }
 
-            showChevron -> {
-                { GlasmioChevron(tint = colors.accent) }
+                            showChevron -> GlasmioChevron(tint = colors.accent)
+                        }
+                    }
+                }
             }
 
             else -> null
@@ -297,6 +317,7 @@ private fun LegacyPrefsRow(
     darkenOnDisable: Boolean,
     icon: (@Composable () -> Unit)?,
     summary: String?,
+    trailingValue: String?,
     trailing: (@Composable () -> Unit)?,
     textColor: Color,
     minimalHeight: Boolean,
@@ -382,11 +403,19 @@ private fun LegacyPrefsRow(
         when {
             styledTrailing != null -> {
                 Spacer(modifier = Modifier.width(24.dp))
+                if (trailingValue != null) {
+                    LegacyTrailingValue(trailingValue, secondaryColor, contentAlpha)
+                    Spacer(modifier = Modifier.width(12.dp))
+                }
                 styledTrailing.invoke()
             }
 
             showChevron -> {
                 Spacer(modifier = Modifier.width(8.dp))
+                if (trailingValue != null) {
+                    LegacyTrailingValue(trailingValue, secondaryColor, contentAlpha)
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
                 Icon(
                     imageVector = Icons.Rounded.ChevronRight,
                     contentDescription = null,
@@ -394,12 +423,29 @@ private fun LegacyPrefsRow(
                     modifier = Modifier.size(PrefsCardDefaults.ChevronSize),
                 )
             }
+
+            // 只有状态值、没有 trailing 控件也没有 chevron（例如不可点的信息行）
+            trailingValue != null -> {
+                Spacer(modifier = Modifier.width(16.dp))
+                LegacyTrailingValue(trailingValue, secondaryColor, contentAlpha)
+            }
         }
     }
 }
 
 private val IconMinPaddedWidth = 40.dp
 private const val ChevronAlpha = 0.7f
+
+/** A 版的行尾状态值（15sp / 次级色），与 Glasmio 路径的 value 位保持同样语义。 */
+@Composable
+private fun LegacyTrailingValue(text: String, color: Color, contentAlpha: Float) {
+    Text(
+        text = text,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        style = GlassTokens.Typography.subheadline.toTextStyle(color.copy(alpha = color.alpha * contentAlpha)),
+    )
+}
 
 /** 副标题最多两行（仅 A 版）：再长的说明也只会把行撑到 74dp。 */
 private const val SummaryMaxLines = 2

@@ -24,6 +24,8 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
  * @param textColor Text colour of the [title] and [summary]
  * @param enabled If false, this Pref cannot be checked/unchecked
  * @param leadingIcon Icon which is positioned at the start of the Pref
+ * @param trailingValue 行尾右侧的「状态/数值」（小号次级色），排在 chevron 左边；
+ * 状态类信息（未登录 / 当前选项 / 缓存大小…）走这里，不再塞进行内副标题
  * @param showChevron 是否在右侧画 chevron（FlClash / iOS 的「可进入」提示）。
  * 默认：可点就画；但如果调用方给了 trailing 内容（开关 / 滑块 / 值），[PrefsListItem] 会跳过它
  * @param trailingContent Composable content which is positioned at the end of the Pref
@@ -40,6 +42,7 @@ fun TextPref(
     textColor: Color = glassColors().textPrimary,
     enabled: Boolean = onClick != null,
     leadingIcon: @Composable (() -> Unit)? = null,
+    trailingValue: String? = null,
     showChevron: Boolean = onClick != null && enabled,
     trailingContent: @Composable (() -> Unit)? = null,
 ) {
@@ -56,6 +59,7 @@ fun TextPref(
         icon = leadingIcon,
         // 副标题最多 2 行的规则在 PrefsListItem 里（所有 pref widget 共用的那一层）
         summary = summary,
+        trailingValue = trailingValue,
         trailing = trailingContent,
         // trailing 已经占了右侧（开关 / 值），再画 chevron 就重复了
         showChevron = showChevron && trailingContent == null,

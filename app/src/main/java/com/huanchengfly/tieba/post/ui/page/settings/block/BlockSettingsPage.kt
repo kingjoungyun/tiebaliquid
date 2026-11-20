@@ -52,7 +52,6 @@ fun BlockSettingsPage(
         prefsItem {
             TextPref(
                 title = stringResource(id = R.string.title_keyword_list_manage),
-                summary = stringResource(id = R.string.summary_keyword_list_manage),
                 leadingIcon = {
                     PrefsIcon("text.badge.xmark")
                 },

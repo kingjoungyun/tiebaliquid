@@ -82,10 +82,8 @@ fun AccountManagePage(
                     DropDownPref(
                         key = "switch_account",
                         title = stringResource(id = R.string.title_switch_account),
-                        summary = stringResource(
-                            id = R.string.summary_now_account,
-                            account.nameShow ?: account.name
-                        ),
+                        // 当前账号是「状态」→ 行尾右侧
+                        trailingValue = account.nameShow ?: account.name,
                         leadingIcon = {
                             PrefsIcon("person.2.fill")
                         },
@@ -167,7 +165,6 @@ fun AccountManagePage(
             prefsItem {
                 TextPref(
                     title = stringResource(id = R.string.title_copy_bduss),
-                    summary = stringResource(id = R.string.summary_copy_bduss),
                     onClick = { TiebaUtil.copyText(context, account?.bduss, isSensitive = true) },
                     leadingIcon = {
                         PrefsIcon("doc.on.doc")
@@ -180,10 +177,12 @@ fun AccountManagePage(
                 EditTextPref(
                     key = "little_tail",
                     title = stringResource(id = R.string.title_my_tail),
-                    summary = if (littleTail.isNullOrEmpty())
-                        stringResource(id = R.string.tip_no_little_tail)
-                    else
-                        littleTail,
+                    // 小尾巴当前内容是「状态」→ 行尾右侧
+                    trailingValue = if (littleTail.isNullOrEmpty()) {
+                        stringResource(id = R.string.status_not_set)
+                    } else {
+                        littleTail
+                    },
                     leadingIcon = {
                         PrefsIcon("text.bubble")
                     },
