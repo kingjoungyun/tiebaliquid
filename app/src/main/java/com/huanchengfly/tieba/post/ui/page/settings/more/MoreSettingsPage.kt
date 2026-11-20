@@ -53,9 +53,9 @@ fun MoreSettingsPage(
         val context = LocalContext.current
         var cacheSize by remember { mutableStateOf("0.0B") }
         LaunchedEffect(Unit) {
-        thread {
-            cacheSize = ImageCacheUtil.getCacheSize(context)
-        }
+            thread {
+                cacheSize = ImageCacheUtil.getCacheSize(context)
+            }
         }
         PrefsScreen(
             dataStore = LocalContext.current.dataStore,
@@ -154,9 +154,9 @@ fun MoreSettingsPage(
                         navigator.navigate(AboutPageDestination)
                     },
                     // 版本号是「状态」→ 行尾右侧
-                        trailingValue = BuildConfig.VERSION_NAME,
+                    trailingValue = BuildConfig.VERSION_NAME,
                 )
             }
     }
+        }
     }
-}

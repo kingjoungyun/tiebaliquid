@@ -67,114 +67,114 @@ fun OKSignSettingsPage(
                 PrefsLargeTitle(text = stringResource(id = R.string.title_oksign))
             },
         ) {
-        prefsItem {
-            SwitchPref(
-                leadingIcon = {
-                    PrefsIcon("clock.arrow.circlepath")
-                },
-                key = "oksign_slow_mode",
-                title = stringResource(id = R.string.title_oksign_slow_mode),
-                defaultChecked = true,
-                summaryOn = stringResource(id = R.string.summary_oksign_slow_mode_on),
-                summaryOff = stringResource(id = R.string.summary_oksign_slow_mode),
-            )
-        }
-        prefsItem {
-            SwitchPref(
-                leadingIcon = {
-                    PrefsIcon("checkmark.seal")
-                },
-                key = "oksign_use_official_oksign",
-                title = stringResource(id = R.string.title_oksign_use_official_oksign),
-                defaultChecked = true,
-                summary = stringResource(id = R.string.summary_oksign_use_official_oksign),
-            )
-        }
-        prefsItem {
-            SwitchPref(
-                leadingIcon = {
-                    PrefsIcon("xmark.octagon")
-                },
-                key = "oksign_fail_auto_stop",
-                title = stringResource(id = R.string.title_oksign_fail_auto_stop),
-                defaultChecked = true,
-                summary = stringResource(id = R.string.summary_oksign_fail_auto_stop),
-            )
-        }
-        prefsItem {
-            SwitchPref(
-                leadingIcon = {
-                    PrefsIcon("calendar.badge.clock")
-                },
-                key = "auto_sign",
-                title = stringResource(id = R.string.title_auto_sign),
-                defaultChecked = false,
-                summaryOn = stringResource(id = R.string.summary_auto_sign_on),
-                summaryOff = stringResource(id = R.string.summary_auto_sign),
-            )
-        }
-        prefsItem {
-            TimePickerPerf(
-                leadingIcon = {
-                    PrefsIcon("clock")
-                },
-                key = "auto_sign_time",
-                title = stringResource(id = R.string.title_auto_sign_time),
-                defaultValue = "09:00",
-                // 当前时间挪到行尾右侧（"09:00"）
-                trailingValue = { it },
-                dialogTitle = stringResource(id = R.string.title_auto_sign_time),
-                enabled = depend(key = "auto_sign")
-            )
-        }
-        prefsItem {
-            TextPref(
-                leadingIcon = {
-                    PrefsIcon("exclamationmark.triangle")
-                },
-                title = stringResource(id = R.string.title_ignore_battery_optimization),
-                enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !context.isIgnoringBatteryOptimizations(),
-                // 只留「状态」在行尾；动作本身由标题表达，不再写行内说明
-                trailingValue =
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) stringResource(id = R.string.status_unsupported)
-                else if (context.isIgnoringBatteryOptimizations()) stringResource(id = R.string.status_ignored)
-                else null,
-                onClick = {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        if (!context.powerManager.isIgnoringBatteryOptimizations(context.packageName)) {
-                            context.requestIgnoreBatteryOptimizations()
-                        } else {
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar(context.getString(R.string.toast_ignore_battery_optimization_already))
+            prefsItem {
+                SwitchPref(
+                    leadingIcon = {
+                        PrefsIcon("clock.arrow.circlepath")
+                    },
+                    key = "oksign_slow_mode",
+                    title = stringResource(id = R.string.title_oksign_slow_mode),
+                    defaultChecked = true,
+                    summaryOn = stringResource(id = R.string.summary_oksign_slow_mode_on),
+                    summaryOff = stringResource(id = R.string.summary_oksign_slow_mode),
+                )
+            }
+            prefsItem {
+                SwitchPref(
+                    leadingIcon = {
+                        PrefsIcon("checkmark.seal")
+                    },
+                    key = "oksign_use_official_oksign",
+                    title = stringResource(id = R.string.title_oksign_use_official_oksign),
+                    defaultChecked = true,
+                    summary = stringResource(id = R.string.summary_oksign_use_official_oksign),
+                )
+            }
+            prefsItem {
+                SwitchPref(
+                    leadingIcon = {
+                        PrefsIcon("xmark.octagon")
+                    },
+                    key = "oksign_fail_auto_stop",
+                    title = stringResource(id = R.string.title_oksign_fail_auto_stop),
+                    defaultChecked = true,
+                    summary = stringResource(id = R.string.summary_oksign_fail_auto_stop),
+                )
+            }
+            prefsItem {
+                SwitchPref(
+                    leadingIcon = {
+                        PrefsIcon("calendar.badge.clock")
+                    },
+                    key = "auto_sign",
+                    title = stringResource(id = R.string.title_auto_sign),
+                    defaultChecked = false,
+                    summaryOn = stringResource(id = R.string.summary_auto_sign_on),
+                    summaryOff = stringResource(id = R.string.summary_auto_sign),
+                )
+            }
+            prefsItem {
+                TimePickerPerf(
+                    leadingIcon = {
+                        PrefsIcon("clock")
+                    },
+                    key = "auto_sign_time",
+                    title = stringResource(id = R.string.title_auto_sign_time),
+                    defaultValue = "09:00",
+                    // 当前时间挪到行尾右侧（"09:00"）
+                    trailingValue = { it },
+                    dialogTitle = stringResource(id = R.string.title_auto_sign_time),
+                    enabled = depend(key = "auto_sign")
+                )
+            }
+            prefsItem {
+                TextPref(
+                    leadingIcon = {
+                        PrefsIcon("exclamationmark.triangle")
+                    },
+                    title = stringResource(id = R.string.title_ignore_battery_optimization),
+                    enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !context.isIgnoringBatteryOptimizations(),
+                    // 只留「状态」在行尾；动作本身由标题表达，不再写行内说明
+                    trailingValue =
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) stringResource(id = R.string.status_unsupported)
+                    else if (context.isIgnoringBatteryOptimizations()) stringResource(id = R.string.status_ignored)
+                    else null,
+                    onClick = {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            if (!context.powerManager.isIgnoringBatteryOptimizations(context.packageName)) {
+                                context.requestIgnoreBatteryOptimizations()
+                            } else {
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(context.getString(R.string.toast_ignore_battery_optimization_already))
+                                }
                             }
                         }
                     }
-                }
-            )
-        }
+                )
+            }
 
-        prefsItem {
-            Text(
-                text = buildAnnotatedString {
-                    withStyle(
-                        style = SpanStyle(
-                            fontWeight = FontWeight.Bold
-                        )
-                    ) {
-                        append(stringResource(id = R.string.tip_start))
-                    }
-                    append(stringResource(id = R.string.tip_auto_sign))
-                },
-                modifier = Modifier
-                    .padding(16.dp)
-                    .padding(start = 8.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(color = ExtendedTheme.colors.chip)
-                    .padding(12.dp),
-                color = ExtendedTheme.colors.onChip,
-                fontSize = 12.sp
-            )
-        }
+            prefsItem {
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(
+                            style = SpanStyle(
+                                fontWeight = FontWeight.Bold
+                            )
+                        ) {
+                            append(stringResource(id = R.string.tip_start))
+                        }
+                        append(stringResource(id = R.string.tip_auto_sign))
+                    },
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .padding(start = 8.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(color = ExtendedTheme.colors.chip)
+                        .padding(12.dp),
+                    color = ExtendedTheme.colors.onChip,
+                    fontSize = 12.sp
+                )
+            }
         }
     }
 }
