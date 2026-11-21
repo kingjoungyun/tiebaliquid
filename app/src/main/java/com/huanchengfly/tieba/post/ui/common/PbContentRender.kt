@@ -19,6 +19,7 @@ import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -56,6 +57,12 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.VoicePlayer
 import com.huanchengfly.tieba.post.utils.EmoticonUtil.emoticonString
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.huanchengfly.tieba.post.utils.launchUrl
+
+/**
+ * 帖子页专用的图片圆角覆盖（B 阶段楼层视觉：主楼/楼层图片 12dp）。
+ * 默认 null，其它页面仍沿用用户设置的 `appPreferences.radius`。
+ */
+val LocalThreadImageRadius = compositionLocalOf<Dp?> { null }
 
 @Stable
 interface PbContentRender {
@@ -140,13 +147,14 @@ data class PicContentRender(
         val widthFraction =
             if (LocalWindowSizeClass.current.widthSizeClass == WindowWidthSizeClass.Compact) 1f else 0.5f
         val context = LocalContext.current
+        val radius = LocalThreadImageRadius.current ?: context.appPreferences.radius.dp
 
         NetworkImage(
             imageUri = picUrl,
             contentDescription = stringResource(id = R.string.desc_image),
             modifier = Modifier
                 .focusable()
-                .clip(RoundedCornerShape(context.appPreferences.radius.dp))
+                .clip(RoundedCornerShape(radius))
                 .fillMaxWidth(widthFraction)
                 .aspectRatio(width * 1f / height),
             photoViewData = photoViewData,
@@ -157,12 +165,13 @@ data class PicContentRender(
     @Composable
     fun FullWidthRender() {
         val context = LocalContext.current
+        val radius = LocalThreadImageRadius.current ?: context.appPreferences.radius.dp
         NetworkImage(
             imageUri = picUrl,
             contentDescription = stringResource(id = R.string.desc_image),
             modifier = Modifier
                 .focusable()
-                .clip(RoundedCornerShape(context.appPreferences.radius.dp))
+                .clip(RoundedCornerShape(radius))
                 .fillMaxWidth()
                 .aspectRatio(
                     if (width > 0 && height > 0) width * 1f / height

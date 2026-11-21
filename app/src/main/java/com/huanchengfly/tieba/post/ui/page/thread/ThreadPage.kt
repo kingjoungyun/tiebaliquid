@@ -78,6 +78,7 @@ import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -131,6 +132,7 @@ import com.huanchengfly.tieba.post.toastShort
 import com.huanchengfly.tieba.post.ui.common.PbContentRender
 import com.huanchengfly.tieba.post.ui.common.PicContentRender
 import com.huanchengfly.tieba.post.ui.common.PbContentText
+import com.huanchengfly.tieba.post.ui.common.LocalThreadImageRadius
 import com.huanchengfly.tieba.post.ui.common.PicWaterfallContentRender
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.invertChipBackground
@@ -197,6 +199,10 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import io.github.neoruaa.glasmio.core.GlasmioTheme
+import io.github.neoruaa.glasmio.core.systemGray5
+import io.github.neoruaa.glasmio.glass.render.backdrops.emptyBackdrop
+import io.github.neoruaa.glasmio.ui.GlasmioCard
 import kotlinx.serialization.Serializable
 import kotlin.concurrent.thread
 import kotlin.math.max
@@ -1317,6 +1323,7 @@ fun ThreadPage(
                     )
                 )
             },
+            glassmio = glassmio,
             onSubPostReplyClick = { post, subPost ->
                 navigator.navigate(
                     ReplyPageDestination(
@@ -1769,6 +1776,7 @@ fun ThreadPage(
                                                             )
                                                         )
                                                     },
+                                                    glassmio = glassmio,
                                                 ) {
                                                     deletePost = null
                                                     confirmDeleteDialogState.show()
@@ -1810,12 +1818,6 @@ fun ThreadPage(
                                                         }
                                                     )
                                                 }
-                                                VerticalDivider(
-                                                    modifier = Modifier
-                                                        .padding(horizontal = 16.dp)
-                                                        .padding(bottom = 8.dp),
-                                                    thickness = 2.dp
-                                                )
                                             }
                                         }
                                     }
@@ -2211,6 +2213,323 @@ private fun BottomBar(
 }
 
 @Composable
+private fun PostContentRenders(
+    contentRenders: ImmutableList<PbContentRender>,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        var waterfallImages: MutableList<PicContentRender>? = null
+        contentRenders.forEach { render ->
+            if (render is PicContentRender) {
+                if (waterfallImages == null) waterfallImages = mutableListOf()
+                waterfallImages!!.add(render)
+            } else {
+                waterfallImages?.let { PicWaterfallContentRender(it) }
+                waterfallImages = null
+                render.Render()
+            }
+        }
+        waterfallImages?.let { PicWaterfallContentRender(it) }
+    }
+}
+
+@Composable
+private fun GlasmioMainPostCard(
+    post: Post,
+    author: User,
+    contentRenders: ImmutableList<PbContentRender>,
+    showTitle: Boolean,
+    collected: Boolean,
+    immersiveMode: Boolean,
+    threadAuthorId: Long,
+    onUserClick: (User) -> Unit,
+) {
+    val colors = GlasmioTheme.colors
+    val backdrop = remember { emptyBackdrop() }
+
+    GlasmioCard(
+        backdrop = backdrop,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 9.dp),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            if (!immersiveMode) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .debounceClickable(onClick = { onUserClick(author) }),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Avatar(
+                        data = StringUtil.getAvatarUrl(author.portrait),
+                        size = 40.dp,
+                        contentDescription = stringResource(id = R.string.user_portrait),
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        ProvideTextStyle(
+                            MaterialTheme.typography.body1.copy(
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.content,
+                            )
+                        ) {
+                            UserNameText(
+                                userName = StringUtil.getUsernameAnnotatedString(
+                                    LocalContext.current,
+                                    author.name,
+                                    author.nameShow,
+                                ),
+                                userLevel = author.level_id,
+                                isLz = author.id == threadAuthorId,
+                                bawuType = author.bawuType,
+                            )
+                        }
+                        Text(
+                            text = getDescText(post.time.toLong(), 0, author.ip_address),
+                            fontSize = 13.sp,
+                            color = colors.secondaryContent,
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
+            if (showTitle) {
+                Text(
+                    text = post.title,
+                    fontSize = 17.sp,
+                    lineHeight = 23.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.content,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            if (collected) {
+                Chip(
+                    text = stringResource(id = R.string.title_collected_floor),
+                    invertColor = true,
+                    prefixIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Star,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    },
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            CompositionLocalProvider(LocalThreadImageRadius provides 12.dp) {
+                ProvideTextStyle(
+                    MaterialTheme.typography.body1.copy(
+                        fontSize = 15.sp,
+                        lineHeight = 22.sp,
+                        color = colors.content,
+                    )
+                ) {
+                    PostContentRenders(contentRenders)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GlasmioFloorRow(
+    post: Post,
+    author: User,
+    contentRenders: ImmutableList<PbContentRender>,
+    subPosts: ImmutableList<SubPostItemData>,
+    showSubPosts: Boolean,
+    collected: Boolean,
+    immersiveMode: Boolean,
+    threadAuthorId: Long,
+    hasAgreed: Boolean,
+    agreeNum: Long,
+    onUserClick: (User) -> Unit,
+    onAgree: () -> Unit,
+    onSubPostReplyClick: ((Post, SubPostList) -> Unit)?,
+    onOpenSubPosts: (Long) -> Unit,
+    onMenuCopyClick: ((String) -> Unit)?,
+) {
+    val colors = GlasmioTheme.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 7.dp),
+    ) {
+        Avatar(
+            data = StringUtil.getAvatarUrl(author.portrait),
+            size = 36.dp,
+            contentDescription = stringResource(id = R.string.user_portrait),
+            modifier = Modifier.debounceClickable(onClick = { onUserClick(author) }),
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            if (!immersiveMode) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .debounceClickable(onClick = { onUserClick(author) }),
+                ) {
+                    ProvideTextStyle(
+                        MaterialTheme.typography.body1.copy(
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.content,
+                        )
+                    ) {
+                        UserNameText(
+                            userName = StringUtil.getUsernameAnnotatedString(
+                                LocalContext.current,
+                                author.name,
+                                author.nameShow,
+                            ),
+                            userLevel = author.level_id,
+                            isLz = author.id == threadAuthorId,
+                            bawuType = author.bawuType,
+                        )
+                    }
+                    Text(
+                        text = getDescText(post.time.toLong(), post.floor, author.ip_address),
+                        fontSize = 13.sp,
+                        color = colors.secondaryContent,
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            CompositionLocalProvider(LocalThreadImageRadius provides 12.dp) {
+                ProvideTextStyle(
+                    MaterialTheme.typography.body1.copy(
+                        fontSize = 15.sp,
+                        lineHeight = 22.sp,
+                        color = colors.content,
+                    )
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (collected) {
+                            Chip(
+                                text = stringResource(id = R.string.title_collected_floor),
+                                invertColor = true,
+                                prefixIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Star,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                },
+                            )
+                        }
+                        PostContentRenders(contentRenders)
+                    }
+                }
+            }
+
+            if (showSubPosts && post.sub_post_number > 0 && subPosts.isNotEmpty() && !immersiveMode) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(colors.systemGray5)
+                        .padding(vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    subPosts.fastForEach { item ->
+                        if (item.hidden) return@fastForEach
+                        BlockableContent(
+                            blocked = item.blocked,
+                            blockedTip = {
+                                Text(
+                                    text = stringResource(id = R.string.tip_blocked_sub_post),
+                                    style = MaterialTheme.typography.body2.copy(
+                                        color = colors.secondaryContent,
+                                        fontSize = 13.sp,
+                                    ),
+                                    modifier = Modifier.padding(horizontal = 12.dp),
+                                )
+                            },
+                        ) {
+                            SubPostItem(
+                                subPostList = item.subPost,
+                                subPostContent = item.subPostContent,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp),
+                                onReplyClick = {
+                                    onSubPostReplyClick?.invoke(post, it)
+                                },
+                                onOpenSubPosts = onOpenSubPosts,
+                                onMenuCopyClick = {
+                                    onMenuCopyClick?.invoke(it.content.plainText)
+                                },
+                            )
+                        }
+                    }
+
+                    if (post.sub_post_number > subPosts.size) {
+                        Text(
+                            text = stringResource(
+                                id = R.string.open_all_sub_posts,
+                                post.sub_post_number,
+                            ),
+                            style = MaterialTheme.typography.caption,
+                            fontSize = 13.sp,
+                            color = colors.accent,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 2.dp)
+                                .debounceClickable(onClick = { onOpenSubPosts(0) })
+                                .padding(horizontal = 12.dp),
+                        )
+                    }
+                }
+            }
+
+            if (!immersiveMode) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    val tint = if (hasAgreed) colors.accent else colors.secondaryContent
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(100))
+                            .debounceClickable(onClick = onAgree)
+                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Icon(
+                            imageVector = if (hasAgreed) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                            contentDescription = stringResource(id = R.string.title_agree),
+                            tint = tint,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        if (agreeNum > 0) {
+                            Text(
+                                text = agreeNum.getShortNumString(),
+                                fontSize = 13.sp,
+                                color = tint,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun PostCard(
     postHolder: ImmutableHolder<Post>,
     contentRenders: ImmutableList<PbContentRender>,
@@ -2228,6 +2547,7 @@ fun PostCard(
     onOpenSubPosts: (subPostId: Long) -> Unit = {},
     onMenuCopyClick: ((String) -> Unit)? = null,
     onMenuFavoriteClick: ((Post) -> Unit)? = null,
+    glassmio: Boolean = false,
     onMenuDeleteClick: ((Post) -> Unit)? = null,
 ) {
     val context = LocalContext.current
@@ -2262,7 +2582,10 @@ fun PostCard(
         hideBlockedContent = context.appPreferences.hideBlockedContent || immersiveMode,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 16.dp)
+            .then(
+                if (glassmio) Modifier
+                else Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
+            )
     ) {
         LongClickMenu(
             menuState = menuState,
@@ -2333,8 +2656,38 @@ fun PostCard(
                 }
             }
         ) {
-            Card(
-                header = {
+            if (glassmio && post.floor <= 1) {
+                GlasmioMainPostCard(
+                    post = post,
+                    author = author,
+                    contentRenders = contentRenders,
+                    showTitle = showTitle,
+                    collected = isCollected(post),
+                    immersiveMode = immersiveMode,
+                    threadAuthorId = threadAuthorId,
+                    onUserClick = onUserClick,
+                )
+            } else if (glassmio) {
+                GlasmioFloorRow(
+                    post = post,
+                    author = author,
+                    contentRenders = contentRenders,
+                    subPosts = subPosts,
+                    showSubPosts = showSubPosts,
+                    collected = isCollected(post),
+                    immersiveMode = immersiveMode,
+                    threadAuthorId = threadAuthorId,
+                    hasAgreed = hasAgreed,
+                    agreeNum = agreeNum,
+                    onUserClick = onUserClick,
+                    onAgree = onAgree,
+                    onSubPostReplyClick = onSubPostReplyClick,
+                    onOpenSubPosts = onOpenSubPosts,
+                    onMenuCopyClick = onMenuCopyClick,
+                )
+            } else {
+                Card(
+                    header = {
                     if (!immersiveMode) {
                         UserHeader(
                             avatar = {
@@ -2485,6 +2838,7 @@ fun PostCard(
                     }
                 }
             )
+            }
         }
     }
 }

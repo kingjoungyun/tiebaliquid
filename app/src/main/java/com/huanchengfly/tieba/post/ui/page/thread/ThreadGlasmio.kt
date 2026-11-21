@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassBackdropHost
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
@@ -88,7 +89,8 @@ fun ThreadPageSkin(
         return
     }
     LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
-        LiquidGlassBackdropHost(
+        HarmonyTextProvider {
+            LiquidGlassBackdropHost(
             modifier = Modifier.fillMaxSize(),
             sampledContent = {
                 Box(
@@ -108,6 +110,7 @@ fun ThreadPageSkin(
                 }
             },
         )
+        }
     }
 }
 
