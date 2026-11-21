@@ -2,6 +2,7 @@ package com.huanchengfly.tieba.post.ui.common.theme.glass
 
 import android.os.Build
 import android.provider.Settings
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Spacer
@@ -34,6 +35,9 @@ import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
 import io.github.neoruaa.glasmio.glass.LocalBlurBackdrop
 import io.github.neoruaa.glasmio.glass.LocalGlassBackdrop
 import io.github.neoruaa.glasmio.glass.rememberCrossWindowBackdrop
+import io.github.neoruaa.glasmio.glass.render.backdrops.layerBackdrop
+import io.github.neoruaa.glasmio.glass.render.backdrops.rememberLayerBackdrop
+import io.github.neoruaa.glasmio.glass.trackBackdropPosition
 import io.github.neoruaa.glasmio.glass.GlassEmphasis
 import io.github.neoruaa.glasmio.glass.GlassSurface as GlasmioGlassSurface
 import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
@@ -98,21 +102,35 @@ fun LiquidGlassBackdropHost(
     sampledContent: @Composable BoxScope.() -> Unit,
     overlayContent: @Composable BoxScope.() -> Unit,
 ) {
-    GlasmioBackdropHost(
-        modifier = modifier,
-        sampledContent = {
-            // 「有 backdrop 可读」为真，但**采样不安全**：这段内容正在被录进本层的 LayerBackdrop。
-            // 里面的玻璃控件必须走「自带纯色小 host」那一支（见 GlassIconButton），
-            // 否则会自己采样自己 → HWUI 渲染树递归爆栈（实测 SIGSEGV）。
-            // 显式置 false，盖掉外层 Activity 级纯色 host 给的真值。
-            CompositionLocalProvider(
-                LocalGlassBackdropAvailable provides true,
-                LocalGlassSamplingSafe provides false,
+    // 不用 Glasmio 的 GlasmioBackdropHost：它固定走 layerBackdrop(backdrop)（reuseContent=false），
+    // 也就是 **页面被画两遍**——屏幕上正常画一遍，再往录制层里录一遍。
+    // 这里拼一个同构的 host，改用 reuseContent=true：只录进录制层，再把这一层上屏，
+    // 页面绘制从 2 遍降到 1 遍（实测 p90/p95 各降约 4/9ms，见 perf-opt-report.md）。
+    // Glasmio 对该模式的约束是「可见内容与录制内容必须一致、录制内容里不能读这层 backdrop」，
+    // 正好是本函数下面那条 LocalGlassSamplingSafe=false 的约定（采样内容里不许放玻璃控件）。
+    val backdrop = rememberLayerBackdrop()
+    CompositionLocalProvider(
+        LocalGlassBackdrop provides backdrop,
+        LocalBlurBackdrop provides backdrop,
+    ) {
+        Box(modifier) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .layerBackdrop(backdrop, reuseContent = true)
+                    .trackBackdropPosition(backdrop),
             ) {
-                sampledContent()
+                // 「有 backdrop 可读」为真，但**采样不安全**：这段内容正在被录进本层的 LayerBackdrop。
+                // 里面的玻璃控件必须走「自带纯色小 host」那一支（见 GlassIconButton），
+                // 否则会自己采样自己 → HWUI 渲染树递归爆栈（实测 SIGSEGV）。
+                // 显式置 false，盖掉外层 Activity 级纯色 host 给的真值。
+                CompositionLocalProvider(
+                    LocalGlassBackdropAvailable provides true,
+                    LocalGlassSamplingSafe provides false,
+                ) {
+                    sampledContent()
+                }
             }
-        },
-        overlayContent = {
             CompositionLocalProvider(
                 LocalLiquidGlassHosted provides true,
                 LocalGlassSamplingSafe provides true,
@@ -120,8 +138,8 @@ fun LiquidGlassBackdropHost(
             ) {
                 overlayContent()
             }
-        },
-    )
+        }
+    }
 }
 
 /**
