@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  仅 debug 源集：临时/常驻的「真玻璃」验证页。
-  用途：不碰主界面，先确认 Glasmio 的折射/模糊在真机（模拟器）上确实生效。
-  启动：adb shell am start -n com.tieba/com.huanchengfly.tieba.post.debug.GlassPlaygroundActivity
+  仅 debug 源集：Glasmio 验证 / 控件总览页。
+  启动：adb shell am start -n com.tieba/com.huanchengfly.tieba.post.debug.GlassGalleryActivity
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
+        <!-- P2/C：Glasmio 控件总览（可交互） -->
+        <activity
+            android:name=".debug.GlassGalleryActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
         <activity
             android:name=".debug.GlassPlaygroundActivity"
             android:exported="true"
