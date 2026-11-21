@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eygraber.compose.placeholder.material.placeholder
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageHost
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.arch.onEvent
@@ -61,139 +62,143 @@ fun BlockListPage(
     ),
     navigator: DestinationsNavigator,
 ) {
-    val dialogState = rememberDialogState()
-
-    PromptDialog(
-        onConfirm = {
-            val input = it.trim()
-            if (input.isNotEmpty()) {
-                val asUid = input.toLongOrNull()
-                viewModel.send(
-                    BlockListUiIntent.Add(
-                        category = Block.CATEGORY_BLACK_LIST,
-                        type = Block.TYPE_USER,
-                        userName = if (asUid == null) input else null,
-                        userId = asUid
-                    )
-                )
-            }
-        },
-        dialogState = dialogState,
-        title = { Text(text = stringResource(id = R.string.title_add_black)) }
-    ) {
-        Column {
-            Text(text = stringResource(id = R.string.tip_add_black))
-        }
-    }
-
-    val context = LocalContext.current
-    val blackList by viewModel.uiState.collectPartialAsState(
-        prop1 = BlockListUiState::blackList,
-        initial = emptyList()
-    )
-    val isLoading by viewModel.uiState.collectPartialAsState(
-        prop1 = BlockListUiState::isLoading,
-        initial = false
-    )
-    val items = remember(blackList) { blackList.filter { it.type == Block.TYPE_USER } }
-
-    MyScaffold(
-        backgroundColor = Color.Transparent,
-        topBar = {
-            TitleCentredToolbar(
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.title_black_list),
-                        fontWeight = FontWeight.Bold, style = MaterialTheme.typography.h6
-                    )
-                },
-                navigationIcon = {
-                    BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
-                },
-            )
-        },
-        bottomBar = {
-            Column {
-                BottomNavigationDivider()
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { dialogState.show() }
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Block,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(
-                            text = stringResource(id = R.string.title_add_black),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
+        // P1：页级 backdrop host —— 本页的菜单/动作面板要能采到这一页的真实内容。
+        // 页面内容进 sampledContent（活 backdrop，整页录制）；页内玻璃控件会自动走自带纯色 host。
+        GlassPageHost(modifier = Modifier.fillMaxSize()) {
+            val dialogState = rememberDialogState()
+    
+            PromptDialog(
+                onConfirm = {
+                    val input = it.trim()
+                    if (input.isNotEmpty()) {
+                        val asUid = input.toLongOrNull()
+                        viewModel.send(
+                            BlockListUiIntent.Add(
+                                category = Block.CATEGORY_BLACK_LIST,
+                                type = Block.TYPE_USER,
+                                userName = if (asUid == null) input else null,
+                                userId = asUid
+                            )
                         )
                     }
+                },
+                dialogState = dialogState,
+                title = { Text(text = stringResource(id = R.string.title_add_black)) }
+            ) {
+                Column {
+                    Text(text = stringResource(id = R.string.tip_add_black))
                 }
             }
-        }
-    ) { paddingValues ->
-        val snackBarHostState = LocalSnackbarHostState.current
-        viewModel.onEvent<BlockListUiEvent.Success> {
-            snackBarHostState.showSnackbar(
-                when (it) {
-                    is BlockListUiEvent.Success.Add -> context.getString(R.string.toast_add_success)
-                    is BlockListUiEvent.Success.Delete -> context.getString(R.string.toast_delete_success)
-                }
+    
+            val context = LocalContext.current
+            val blackList by viewModel.uiState.collectPartialAsState(
+                prop1 = BlockListUiState::blackList,
+                initial = emptyList()
             )
-        }
-        StateScreen(
-            isEmpty = items.isEmpty(),
-            isError = false,
-            isLoading = isLoading,
-            loadingScreen = {
-                MyLazyColumn(
+            val isLoading by viewModel.uiState.collectPartialAsState(
+                prop1 = BlockListUiState::isLoading,
+                initial = false
+            )
+            val items = remember(blackList) { blackList.filter { it.type == Block.TYPE_USER } }
+    
+            MyScaffold(
+                backgroundColor = Color.Transparent,
+                topBar = {
+                    TitleCentredToolbar(
+                        title = {
+                            Text(
+                                text = stringResource(id = R.string.title_black_list),
+                                fontWeight = FontWeight.Bold, style = MaterialTheme.typography.h6
+                            )
+                        },
+                        navigationIcon = {
+                            BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
+                        },
+                    )
+                },
+                bottomBar = {
+                    Column {
+                        BottomNavigationDivider()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .navigationBarsPadding()
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { dialogState.show() }
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Block,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Text(
+                                    text = stringResource(id = R.string.title_add_black),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+            ) { paddingValues ->
+                val snackBarHostState = LocalSnackbarHostState.current
+                viewModel.onEvent<BlockListUiEvent.Success> {
+                    snackBarHostState.showSnackbar(
+                        when (it) {
+                            is BlockListUiEvent.Success.Add -> context.getString(R.string.toast_add_success)
+                            is BlockListUiEvent.Success.Delete -> context.getString(R.string.toast_delete_success)
+                        }
+                    )
+                }
+                StateScreen(
+                    isEmpty = items.isEmpty(),
+                    isError = false,
+                    isLoading = isLoading,
+                    loadingScreen = {
+                        MyLazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(paddingValues)
+                        ) {
+                            items(4) {
+                                BlockUserItemPlaceholder()
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
-                    items(4) {
-                        BlockUserItemPlaceholder()
-                    }
-                }
-            },
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            val clipboardManager = LocalClipboardManager.current
-            MyLazyColumn(Modifier.fillMaxSize()) {
-                items(items, key = { it.id }) { item ->
-                    LongClickMenu(menuContent = {
-                        DropdownMenuItem(onClick = {
-                            clipboardManager.setText(AnnotatedString(item.username.orEmpty()))
-                            Toast.makeText(context, R.string.toast_copy_success, Toast.LENGTH_SHORT).show()
-                        }) {
-                            Text(text = stringResource(id = R.string.title_copy))
+                    val clipboardManager = LocalClipboardManager.current
+                    MyLazyColumn(Modifier.fillMaxSize()) {
+                        items(items, key = { it.id }) { item ->
+                            LongClickMenu(menuContent = {
+                                DropdownMenuItem(onClick = {
+                                    clipboardManager.setText(AnnotatedString(item.username.orEmpty()))
+                                    Toast.makeText(context, R.string.toast_copy_success, Toast.LENGTH_SHORT).show()
+                                }) {
+                                    Text(text = stringResource(id = R.string.title_copy))
+                                }
+                                DropdownMenuItem(onClick = {
+                                    viewModel.send(BlockListUiIntent.Delete(item.id))
+                                }) {
+                                    Text(text = stringResource(id = R.string.title_delete))
+                                }
+                            }) {
+                                BlockUserItem(item = item)
+                            }
                         }
-                        DropdownMenuItem(onClick = {
-                            viewModel.send(BlockListUiIntent.Delete(item.id))
-                        }) {
-                            Text(text = stringResource(id = R.string.title_delete))
-                        }
-                    }) {
-                        BlockUserItem(item = item)
                     }
                 }
             }
         }
-    }
 }
 
 @Composable

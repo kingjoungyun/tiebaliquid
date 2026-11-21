@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageHost
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.api.models.ThreadStoreBean
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
@@ -85,146 +86,150 @@ fun ThreadStorePage(
     navigator: DestinationsNavigator,
     viewModel: ThreadStoreViewModel = pageViewModel()
 ) {
-    LazyLoad(loaded = viewModel.initialized) {
-        viewModel.send(ThreadStoreUiIntent.Refresh)
-        viewModel.initialized = true
-    }
-    val isRefreshing by viewModel.uiState.collectPartialAsState(
-        prop1 = ThreadStoreUiState::isRefreshing,
-        initial = false
-    )
-    val isLoadingMore by viewModel.uiState.collectPartialAsState(
-        prop1 = ThreadStoreUiState::isLoadingMore,
-        initial = false
-    )
-    val hasMore by viewModel.uiState.collectPartialAsState(
-        prop1 = ThreadStoreUiState::hasMore,
-        initial = true
-    )
-    val currentPage by viewModel.uiState.collectPartialAsState(
-        prop1 = ThreadStoreUiState::currentPage,
-        initial = 0
-    )
-    val data by viewModel.uiState.collectPartialAsState(
-        prop1 = ThreadStoreUiState::data,
-        initial = emptyList()
-    )
-    val error by viewModel.uiState.collectPartialAsState(
-        prop1 = ThreadStoreUiState::error,
-        initial = null
-    )
-    val isError by remember { derivedStateOf { error != null } }
-
-    val context = LocalContext.current
-    val scaffoldState = rememberScaffoldState()
-    viewModel.onEvent<ThreadStoreUiEvent.Delete.Failure> {
-        scaffoldState.snackbarHostState.showSnackbar(
-            context.getString(
-                R.string.delete_store_failure,
-                it.errorMsg
-            )
-        )
-    }
-    viewModel.onEvent<ThreadStoreUiEvent.Delete.Success> {
-        scaffoldState.snackbarHostState.showSnackbar(context.getString(R.string.delete_store_success))
-    }
-    MyScaffold(
-        backgroundColor = Color.Transparent,
-        scaffoldState = scaffoldState,
-        topBar = {
-            TitleCentredToolbar(
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.title_my_collect),
-                        fontWeight = FontWeight.Bold, style = MaterialTheme.typography.h6
-                    )
-                },
-                navigationIcon = {
-                    BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
-                }
-            )
-        }
-    ) { contentPaddings ->
-        StateScreen(
-            isEmpty = data.isEmpty(),
-            isError = isError,
-            isLoading = isRefreshing,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPaddings),
-            onReload = {
+        // P1：页级 backdrop host —— 本页的菜单/动作面板要能采到这一页的真实内容。
+        // 页面内容进 sampledContent（活 backdrop，整页录制）；页内玻璃控件会自动走自带纯色 host。
+        GlassPageHost(modifier = Modifier.fillMaxSize()) {
+            LazyLoad(loaded = viewModel.initialized) {
                 viewModel.send(ThreadStoreUiIntent.Refresh)
-            },
-            errorScreen = {
-                error?.let {
-                    val (e) = it
-                    ErrorScreen(error = e)
-                }
+                viewModel.initialized = true
             }
-        ) {
-            val pullRefreshState = rememberPullRefreshState(
-                refreshing = isRefreshing,
-                onRefresh = { viewModel.send(ThreadStoreUiIntent.Refresh) }
+            val isRefreshing by viewModel.uiState.collectPartialAsState(
+                prop1 = ThreadStoreUiState::isRefreshing,
+                initial = false
             )
-
-            val lazyListState = rememberLazyListState()
-
-            Box(modifier = Modifier.pullRefresh(pullRefreshState)) {
-                LoadMoreLayout(
-                    isLoading = isLoadingMore,
-                    onLoadMore = { viewModel.send(ThreadStoreUiIntent.LoadMore(currentPage + 1)) },
-                    loadEnd = !hasMore,
-                    lazyListState = lazyListState
-                ) {
-                    MyLazyColumn(state = lazyListState) {
-                        items(
-                            items = data,
-                            key = { it.threadId }
-                        ) { info ->
-                            StoreItem(
-                                info = info,
-                                onUserClick = {
-                                    info.author.lzUid?.let {
-                                        navigator.navigate(UserProfilePageDestination(it.toLong()))
-                                    }
-                                },
-                                onClick = {
-                                    navigator.navigate(
-                                        ThreadPageDestination(
-                                            threadId = info.threadId.toLong(),
-                                            postId = info.markPid.toLong(),
-                                            seeLz = context.appPreferences.collectThreadSeeLz,
-                                            sortType = if(context.appPreferences.collectThreadDescSort) ThreadSortType.SORT_TYPE_DESC else ThreadSortType.SORT_TYPE_DEFAULT,
-                                            from = ThreadPageFrom.FROM_STORE,
-                                            extra = ThreadPageFromStoreExtra(
-                                                maxPid = info.maxPid.toLong(),
-                                                maxFloor = info.postNo.toInt()
-                                            )
-                                        )
-                                    )
-                                },
-                                onDelete = {
-                                    viewModel.send(
-                                        ThreadStoreUiIntent.Delete(
-                                            info.threadId
-                                        )
-                                    )
-                                }
-                            )
-                        }
-                    }
-                }
-
-                PullRefreshIndicator(
-                    refreshing = isRefreshing,
-                    state = pullRefreshState,
-                    modifier = Modifier.align(Alignment.TopCenter),
-                    backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                    contentColor = ExtendedTheme.colors.primary,
+            val isLoadingMore by viewModel.uiState.collectPartialAsState(
+                prop1 = ThreadStoreUiState::isLoadingMore,
+                initial = false
+            )
+            val hasMore by viewModel.uiState.collectPartialAsState(
+                prop1 = ThreadStoreUiState::hasMore,
+                initial = true
+            )
+            val currentPage by viewModel.uiState.collectPartialAsState(
+                prop1 = ThreadStoreUiState::currentPage,
+                initial = 0
+            )
+            val data by viewModel.uiState.collectPartialAsState(
+                prop1 = ThreadStoreUiState::data,
+                initial = emptyList()
+            )
+            val error by viewModel.uiState.collectPartialAsState(
+                prop1 = ThreadStoreUiState::error,
+                initial = null
+            )
+            val isError by remember { derivedStateOf { error != null } }
+    
+            val context = LocalContext.current
+            val scaffoldState = rememberScaffoldState()
+            viewModel.onEvent<ThreadStoreUiEvent.Delete.Failure> {
+                scaffoldState.snackbarHostState.showSnackbar(
+                    context.getString(
+                        R.string.delete_store_failure,
+                        it.errorMsg
+                    )
                 )
             }
+            viewModel.onEvent<ThreadStoreUiEvent.Delete.Success> {
+                scaffoldState.snackbarHostState.showSnackbar(context.getString(R.string.delete_store_success))
+            }
+            MyScaffold(
+                backgroundColor = Color.Transparent,
+                scaffoldState = scaffoldState,
+                topBar = {
+                    TitleCentredToolbar(
+                        title = {
+                            Text(
+                                text = stringResource(id = R.string.title_my_collect),
+                                fontWeight = FontWeight.Bold, style = MaterialTheme.typography.h6
+                            )
+                        },
+                        navigationIcon = {
+                            BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
+                        }
+                    )
+                }
+            ) { contentPaddings ->
+                StateScreen(
+                    isEmpty = data.isEmpty(),
+                    isError = isError,
+                    isLoading = isRefreshing,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(contentPaddings),
+                    onReload = {
+                        viewModel.send(ThreadStoreUiIntent.Refresh)
+                    },
+                    errorScreen = {
+                        error?.let {
+                            val (e) = it
+                            ErrorScreen(error = e)
+                        }
+                    }
+                ) {
+                    val pullRefreshState = rememberPullRefreshState(
+                        refreshing = isRefreshing,
+                        onRefresh = { viewModel.send(ThreadStoreUiIntent.Refresh) }
+                    )
+    
+                    val lazyListState = rememberLazyListState()
+    
+                    Box(modifier = Modifier.pullRefresh(pullRefreshState)) {
+                        LoadMoreLayout(
+                            isLoading = isLoadingMore,
+                            onLoadMore = { viewModel.send(ThreadStoreUiIntent.LoadMore(currentPage + 1)) },
+                            loadEnd = !hasMore,
+                            lazyListState = lazyListState
+                        ) {
+                            MyLazyColumn(state = lazyListState) {
+                                items(
+                                    items = data,
+                                    key = { it.threadId }
+                                ) { info ->
+                                    StoreItem(
+                                        info = info,
+                                        onUserClick = {
+                                            info.author.lzUid?.let {
+                                                navigator.navigate(UserProfilePageDestination(it.toLong()))
+                                            }
+                                        },
+                                        onClick = {
+                                            navigator.navigate(
+                                                ThreadPageDestination(
+                                                    threadId = info.threadId.toLong(),
+                                                    postId = info.markPid.toLong(),
+                                                    seeLz = context.appPreferences.collectThreadSeeLz,
+                                                    sortType = if(context.appPreferences.collectThreadDescSort) ThreadSortType.SORT_TYPE_DESC else ThreadSortType.SORT_TYPE_DEFAULT,
+                                                    from = ThreadPageFrom.FROM_STORE,
+                                                    extra = ThreadPageFromStoreExtra(
+                                                        maxPid = info.maxPid.toLong(),
+                                                        maxFloor = info.postNo.toInt()
+                                                    )
+                                                )
+                                            )
+                                        },
+                                        onDelete = {
+                                            viewModel.send(
+                                                ThreadStoreUiIntent.Delete(
+                                                    info.threadId
+                                                )
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
+    
+                        PullRefreshIndicator(
+                            refreshing = isRefreshing,
+                            state = pullRefreshState,
+                            modifier = Modifier.align(Alignment.TopCenter),
+                            backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
+                            contentColor = ExtendedTheme.colors.primary,
+                        )
+                    }
+                }
+            }
         }
-    }
 }
 
 @OptIn(ExperimentalTextApi::class)

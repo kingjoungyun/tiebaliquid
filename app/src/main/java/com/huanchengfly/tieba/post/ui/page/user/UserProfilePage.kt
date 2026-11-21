@@ -75,6 +75,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEachIndexed
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageHost
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.api.models.PermissionListBean
 import com.huanchengfly.tieba.post.api.models.protos.User
@@ -162,93 +163,97 @@ fun UserProfilePage(
     navigator: DestinationsNavigator,
     viewModel: UserProfileViewModel = pageViewModel(),
 ) {
-    val account = LocalAccount.current
-
-    val isSelf = remember(account, uid) {
-        account?.uid == uid.toString()
-    }
-
-    LazyLoad(loaded = viewModel.initialized) {
-        viewModel.send(UserProfileUiIntent.Refresh(uid))
-        viewModel.initialized = true
-    }
-
-    val isRefreshing by viewModel.uiState.collectPartialAsState(
-        prop1 = UserProfileUiState::isRefreshing,
-        initial = true
-    )
-    val error by viewModel.uiState.collectPartialAsState(
-        prop1 = UserProfileUiState::error,
-        initial = null
-    )
-    val user by viewModel.uiState.collectPartialAsState(
-        prop1 = UserProfileUiState::user,
-        initial = null
-    )
-    val disableButton by viewModel.uiState.collectPartialAsState(
-        prop1 = UserProfileUiState::disableButton,
-        initial = false
-    )
-
-    val isError by remember {
-        derivedStateOf { error != null }
-    }
-    val isEmpty by remember {
-        derivedStateOf { user == null }
-    }
-    val permissionSettingDialogDialogState = rememberDialogState()
-    var dialogPermissionList by remember {
-        mutableStateOf(PermissionListBean())
-    }
-    viewModel.onEvent<UserProfileUiEvent.ShowPermissionSettingDialog> {
-        dialogPermissionList = it.permList
-        permissionSettingDialogDialogState.show()
-    }
-    PermissionSettingDialogM2(
-        dialogState = permissionSettingDialogDialogState,
-        initialPermissionList = dialogPermissionList,
-        onConfirm = { updatedBean ->
-            viewModel.send(UserProfileUiIntent.SetUserBlack(uid, account!!.tbs, updatedBean))
-        }
-    )
-
-    ProvideNavigator(navigator = navigator) {
-        StateScreen(
-            modifier = Modifier.fillMaxSize(),
-            isEmpty = isEmpty,
-            isError = isError,
-            isLoading = isRefreshing,
-            onReload = { viewModel.send(UserProfileUiIntent.Refresh(uid)) },
-            errorScreen = { ErrorScreen(error = error.getOrNull()) }
-        ) {
-            user?.let {
-                UserProfileContent(
-                    user = it,
-                    showActionBtn = account != null,
-                    disableButton = disableButton,
-                    isSelf = isSelf,
-                    onBack = { navigator.navigateUp() },
-                    onFollow = {
-                        viewModel.send(
-                            UserProfileUiIntent.Follow(
-                                it.get { portrait },
-                                account!!.tbs,
-                            )
+        // P1：页级 backdrop host —— 本页的菜单/动作面板要能采到这一页的真实内容。
+        // 页面内容进 sampledContent（活 backdrop，整页录制）；页内玻璃控件会自动走自带纯色 host。
+        GlassPageHost(modifier = Modifier.fillMaxSize()) {
+            val account = LocalAccount.current
+    
+            val isSelf = remember(account, uid) {
+                account?.uid == uid.toString()
+            }
+    
+            LazyLoad(loaded = viewModel.initialized) {
+                viewModel.send(UserProfileUiIntent.Refresh(uid))
+                viewModel.initialized = true
+            }
+    
+            val isRefreshing by viewModel.uiState.collectPartialAsState(
+                prop1 = UserProfileUiState::isRefreshing,
+                initial = true
+            )
+            val error by viewModel.uiState.collectPartialAsState(
+                prop1 = UserProfileUiState::error,
+                initial = null
+            )
+            val user by viewModel.uiState.collectPartialAsState(
+                prop1 = UserProfileUiState::user,
+                initial = null
+            )
+            val disableButton by viewModel.uiState.collectPartialAsState(
+                prop1 = UserProfileUiState::disableButton,
+                initial = false
+            )
+    
+            val isError by remember {
+                derivedStateOf { error != null }
+            }
+            val isEmpty by remember {
+                derivedStateOf { user == null }
+            }
+            val permissionSettingDialogDialogState = rememberDialogState()
+            var dialogPermissionList by remember {
+                mutableStateOf(PermissionListBean())
+            }
+            viewModel.onEvent<UserProfileUiEvent.ShowPermissionSettingDialog> {
+                dialogPermissionList = it.permList
+                permissionSettingDialogDialogState.show()
+            }
+            PermissionSettingDialogM2(
+                dialogState = permissionSettingDialogDialogState,
+                initialPermissionList = dialogPermissionList,
+                onConfirm = { updatedBean ->
+                    viewModel.send(UserProfileUiIntent.SetUserBlack(uid, account!!.tbs, updatedBean))
+                }
+            )
+    
+            ProvideNavigator(navigator = navigator) {
+                StateScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    isEmpty = isEmpty,
+                    isError = isError,
+                    isLoading = isRefreshing,
+                    onReload = { viewModel.send(UserProfileUiIntent.Refresh(uid)) },
+                    errorScreen = { ErrorScreen(error = error.getOrNull()) }
+                ) {
+                    user?.let {
+                        UserProfileContent(
+                            user = it,
+                            showActionBtn = account != null,
+                            disableButton = disableButton,
+                            isSelf = isSelf,
+                            onBack = { navigator.navigateUp() },
+                            onFollow = {
+                                viewModel.send(
+                                    UserProfileUiIntent.Follow(
+                                        it.get { portrait },
+                                        account!!.tbs,
+                                    )
+                                )
+                            },
+                            onUnfollow = {
+                                viewModel.send(
+                                    UserProfileUiIntent.Unfollow(
+                                        it.get { portrait },
+                                        account!!.tbs,
+                                    )
+                                )
+                            },
+                            onSetUserBlack = { viewModel.send(UserProfileUiIntent.GetUserBlackInfo(uid)) },
                         )
-                    },
-                    onUnfollow = {
-                        viewModel.send(
-                            UserProfileUiIntent.Unfollow(
-                                it.get { portrait },
-                                account!!.tbs,
-                            )
-                        )
-                    },
-                    onSetUserBlack = { viewModel.send(UserProfileUiIntent.GetUserBlackInfo(uid)) },
-                )
+                    }
+                }
             }
         }
-    }
 }
 
 @ExperimentalMaterialApi

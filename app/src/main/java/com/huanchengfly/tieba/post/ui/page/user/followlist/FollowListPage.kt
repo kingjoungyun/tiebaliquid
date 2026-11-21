@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageHost
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.api.models.FollowListBean
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
@@ -77,187 +78,191 @@ fun FollowListPage(
     navigator: DestinationsNavigator,
     viewModel: FollowListViewModel = pageViewModel(),
 ) {
-    val showActions = (uid == 0L || uid == AccountUtil.LocalAccount.current?.uid?.toLong())
-
-    fun refresh() {
-        if (showActions) {
-            viewModel.send(FollowListUiIntent.Refresh())
-        } else {
-            viewModel.send(FollowListUiIntent.Refresh(uid))
-        }
-    }
-
-    LazyLoad(loaded = viewModel.initialized) {
-        refresh()
-        viewModel.initialized = true
-    }
-    val isRefreshing by viewModel.uiState.collectPartialAsState(
-        prop1 = FollowListUiState::isRefreshing,
-        initial = true
-    )
-    val isLoadingMore by viewModel.uiState.collectPartialAsState(
-        prop1 = FollowListUiState::isLoadingMore,
-        initial = false
-    )
-    val error by viewModel.uiState.collectPartialAsState(
-        prop1 = FollowListUiState::error,
-        initial = null
-    )
-    val currentPage by viewModel.uiState.collectPartialAsState(
-        prop1 = FollowListUiState::currentPage,
-        initial = 1
-    )
-    val hasMore by viewModel.uiState.collectPartialAsState(
-        prop1 = FollowListUiState::hasMore,
-        initial = false
-    )
-    val totalFollowNum by viewModel.uiState.collectPartialAsState(
-        prop1 = FollowListUiState::totalFollowNum,
-        initial = 0
-    )
-    val tipsText by viewModel.uiState.collectPartialAsState(
-        prop1 = FollowListUiState::tipsText,
-        initial = null
-    )
-    val users by viewModel.uiState.collectPartialAsState(
-        prop1 = FollowListUiState::users,
-        initial = persistentListOf()
-    )
-    val unfollowedIds by viewModel.uiState.collectPartialAsState(
-        prop1 = FollowListUiState::unfollowedIds,
-        initial = emptySet()
-    )
-
-    var filter by rememberSaveable { mutableStateOf(FollowListFilter.All) }
-
-    val isEmpty by remember {
-        derivedStateOf { users.isEmpty() }
-    }
-    val isError by remember {
-        derivedStateOf { error != null }
-    }
-
-    val displayUsers = remember(users, filter) {
-        when (filter) {
-            FollowListFilter.All -> users
-            FollowListFilter.Mutual -> users.filter { it.hasConcerned == 2 }
-        }
-    }
-
-    MyScaffold(
-        topBar = {
-            TitleCentredToolbar(
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.title_follow_list),
-                        style = MaterialTheme.typography.h6,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
+        // P1：页级 backdrop host —— 本页的菜单/动作面板要能采到这一页的真实内容。
+        // 页面内容进 sampledContent（活 backdrop，整页录制）；页内玻璃控件会自动走自带纯色 host。
+        GlassPageHost(modifier = Modifier.fillMaxSize()) {
+            val showActions = (uid == 0L || uid == AccountUtil.LocalAccount.current?.uid?.toLong())
+    
+            fun refresh() {
+                if (showActions) {
+                    viewModel.send(FollowListUiIntent.Refresh())
+                } else {
+                    viewModel.send(FollowListUiIntent.Refresh(uid))
                 }
+            }
+    
+            LazyLoad(loaded = viewModel.initialized) {
+                refresh()
+                viewModel.initialized = true
+            }
+            val isRefreshing by viewModel.uiState.collectPartialAsState(
+                prop1 = FollowListUiState::isRefreshing,
+                initial = true
             )
-        }
-    ) { contentPaddings ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPaddings)
-        ) {
-            FollowListHeader(
-                filter = filter,
-                onFilterChange = { filter = it },
-                totalFollowNum = totalFollowNum,
-                tipsText = tipsText,
-                showFilter = showActions,
+            val isLoadingMore by viewModel.uiState.collectPartialAsState(
+                prop1 = FollowListUiState::isLoadingMore,
+                initial = false
             )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-            ) {
-                StateScreen(
-                    modifier = Modifier.fillMaxSize(),
-                    isEmpty = isEmpty,
-                    isError = isError,
-                    isLoading = isRefreshing,
-                    onReload = ::refresh,
-                    errorScreen = { ErrorScreen(error = error.getOrNull()) },
-                ) {
-                    val pullRefreshState = rememberPullRefreshState(
-                        refreshing = isRefreshing,
-                        onRefresh = ::refresh
+            val error by viewModel.uiState.collectPartialAsState(
+                prop1 = FollowListUiState::error,
+                initial = null
+            )
+            val currentPage by viewModel.uiState.collectPartialAsState(
+                prop1 = FollowListUiState::currentPage,
+                initial = 1
+            )
+            val hasMore by viewModel.uiState.collectPartialAsState(
+                prop1 = FollowListUiState::hasMore,
+                initial = false
+            )
+            val totalFollowNum by viewModel.uiState.collectPartialAsState(
+                prop1 = FollowListUiState::totalFollowNum,
+                initial = 0
+            )
+            val tipsText by viewModel.uiState.collectPartialAsState(
+                prop1 = FollowListUiState::tipsText,
+                initial = null
+            )
+            val users by viewModel.uiState.collectPartialAsState(
+                prop1 = FollowListUiState::users,
+                initial = persistentListOf()
+            )
+            val unfollowedIds by viewModel.uiState.collectPartialAsState(
+                prop1 = FollowListUiState::unfollowedIds,
+                initial = emptySet()
+            )
+    
+            var filter by rememberSaveable { mutableStateOf(FollowListFilter.All) }
+    
+            val isEmpty by remember {
+                derivedStateOf { users.isEmpty() }
+            }
+            val isError by remember {
+                derivedStateOf { error != null }
+            }
+    
+            val displayUsers = remember(users, filter) {
+                when (filter) {
+                    FollowListFilter.All -> users
+                    FollowListFilter.Mutual -> users.filter { it.hasConcerned == 2 }
+                }
+            }
+    
+            MyScaffold(
+                topBar = {
+                    TitleCentredToolbar(
+                        title = {
+                            Text(
+                                text = stringResource(id = R.string.title_follow_list),
+                                style = MaterialTheme.typography.h6,
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        navigationIcon = {
+                            BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
+                        }
                     )
-                    val lazyListState = rememberLazyListState()
+                }
+            ) { contentPaddings ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(contentPaddings)
+                ) {
+                    FollowListHeader(
+                        filter = filter,
+                        onFilterChange = { filter = it },
+                        totalFollowNum = totalFollowNum,
+                        tipsText = tipsText,
+                        showFilter = showActions,
+                    )
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .pullRefresh(pullRefreshState)
+                            .fillMaxWidth()
+                            .weight(1f)
                     ) {
-                        LoadMoreLayout(
-                            isLoading = isLoadingMore,
-                            onLoadMore = {
-                                if (hasMore) {
-                                    if (showActions) {
-                                        viewModel.send(FollowListUiIntent.LoadMore(currentPage))
-                                    } else {
-                                        viewModel.send(FollowListUiIntent.LoadMore(currentPage, uid))
-                                    }
-                                }
-                            },
-                            loadEnd = !hasMore,
-                            lazyListState = lazyListState
+                        StateScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            isEmpty = isEmpty,
+                            isError = isError,
+                            isLoading = isRefreshing,
+                            onReload = ::refresh,
+                            errorScreen = { ErrorScreen(error = error.getOrNull()) },
                         ) {
-                            FollowList(
-                                data = displayUsers,
-                                unfollowedIds = unfollowedIds,
-                                showButton = showActions,
-                                onUnfollow = { item ->
-                                    val portrait = item.portrait
-                                    val tbs = AccountUtil.getAccountInfo { this.tbs }
-                                    if (portrait != null && tbs != null) {
-                                        viewModel.send(
-                                            FollowListUiIntent.Unfollow(
-                                                item.id,
-                                                portrait,
-                                                tbs
-                                            )
-                                        )
-                                    }
-                                },
-                                onFollow = { item ->
-                                    val portrait = item.portrait
-                                    val tbs = AccountUtil.getAccountInfo { this.tbs }
-                                    if (portrait != null && tbs != null) {
-                                        viewModel.send(
-                                            FollowListUiIntent.Follow(
-                                                item.id,
-                                                portrait,
-                                                tbs
-                                            )
-                                        )
-                                    }
-                                },
-                                onClick = { item ->
-                                    navigator.navigate(UserProfilePageDestination(item.id))
-                                },
-                                lazyListState = lazyListState
+                            val pullRefreshState = rememberPullRefreshState(
+                                refreshing = isRefreshing,
+                                onRefresh = ::refresh
                             )
+                            val lazyListState = rememberLazyListState()
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .pullRefresh(pullRefreshState)
+                            ) {
+                                LoadMoreLayout(
+                                    isLoading = isLoadingMore,
+                                    onLoadMore = {
+                                        if (hasMore) {
+                                            if (showActions) {
+                                                viewModel.send(FollowListUiIntent.LoadMore(currentPage))
+                                            } else {
+                                                viewModel.send(FollowListUiIntent.LoadMore(currentPage, uid))
+                                            }
+                                        }
+                                    },
+                                    loadEnd = !hasMore,
+                                    lazyListState = lazyListState
+                                ) {
+                                    FollowList(
+                                        data = displayUsers,
+                                        unfollowedIds = unfollowedIds,
+                                        showButton = showActions,
+                                        onUnfollow = { item ->
+                                            val portrait = item.portrait
+                                            val tbs = AccountUtil.getAccountInfo { this.tbs }
+                                            if (portrait != null && tbs != null) {
+                                                viewModel.send(
+                                                    FollowListUiIntent.Unfollow(
+                                                        item.id,
+                                                        portrait,
+                                                        tbs
+                                                    )
+                                                )
+                                            }
+                                        },
+                                        onFollow = { item ->
+                                            val portrait = item.portrait
+                                            val tbs = AccountUtil.getAccountInfo { this.tbs }
+                                            if (portrait != null && tbs != null) {
+                                                viewModel.send(
+                                                    FollowListUiIntent.Follow(
+                                                        item.id,
+                                                        portrait,
+                                                        tbs
+                                                    )
+                                                )
+                                            }
+                                        },
+                                        onClick = { item ->
+                                            navigator.navigate(UserProfilePageDestination(item.id))
+                                        },
+                                        lazyListState = lazyListState
+                                    )
+                                }
+    
+                                PullRefreshIndicator(
+                                    refreshing = isRefreshing,
+                                    state = pullRefreshState,
+                                    modifier = Modifier.align(Alignment.TopCenter),
+                                    backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
+                                    contentColor = ExtendedTheme.colors.primary,
+                                )
+                            }
                         }
-
-                        PullRefreshIndicator(
-                            refreshing = isRefreshing,
-                            state = pullRefreshState,
-                            modifier = Modifier.align(Alignment.TopCenter),
-                            backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                            contentColor = ExtendedTheme.colors.primary,
-                        )
                     }
                 }
             }
         }
-    }
 }
 
 @Composable

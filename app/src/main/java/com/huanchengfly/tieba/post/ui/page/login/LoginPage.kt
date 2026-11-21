@@ -37,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageHost
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.api.retrofit.exception.getErrorMessage
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
@@ -78,161 +79,165 @@ const val LOGIN_URL =
 fun LoginPage(
     navigator: DestinationsNavigator,
 ) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val webViewState = rememberSaveableWebViewState()
-    val webViewNavigator = rememberWebViewNavigator()
-    var loaded by rememberSaveable {
-        mutableStateOf(false)
-    }
-    var pageTitle by rememberSaveable {
-        mutableStateOf("")
-    }
-    val displayPageTitle by remember {
-        derivedStateOf {
-            pageTitle.ifEmpty {
-                context.getString(R.string.title_default)
+        // P1：页级 backdrop host —— 本页的菜单/动作面板要能采到这一页的真实内容。
+        // 页面内容进 sampledContent（活 backdrop，整页录制）；页内玻璃控件会自动走自带纯色 host。
+        GlassPageHost(modifier = Modifier.fillMaxSize()) {
+            val context = LocalContext.current
+            val coroutineScope = rememberCoroutineScope()
+            val webViewState = rememberSaveableWebViewState()
+            val webViewNavigator = rememberWebViewNavigator()
+            var loaded by rememberSaveable {
+                mutableStateOf(false)
             }
-        }
-    }
-    val currentHost by remember {
-        derivedStateOf {
-            webViewState.lastLoadedUrl?.toUri()?.host.orEmpty().lowercase()
-        }
-    }
-    val isExternalHost by remember {
-        derivedStateOf {
-            currentHost.isNotEmpty() && !isInternalHost(currentHost)
-        }
-    }
-
-    DisposableEffect(Unit) {
-        val job = coroutineScope.launch {
-            snapshotFlow { webViewState.pageTitle }
-                .filterNotNull()
-                .filter { it.isNotEmpty() }
-                .cancellable()
-                .collect {
-                    pageTitle = it
-                }
-        }
-        onDispose {
-            job.cancel()
-        }
-    }
-
-    LazyLoad(loaded = loaded) {
-        webViewNavigator.loadUrl(LOGIN_URL)
-        loaded = true
-    }
-
-    val isLoading by remember {
-        derivedStateOf {
-            webViewState.loadingState is LoadingState.Loading
-        }
-    }
-
-    val progress by remember {
-        derivedStateOf {
-            webViewState.loadingState.let {
-                if (it is LoadingState.Loading) {
-                    it.progress
-                } else {
-                    0f
+            var pageTitle by rememberSaveable {
+                mutableStateOf("")
+            }
+            val displayPageTitle by remember {
+                derivedStateOf {
+                    pageTitle.ifEmpty {
+                        context.getString(R.string.title_default)
+                    }
                 }
             }
-        }
-    }
-
-    val animatedProgress by animateFloatAsState(targetValue = progress, label = "progress")
-
-    MyScaffold(
-        topBar = {
-            Toolbar(
-                title = {
-                    Column {
-                        Text(
-                            text = displayPageTitle,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        if (isExternalHost) {
-                            Text(
-                                text = currentHost,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color = ExtendedTheme.colors.onTopBarSecondary,
-                                style = MaterialTheme.typography.caption
-                            )
+            val currentHost by remember {
+                derivedStateOf {
+                    webViewState.lastLoadedUrl?.toUri()?.host.orEmpty().lowercase()
+                }
+            }
+            val isExternalHost by remember {
+                derivedStateOf {
+                    currentHost.isNotEmpty() && !isInternalHost(currentHost)
+                }
+            }
+    
+            DisposableEffect(Unit) {
+                val job = coroutineScope.launch {
+                    snapshotFlow { webViewState.pageTitle }
+                        .filterNotNull()
+                        .filter { it.isNotEmpty() }
+                        .cancellable()
+                        .collect {
+                            pageTitle = it
+                        }
+                }
+                onDispose {
+                    job.cancel()
+                }
+            }
+    
+            LazyLoad(loaded = loaded) {
+                webViewNavigator.loadUrl(LOGIN_URL)
+                loaded = true
+            }
+    
+            val isLoading by remember {
+                derivedStateOf {
+                    webViewState.loadingState is LoadingState.Loading
+                }
+            }
+    
+            val progress by remember {
+                derivedStateOf {
+                    webViewState.loadingState.let {
+                        if (it is LoadingState.Loading) {
+                            it.progress
+                        } else {
+                            0f
                         }
                     }
-                },
-                navigationIcon = { BackNavigationIcon(onBackPressed = { navigator.navigateUp() }) },
-                actions = {
-                    val menuState = rememberMenuState()
-                    ClickMenu(
-                        menuContent = {
-                            DropdownMenuItem(
-                                onClick = {
-                                    webViewNavigator.reload()
-                                    dismiss()
+                }
+            }
+    
+            val animatedProgress by animateFloatAsState(targetValue = progress, label = "progress")
+    
+            MyScaffold(
+                topBar = {
+                    Toolbar(
+                        title = {
+                            Column {
+                                Text(
+                                    text = displayPageTitle,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                if (isExternalHost) {
+                                    Text(
+                                        text = currentHost,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        color = ExtendedTheme.colors.onTopBarSecondary,
+                                        style = MaterialTheme.typography.caption
+                                    )
                                 }
-                            ) {
-                                Text(text = stringResource(id = R.string.title_refresh))
                             }
                         },
-                        menuState = menuState,
-                        triggerShape = CircleShape
-                    ) {
-                        Box(
-                            modifier = Modifier.size(48.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.MoreVert,
-                                contentDescription = stringResource(id = R.string.btn_more)
-                            )
-                        }
-                    }
-                },
-            )
-        }
-    ) { paddingValues ->
-        Box {
-            val snackbarHostState = LocalSnackbarHostState.current
-            WebView(
-                state = webViewState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                navigator = webViewNavigator,
-                onCreated = {
-                    it.settings.apply {
-                        javaScriptEnabled = true
-                        domStorageEnabled = true
-                        setSupportZoom(true)
-                        builtInZoomControls = true
-                        displayZoomControls = false
-                    }
-                },
-                client = remember(navigator) {
-                    LoginWebViewClient(
-                        navigator,
-                        coroutineScope,
-                        snackbarHostState
+                        navigationIcon = { BackNavigationIcon(onBackPressed = { navigator.navigateUp() }) },
+                        actions = {
+                            val menuState = rememberMenuState()
+                            ClickMenu(
+                                menuContent = {
+                                    DropdownMenuItem(
+                                        onClick = {
+                                            webViewNavigator.reload()
+                                            dismiss()
+                                        }
+                                    ) {
+                                        Text(text = stringResource(id = R.string.title_refresh))
+                                    }
+                                },
+                                menuState = menuState,
+                                triggerShape = CircleShape
+                            ) {
+                                Box(
+                                    modifier = Modifier.size(48.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.MoreVert,
+                                        contentDescription = stringResource(id = R.string.btn_more)
+                                    )
+                                }
+                            }
+                        },
                     )
-                },
-                chromeClient = remember { MyWebChromeClient(context, coroutineScope) }
-            )
-
-            if (isLoading) {
-                LinearProgressIndicator(
-                    progress = animatedProgress,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                }
+            ) { paddingValues ->
+                Box {
+                    val snackbarHostState = LocalSnackbarHostState.current
+                    WebView(
+                        state = webViewState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        navigator = webViewNavigator,
+                        onCreated = {
+                            it.settings.apply {
+                                javaScriptEnabled = true
+                                domStorageEnabled = true
+                                setSupportZoom(true)
+                                builtInZoomControls = true
+                                displayZoomControls = false
+                            }
+                        },
+                        client = remember(navigator) {
+                            LoginWebViewClient(
+                                navigator,
+                                coroutineScope,
+                                snackbarHostState
+                            )
+                        },
+                        chromeClient = remember { MyWebChromeClient(context, coroutineScope) }
+                    )
+    
+                    if (isLoading) {
+                        LinearProgressIndicator(
+                            progress = animatedProgress,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
         }
-    }
 }
 
 class LoginWebViewClient(

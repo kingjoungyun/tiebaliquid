@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageHost
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.arch.onEvent
@@ -57,157 +58,161 @@ fun HistoryListPage(
     type: Int,
     viewModel: HistoryListViewModel = if (type == HistoryUtil.TYPE_THREAD) pageViewModel<ThreadHistoryListViewModel>() else pageViewModel<ForumHistoryListViewModel>()
 ) {
-    LazyLoad(loaded = viewModel.initialized) {
-        viewModel.send(HistoryListUiIntent.Refresh)
-        viewModel.initialized = true
-    }
-    onGlobalEvent<HistoryListUiEvent.DeleteAll> {
-        viewModel.send(HistoryListUiIntent.DeleteAll)
-    }
-    val isLoadingMore by viewModel.uiState.collectPartialAsState(
-        prop1 = HistoryListUiState::isLoadingMore,
-        initial = false
-    )
-    val hasMore by viewModel.uiState.collectPartialAsState(
-        prop1 = HistoryListUiState::hasMore,
-        initial = true
-    )
-    val currentPage by viewModel.uiState.collectPartialAsState(
-        prop1 = HistoryListUiState::currentPage,
-        initial = 0
-    )
-    val todayHistoryData by viewModel.uiState.collectPartialAsState(
-        prop1 = HistoryListUiState::todayHistoryData,
-        initial = emptyList()
-    )
-    val beforeHistoryData by viewModel.uiState.collectPartialAsState(
-        prop1 = HistoryListUiState::beforeHistoryData,
-        initial = emptyList()
-    )
-
-    val context = LocalContext.current
-    val navigator = LocalNavigator.current
-    val snackbarHostState = LocalSnackbarHostState.current
-    viewModel.onEvent<HistoryListUiEvent.Delete.Failure> {
-        snackbarHostState.showSnackbar(
-            context.getString(
-                R.string.delete_history_failure,
-                it.errorMsg
+        // P1：页级 backdrop host —— 本页的菜单/动作面板要能采到这一页的真实内容。
+        // 页面内容进 sampledContent（活 backdrop，整页录制）；页内玻璃控件会自动走自带纯色 host。
+        GlassPageHost(modifier = Modifier.fillMaxSize()) {
+            LazyLoad(loaded = viewModel.initialized) {
+                viewModel.send(HistoryListUiIntent.Refresh)
+                viewModel.initialized = true
+            }
+            onGlobalEvent<HistoryListUiEvent.DeleteAll> {
+                viewModel.send(HistoryListUiIntent.DeleteAll)
+            }
+            val isLoadingMore by viewModel.uiState.collectPartialAsState(
+                prop1 = HistoryListUiState::isLoadingMore,
+                initial = false
             )
-        )
-    }
-    viewModel.onEvent<HistoryListUiEvent.Delete.Success> {
-        snackbarHostState.showSnackbar(context.getString(R.string.delete_history_success))
-    }
-    val lazyListState = rememberLazyListState()
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        LoadMoreLayout(
-            isLoading = isLoadingMore,
-            onLoadMore = { viewModel.send(HistoryListUiIntent.LoadMore(currentPage + 1)) },
-            loadEnd = !hasMore,
-            lazyListState = lazyListState,
-            isEmpty = todayHistoryData.isEmpty() && beforeHistoryData.isEmpty()
-        ) {
-            MyLazyColumn(
+            val hasMore by viewModel.uiState.collectPartialAsState(
+                prop1 = HistoryListUiState::hasMore,
+                initial = true
+            )
+            val currentPage by viewModel.uiState.collectPartialAsState(
+                prop1 = HistoryListUiState::currentPage,
+                initial = 0
+            )
+            val todayHistoryData by viewModel.uiState.collectPartialAsState(
+                prop1 = HistoryListUiState::todayHistoryData,
+                initial = emptyList()
+            )
+            val beforeHistoryData by viewModel.uiState.collectPartialAsState(
+                prop1 = HistoryListUiState::beforeHistoryData,
+                initial = emptyList()
+            )
+    
+            val context = LocalContext.current
+            val navigator = LocalNavigator.current
+            val snackbarHostState = LocalSnackbarHostState.current
+            viewModel.onEvent<HistoryListUiEvent.Delete.Failure> {
+                snackbarHostState.showSnackbar(
+                    context.getString(
+                        R.string.delete_history_failure,
+                        it.errorMsg
+                    )
+                )
+            }
+            viewModel.onEvent<HistoryListUiEvent.Delete.Success> {
+                snackbarHostState.showSnackbar(context.getString(R.string.delete_history_success))
+            }
+            val lazyListState = rememberLazyListState()
+            Box(
                 modifier = Modifier
-                    .fillMaxSize(),
-                state = lazyListState
+                    .fillMaxSize()
             ) {
-                if (todayHistoryData.isNotEmpty()) {
-                    stickyHeader(key = "TodayHistoryHeader") {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(ExtendedTheme.colors.background)
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                        ) {
-                            Chip(
-                                text = stringResource(id = R.string.title_history_today),
-                                invertColor = true
-                            )
-                        }
-                    }
-                    items(
-                        items = todayHistoryData,
-                        key = { it.id }
-                    ) { info ->
-                        HistoryItem(
-                            info,
-                            onDelete = {
-                                viewModel.send(HistoryListUiIntent.Delete(it.id))
-                            },
-                            onClick = {
-                                when (it.type) {
-                                    HistoryUtil.TYPE_FORUM -> {
-                                        navigator.navigate(ForumPageDestination(it.data))
-                                    }
-
-                                    HistoryUtil.TYPE_THREAD -> {
-                                        val extra =
-                                            if (it.extras != null) it.extras.fromJson<ThreadHistoryInfoBean>() else null
-                                        navigator.navigate(
-                                            ThreadPageDestination(
-                                                it.data.toLong(),
-                                                postId = extra?.pid?.toLongOrNull() ?: 0L,
-                                                seeLz = extra?.isSeeLz ?: false,
-                                                from = ThreadPageFrom.FROM_HISTORY
-                                            )
-                                        )
-                                    }
+                LoadMoreLayout(
+                    isLoading = isLoadingMore,
+                    onLoadMore = { viewModel.send(HistoryListUiIntent.LoadMore(currentPage + 1)) },
+                    loadEnd = !hasMore,
+                    lazyListState = lazyListState,
+                    isEmpty = todayHistoryData.isEmpty() && beforeHistoryData.isEmpty()
+                ) {
+                    MyLazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        state = lazyListState
+                    ) {
+                        if (todayHistoryData.isNotEmpty()) {
+                            stickyHeader(key = "TodayHistoryHeader") {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(ExtendedTheme.colors.background)
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                ) {
+                                    Chip(
+                                        text = stringResource(id = R.string.title_history_today),
+                                        invertColor = true
+                                    )
                                 }
                             }
-                        )
-                    }
-                }
-                if (beforeHistoryData.isNotEmpty()) {
-                    stickyHeader(key = "BeforeHistoryHeader") {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(ExtendedTheme.colors.background)
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                        ) {
-                            Chip(text = stringResource(id = R.string.title_history_before))
+                            items(
+                                items = todayHistoryData,
+                                key = { it.id }
+                            ) { info ->
+                                HistoryItem(
+                                    info,
+                                    onDelete = {
+                                        viewModel.send(HistoryListUiIntent.Delete(it.id))
+                                    },
+                                    onClick = {
+                                        when (it.type) {
+                                            HistoryUtil.TYPE_FORUM -> {
+                                                navigator.navigate(ForumPageDestination(it.data))
+                                            }
+    
+                                            HistoryUtil.TYPE_THREAD -> {
+                                                val extra =
+                                                    if (it.extras != null) it.extras.fromJson<ThreadHistoryInfoBean>() else null
+                                                navigator.navigate(
+                                                    ThreadPageDestination(
+                                                        it.data.toLong(),
+                                                        postId = extra?.pid?.toLongOrNull() ?: 0L,
+                                                        seeLz = extra?.isSeeLz ?: false,
+                                                        from = ThreadPageFrom.FROM_HISTORY
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+                                )
+                            }
                         }
-                    }
-                    items(
-                        items = beforeHistoryData,
-                        key = { it.id }
-                    ) { info ->
-                        HistoryItem(
-                            info,
-                            onDelete = {
-                                viewModel.send(HistoryListUiIntent.Delete(it.id))
-                            },
-                            onClick = {
-                                when (it.type) {
-                                    HistoryUtil.TYPE_FORUM -> {
-                                        navigator.navigate(ForumPageDestination(it.data))
-                                    }
-
-                                    HistoryUtil.TYPE_THREAD -> {
-                                        val extra =
-                                            if (it.extras != null) it.extras.fromJson<ThreadHistoryInfoBean>() else null
-                                        navigator.navigate(
-                                            ThreadPageDestination(
-                                                it.data.toLong(),
-                                                postId = extra?.pid?.toLongOrNull() ?: 0L,
-                                                seeLz = extra?.isSeeLz ?: false,
-                                                from = ThreadPageFrom.FROM_HISTORY
-                                            )
-                                        )
-                                    }
+                        if (beforeHistoryData.isNotEmpty()) {
+                            stickyHeader(key = "BeforeHistoryHeader") {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(ExtendedTheme.colors.background)
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                ) {
+                                    Chip(text = stringResource(id = R.string.title_history_before))
                                 }
                             }
-                        )
+                            items(
+                                items = beforeHistoryData,
+                                key = { it.id }
+                            ) { info ->
+                                HistoryItem(
+                                    info,
+                                    onDelete = {
+                                        viewModel.send(HistoryListUiIntent.Delete(it.id))
+                                    },
+                                    onClick = {
+                                        when (it.type) {
+                                            HistoryUtil.TYPE_FORUM -> {
+                                                navigator.navigate(ForumPageDestination(it.data))
+                                            }
+    
+                                            HistoryUtil.TYPE_THREAD -> {
+                                                val extra =
+                                                    if (it.extras != null) it.extras.fromJson<ThreadHistoryInfoBean>() else null
+                                                navigator.navigate(
+                                                    ThreadPageDestination(
+                                                        it.data.toLong(),
+                                                        postId = extra?.pid?.toLongOrNull() ?: 0L,
+                                                        seeLz = extra?.isSeeLz ?: false,
+                                                        from = ThreadPageFrom.FROM_HISTORY
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
-    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
