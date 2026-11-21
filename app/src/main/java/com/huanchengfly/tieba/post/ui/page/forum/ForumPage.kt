@@ -98,6 +98,7 @@ import com.huanchengfly.tieba.post.models.ForumHistoryExtra
 import com.huanchengfly.tieba.post.models.database.History
 import com.huanchengfly.tieba.post.toastShort
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import io.github.neoruaa.glasmio.core.GlasmioTheme
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumDetailPageDestination
@@ -579,7 +580,65 @@ fun ForumPage(
         } else context.toastShort(R.string.toast_add_thread_failed)
     }
 
+    // 吧页的风格开关（GLASMIO / LEGACY）。两条分支共用下面这一整套页面逻辑，只换外壳。
+    val glassmio = ForumPageUi.DefaultStyle == ForumPageUiStyle.GLASMIO
+    // 顶栏与悬浮条共用的「更多」菜单内容（分享 / 发送到桌面 / 取消关注）
+    val forumMenuContent: @Composable MenuScope.() -> Unit = {
+        DropdownMenuItem(
+            onClick = {
+                shareForum(context, forumName)
+                dismiss()
+            }
+        ) {
+            Text(text = stringResource(id = R.string.title_share))
+        }
+        DropdownMenuItem(
+            onClick = {
+                if (forumInfo != null) {
+                    val (forum) = forumInfo!!
+                    coroutineScope.launch {
+                        sendToDesktop(
+                            context,
+                            forum,
+                            onSuccess = {
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = context.getString(
+                                            R.string.toast_send_to_desktop_success
+                                        )
+                                    )
+                                }
+                            },
+                            onFailure = {
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = context.getString(
+                                            R.string.toast_send_to_desktop_failed,
+                                            it
+                                        )
+                                    )
+                                }
+                            }
+                        )
+                    }
+                }
+                dismiss()
+            }
+        ) {
+            Text(text = stringResource(id = R.string.title_send_to_desktop))
+        }
+        DropdownMenuItem(
+            onClick = {
+                unlikeDialogState.show()
+                dismiss()
+            }
+        ) {
+            Text(text = stringResource(id = R.string.title_unfollow))
+        }
+    }
+
     ProvideNavigator(navigator = navigator) {
+        ForumPageSkin(enabled = glassmio) {
         StateScreen(
             modifier = Modifier.fillMaxSize(),
             isEmpty = forumInfo == null,
@@ -602,64 +661,30 @@ fun ForumPage(
                 backgroundColor = Color.Transparent,
                 modifier = Modifier.fillMaxSize(),
                 topBar = {
-                    ForumToolbar(
-                        forumName = forumName,
-                        showTitle = !isShowTopBarArea,
-                        menuContent = {
-                            DropdownMenuItem(
-                                onClick = {
-                                    shareForum(context, forumName)
-                                    dismiss()
+                    // GLASMIO：顶栏本体透明、只有两个 40dp 圆形按钮（返回 / 搜索 / ⋯），
+                    // 没有标题、没有背景色——视觉上等同「无顶栏」，但保留了二级页必须的返回与菜单落点。
+                    if (!glassmio) {
+                        ForumToolbar(
+                            forumName = forumName,
+                            showTitle = !isShowTopBarArea,
+                            menuContent = forumMenuContent,
+                            forumId = forumInfo?.get { id }
+                        )
+                    } else {
+                        ForumTopBar(
+                            showSearch = forumInfo != null,
+                            menuContent = forumMenuContent,
+                            onBack = { navigator.navigateUp() },
+                            onSearch = {
+                                val forumId = forumInfo?.get { id }
+                                if (forumId != null) {
+                                    navigator.navigate(
+                                        ForumSearchPostPageDestination(forumName, forumId)
+                                    )
                                 }
-                            ) {
-                                Text(text = stringResource(id = R.string.title_share))
-                            }
-                            DropdownMenuItem(
-                                onClick = {
-                                    if (forumInfo != null) {
-                                        val (forum) = forumInfo!!
-                                        coroutineScope.launch {
-                                            sendToDesktop(
-                                                context,
-                                                forum,
-                                                onSuccess = {
-                                                    coroutineScope.launch {
-                                                        snackbarHostState.showSnackbar(
-                                                            message = context.getString(
-                                                                R.string.toast_send_to_desktop_success
-                                                            )
-                                                        )
-                                                    }
-                                                },
-                                                onFailure = {
-                                                    coroutineScope.launch {
-                                                        snackbarHostState.showSnackbar(
-                                                            message = context.getString(
-                                                                R.string.toast_send_to_desktop_failed,
-                                                                it
-                                                            )
-                                                        )
-                                                    }
-                                                }
-                                            )
-                                        }
-                                    }
-                                    dismiss()
-                                }
-                            ) {
-                                Text(text = stringResource(id = R.string.title_send_to_desktop))
-                            }
-                            DropdownMenuItem(
-                                onClick = {
-                                    unlikeDialogState.show()
-                                    dismiss()
-                                }
-                            ) {
-                                Text(text = stringResource(id = R.string.title_unfollow))
-                            }
-                        },
-                        forumId = forumInfo?.get { id }
-                    )
+                            },
+                        )
+                    }
                 },
                 floatingActionButton = {
                     if (context.appPreferences.forumFabFunction != "hide"
@@ -799,7 +824,7 @@ fun ForumPage(
                     Box(
                         modifier = Modifier
                             .padding(contentPadding)
-                            .nestedScroll(headerNestedScrollConnection)
+                                                        .nestedScroll(headerNestedScrollConnection)
                     ) {
                         Column {
                             val containerHeight by remember {
@@ -825,49 +850,117 @@ fun ForumPage(
                                         }
                                 ) {
                                     forumInfo?.let { holder ->
-                                        ForumHeader(
-                                            forumInfoImmutableHolder = holder,
-                                            onOpenForumInfo = {
-                                                navigator.navigate(
-                                                    ForumDetailPageDestination(
-                                                        forumId = holder.get { this.id })
-                                                )
-                                            },
-                                            onBtnClick = {
-                                                val (forum) = holder
-                                                when {
-                                                    forum.is_like != 1 -> viewModel.send(
-                                                        ForumUiIntent.Like(
-                                                            forum.id,
-                                                            forum.name,
-                                                            tbs ?: account!!.tbs
+                                        if (glassmio) {
+                                            // 大标题（吧名）+ 吧头卡片：大标题随 header 一起收起。
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    // 顶部留一条给悬浮按钮（返回 / 搜索 / ⋯）：40dp 按钮 + 上下各 4dp。
+                                                    .padding(
+                                                        start = 16.dp,
+                                                        end = 16.dp,
+                                                        top = 8.dp,
+                                                        bottom = 4.dp,
+                                                    ),
+                                            ) {
+                                                ForumLargeTitle(text = stringResource(
+                                                    id = R.string.title_forum,
+                                                    forumName,
+                                                ))
+                                                Spacer(modifier = Modifier.height(10.dp))
+                                                GlasmioForumHeaderCard(
+                                                    forumInfoImmutableHolder = holder,
+                                                    onOpenForumInfo = {
+                                                        navigator.navigate(
+                                                            ForumDetailPageDestination(
+                                                                forumId = holder.get { this.id })
                                                         )
-                                                    )
+                                                    },
+                                                    onBtnClick = {
+                                                        val (forum) = holder
+                                                        when {
+                                                            forum.is_like != 1 -> viewModel.send(
+                                                                ForumUiIntent.Like(
+                                                                    forum.id,
+                                                                    forum.name,
+                                                                    tbs ?: account!!.tbs
+                                                                )
+                                                            )
 
-                                                    forum.sign_in_info?.user_info?.is_sign_in != 1 -> {
-                                                        viewModel.send(
-                                                            ForumUiIntent.SignIn(
+                                                            forum.sign_in_info?.user_info?.is_sign_in != 1 -> {
+                                                                viewModel.send(
+                                                                    ForumUiIntent.SignIn(
+                                                                        forum.id,
+                                                                        forum.name,
+                                                                        tbs ?: account!!.tbs
+                                                                    )
+                                                                )
+                                                            }
+                                                        }
+                                                    },
+                                                    showAction = account != null &&
+                                                        !context.appPreferences.safeMode,
+                                                )
+                                            }
+                                        } else {
+                                            ForumHeader(
+                                                forumInfoImmutableHolder = holder,
+                                                onOpenForumInfo = {
+                                                    navigator.navigate(
+                                                        ForumDetailPageDestination(
+                                                            forumId = holder.get { this.id })
+                                                    )
+                                                },
+                                                onBtnClick = {
+                                                    val (forum) = holder
+                                                    when {
+                                                        forum.is_like != 1 -> viewModel.send(
+                                                            ForumUiIntent.Like(
                                                                 forum.id,
                                                                 forum.name,
                                                                 tbs ?: account!!.tbs
                                                             )
                                                         )
+
+                                                        forum.sign_in_info?.user_info?.is_sign_in != 1 -> {
+                                                            viewModel.send(
+                                                                ForumUiIntent.SignIn(
+                                                                    forum.id,
+                                                                    forum.name,
+                                                                    tbs ?: account!!.tbs
+                                                                )
+                                                            )
+                                                        }
                                                     }
-                                                }
-                                            },
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(16.dp)
-                                        )
+                                                },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
 
-                            val tabTextStyle = MaterialTheme.typography.button.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                letterSpacing = 0.sp
-                            )
+                            val tabTextStyle = if (glassmio) {
+                                MaterialTheme.typography.body1.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 15.sp,
+                                    letterSpacing = 0.sp
+                                )
+                            } else {
+                                MaterialTheme.typography.button.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    letterSpacing = 0.sp
+                                )
+                            }
+                            val tabSelectedColor =
+                                if (glassmio) GlasmioTheme.colors.content
+                                else ExtendedTheme.colors.primary
+                            val tabUnselectedColor =
+                                if (glassmio) GlasmioTheme.colors.secondaryContent
+                                else ExtendedTheme.colors.textSecondary
 
                             ScrollableTabRow(
                                 selectedTabIndex = currentPage,
@@ -879,8 +972,8 @@ fun ForumPage(
                                 },
                                 divider = {},
                                 backgroundColor = Color.Transparent,
-                                contentColor = ExtendedTheme.colors.primary,
-                                edgePadding = 0.dp,
+                                contentColor = tabSelectedColor,
+                                edgePadding = if (glassmio) 12.dp else 0.dp,
                                 modifier = Modifier
                                     .wrapContentWidth(align = Alignment.Start)
                                     .align(Alignment.Start)
@@ -931,8 +1024,8 @@ fun ForumPage(
                                             }
                                         )
                                     },
-                                    selectedContentColor = ExtendedTheme.colors.primary,
-                                    unselectedContentColor = ExtendedTheme.colors.textSecondary
+                                    selectedContentColor = tabSelectedColor,
+                                    unselectedContentColor = tabUnselectedColor
                                 )
                                 Tab(
                                     selected = currentPage == 1,
@@ -941,8 +1034,8 @@ fun ForumPage(
                                             pagerState.animateScrollToPage(1)
                                         }
                                     },
-                                    selectedContentColor = ExtendedTheme.colors.primary,
-                                    unselectedContentColor = ExtendedTheme.colors.textSecondary
+                                    selectedContentColor = tabSelectedColor,
+                                    unselectedContentColor = tabUnselectedColor
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
@@ -991,8 +1084,8 @@ fun ForumPage(
                                                     }
                                                 )
                                             },
-                                            selectedContentColor = ExtendedTheme.colors.primary,
-                                            unselectedContentColor = ExtendedTheme.colors.textSecondary
+                                            selectedContentColor = tabSelectedColor,
+                                            unselectedContentColor = tabUnselectedColor
                                         )
                                     } else {
                                         Tab(
@@ -1002,8 +1095,8 @@ fun ForumPage(
                                                     pagerState.animateScrollToPage(tabIndex)
                                                 }
                                             },
-                                            selectedContentColor = ExtendedTheme.colors.primary,
-                                            unselectedContentColor = ExtendedTheme.colors.textSecondary
+                                            selectedContentColor = tabSelectedColor,
+                                            unselectedContentColor = tabUnselectedColor
                                         ) {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
@@ -1054,6 +1147,7 @@ fun ForumPage(
                     }
                 }
             }
+        }
         }
     }
 }

@@ -3,6 +3,7 @@ package com.huanchengfly.tieba.post.ui.page.forum.threadlist
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -55,6 +56,9 @@ import com.huanchengfly.tieba.post.ui.page.destinations.ForumRuleDetailPageDesti
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
 import com.huanchengfly.tieba.post.ui.page.forum.getSortType
+import com.huanchengfly.tieba.post.ui.page.main.home.PostCard
+import com.huanchengfly.tieba.post.ui.page.main.home.PostCardUi
+import com.huanchengfly.tieba.post.ui.page.main.home.PostCardUiStyle
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockTip
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockableContent
 import com.huanchengfly.tieba.post.ui.widgets.compose.Chip
@@ -173,17 +177,32 @@ private fun ThreadList(
     onOpenForumRule: (() -> Unit)? = null,
     onOriginThreadClicked: (OriginThreadInfo) -> Unit = {},
     onUserClicked: (User) -> Unit = {},
+    forumNameFallback: String? = null,
 ) {
     val windowSizeClass = LocalWindowSizeClass.current
     val itemFraction = when (windowSizeClass.widthSizeClass) {
         WindowWidthSizeClass.Expanded -> 0.5f
         else -> 1f
     }
+    // 与首页信息流共用同一个卡片开关：TWITTER → 推特式 PostCard（16dp 页边 / 10dp 卡距 / 无分隔线）；
+    // LEGACY → 原来的 FeedCard + 分隔线。
+    val twitter = PostCardUi.DefaultStyle == PostCardUiStyle.TWITTER
+    val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     MyLazyColumn(
         state = state,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = if (twitter) Alignment.Start else Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = WindowInsets.navigationBars.asPaddingValues()
+        contentPadding = if (twitter) {
+            PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 10.dp,
+                bottom = navigationBarBottom + 16.dp,
+            )
+        } else {
+            WindowInsets.navigationBars.asPaddingValues()
+        },
+        verticalArrangement = if (twitter) Arrangement.spacedBy(10.dp) else Arrangement.Top,
     ) {
         if (!forumRuleTitle.isNullOrEmpty()) {
             item(key = "ForumRule") {
@@ -218,14 +237,16 @@ private fun ThreadList(
             BlockableContent(
                 blocked = blocked,
                 blockedTip = { BlockTip(text = { Text(text = stringResource(id = R.string.tip_blocked_thread)) }) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp, horizontal = 16.dp),
+                modifier = if (twitter) {
+                    Modifier.fillMaxWidth()
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp, horizontal = 16.dp)
+                },
             ) {
                 val (item) = holder
-                Column(
-                    modifier = Modifier.fillMaxWidth(itemFraction)
-                ) {
+                if (twitter) {
                     if (item.isTop == 1) {
                         val title = item.title.takeUnless { it.isBlank() } ?: item.abstractText
                         TopThreadItem(
@@ -234,20 +255,43 @@ private fun ThreadList(
                             modifier = Modifier.fillMaxWidth(),
                         )
                     } else {
-                        if (index > 0) {
-                            if (items[index - 1].thread.get { isTop } == 1) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                            }
-                            VerticalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                        }
-                        FeedCard(
+                        PostCard(
                             item = holder,
                             onClick = onItemClicked,
                             onClickReply = onItemReplyClicked,
                             onAgree = onAgree,
-                            onClickOriginThread = onOriginThreadClicked,
-                            onClickUser = onUserClicked
+                            onClickUser = onUserClicked,
+                            forumNameFallback = forumNameFallback,
+                            modifier = Modifier.fillMaxWidth(itemFraction),
                         )
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(itemFraction)
+                    ) {
+                        if (item.isTop == 1) {
+                            val title = item.title.takeUnless { it.isBlank() } ?: item.abstractText
+                            TopThreadItem(
+                                title = title,
+                                onClick = { onItemClicked(item) },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        } else {
+                            if (index > 0) {
+                                if (items[index - 1].thread.get { isTop } == 1) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
+                                VerticalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                            }
+                            FeedCard(
+                                item = holder,
+                                onClick = onItemClicked,
+                                onClickReply = onItemReplyClicked,
+                                onAgree = onAgree,
+                                onClickOriginThread = onOriginThreadClicked,
+                                onClickUser = onUserClicked
+                            )
+                        }
                     }
                 }
             }
@@ -425,8 +469,12 @@ fun ForumThreadListPage(
                                 forumId = it.fid,
                             )
                         )
-                    }
-                ) { navigator.navigate(UserProfilePageDestination(it.id)) }
+                    },
+                    forumNameFallback = forumName,
+                    onUserClicked = {
+                        navigator.navigate(UserProfilePageDestination(it.id))
+                    },
+                )
             }
         }
 

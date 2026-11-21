@@ -114,6 +114,8 @@ fun PostCard(
     onClickUser: (User) -> Unit = {},
     onClickForum: (SimpleForum) -> Unit = {},
     menuAction: @Composable () -> Unit = {},
+    /** 吧内帖子列表用：接口返回的 `ThreadInfo.forumName` 常常是空串，用当前吧名兜底。 */
+    forumNameFallback: String? = null,
 ) {
     val colors = GlasmioTheme.colors
     val context = LocalContext.current
@@ -133,7 +135,9 @@ fun PostCard(
     }
     val originTitle = remember(originThread) { originThread?.title.orEmpty() }
     val originAuthorName = remember(originThread) { originThread?.author?.name.orEmpty() }
-    val rawForumName = remember(item) { item.get { forumName } }
+    val rawForumName = remember(item, forumNameFallback) {
+        item.get { forumName }.takeUnless { it.isBlank() } ?: forumNameFallback.orEmpty()
+    }
     val forumLabel = remember(rawForumName) {
         if (rawForumName.isBlank()) "" else context.getString(R.string.title_forum_name, rawForumName)
     }
