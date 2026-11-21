@@ -1,7 +1,6 @@
 package com.huanchengfly.tieba.post.ui.page.forum
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +46,9 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.ClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.MenuScope
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassCircleSurface
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
 import io.github.neoruaa.glasmio.core.GlasmioTheme
@@ -279,8 +281,10 @@ private fun ForumActionPill(
  *
  * 没有标题、没有背景、没有分割线——视觉上就是「无顶栏 + 两个悬浮按钮」，
  * 但仍占 48dp 高度，所以列表不会钻到按钮下面（也就不用做遮罩/避让）。
- * 素材是实色 `elevatedBackground` + 1dp `subtleStroke`：本页没有 `GlasmioBackdropHost`，
- * 做不了真玻璃（TODO：吧页进 MainStack 的玻璃宿主后换 `LiquidGlassSurface`）。
+ *
+ * 按钮统一走 [GlassIconButton] / [GlassCircleSurface]（全 App 一套悬浮玻璃钮）：
+ * 本页内容在 Activity 级 host 的录制层里（采样不安全），组件会自动为按钮自带一个纯色小 host，
+ * 所以这里是**真 Glasmio 材质**，不再需要「实色 + 1dp 描边」的临时方案。
  */
 @Composable
 fun ForumTopBar(
@@ -297,22 +301,22 @@ fun ForumTopBar(
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ForumCircleButton(onClick = onBack) { iconModifier ->
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                contentDescription = stringResource(id = R.string.button_back),
-                modifier = iconModifier,
-            )
-        }
+        GlassIconButton(
+            onClick = onBack,
+            icon = Icons.AutoMirrored.Rounded.ArrowBack,
+            contentDescription = stringResource(id = R.string.button_back),
+            size = GlassTokens.Spacing.topBarActionSize,
+            iconSize = GlassTokens.Spacing.topBarActionIconSize,
+        )
         Spacer(modifier = Modifier.weight(1f))
         if (showSearch) {
-            ForumCircleButton(onClick = onSearch) { iconModifier ->
-                Icon(
-                    imageVector = Icons.Rounded.Search,
-                    contentDescription = stringResource(id = R.string.btn_search_in_forum),
-                    modifier = iconModifier,
-                )
-            }
+            GlassIconButton(
+                onClick = onSearch,
+                icon = Icons.Rounded.Search,
+                contentDescription = stringResource(id = R.string.btn_search_in_forum),
+                size = GlassTokens.Spacing.topBarActionSize,
+                iconSize = GlassTokens.Spacing.topBarActionIconSize,
+            )
             Spacer(modifier = Modifier.width(8.dp))
         }
         ClickMenu(
@@ -320,47 +324,18 @@ fun ForumTopBar(
             menuShape = RoundedCornerShape(14.dp),
             triggerShape = CircleShape,
         ) {
-            ForumCircleSurface {
+            GlassCircleSurface(
+                size = GlassTokens.Spacing.topBarActionSize,
+            ) { tint ->
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
                     contentDescription = stringResource(id = R.string.btn_more),
-                    modifier = Modifier.size(20.dp),
+                    tint = tint,
+                    modifier = Modifier.size(GlassTokens.Spacing.topBarActionIconSize),
                 )
             }
         }
     }
 }
 
-@Composable
-private fun ForumCircleButton(
-    onClick: () -> Unit,
-    content: @Composable (Modifier) -> Unit,
-) {
-    ForumCircleSurface(
-        modifier = Modifier
-            .clip(CircleShape)
-            .debounceClickable(onClick = onClick),
-    ) {
-        content(Modifier.size(20.dp))
-    }
-}
-
-@Composable
-private fun ForumCircleSurface(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    val colors = GlasmioTheme.colors
-    Box(
-        modifier = Modifier
-            .padding(4.dp)
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(colors.elevatedBackground)
-            .border(1.dp, colors.subtleStroke, CircleShape)
-            .then(modifier),
-        contentAlignment = Alignment.Center,
-    ) {
-        content()
-    }
-}
+// ForumCircleButton / ForumCircleSurface 已删除：统一走 ui/common/theme/glass/GlassIconButton.kt

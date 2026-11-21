@@ -4,7 +4,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -21,8 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -60,15 +57,14 @@ import androidx.compose.ui.util.lerp
 import com.huanchengfly.tieba.post.arch.GlobalEvent
 import com.huanchengfly.tieba.post.arch.emitGlobalEvent
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
-import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassSurface
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassNavigationTint
 import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.utils.ThemeUtil
-import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
 
 /**
  * 主界面顶栏的运行状态。
@@ -398,6 +394,9 @@ fun MainTopBarRow(
  * 顶栏上的悬浮液态玻璃按钮，形态对齐 FlClash 右上角「🖊」：
  * 44dp 圆形、20dp 图标、浮在内容上（不坐在一条玻璃条里），深色下靠内发光描边把壳拉出来。
  *
+ * 实现已收敛到全 App 统一的 [GlassIconButton]（顶栏在 host 的 overlay 层里，
+ * 也就是「采样安全」的那一支，所以能采到下面的真实内容）。
+ *
  * 手势：**只处理 tap**。双击回顶留在顶栏容器的 `combinedClickable` 上（PLAN 第 10 节第 2 条），
  * 这里不注册 `combinedClickable`，避免把容器的手势吃掉。
  */
@@ -408,37 +407,18 @@ fun MainTopBarGlassActionItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val glass = glassColors()
     Box(
         modifier = modifier.padding(horizontal = GlassTokens.Spacing.topBarActionGap),
         contentAlignment = Alignment.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .size(GlassTokens.Spacing.topBarActionSize)
-                .clip(CircleShape)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onClick,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            LiquidGlassSurface(
-                modifier = Modifier.matchParentSize(),
-                shape = CircleShape,
-                material = NavigationGlassMaterial.RegularSmall,
-                navigationSurfaceColor = glassNavigationTint(),
-                navigationSurfaceAlphaMultiplier = GlassTokens.topBarActionTintMultiplier,
-                innerGlow = true,
-            ) {}
-            Icon(
-                imageVector = icon,
-                contentDescription = contentDescription,
-                tint = glass.textPrimary,
-                modifier = Modifier.size(GlassTokens.Spacing.topBarActionIconSize),
-            )
-        }
+        GlassIconButton(
+            onClick = onClick,
+            icon = icon,
+            contentDescription = contentDescription,
+            size = GlassTokens.Spacing.topBarActionSize,
+            iconSize = GlassTokens.Spacing.topBarActionIconSize,
+            navigationSurfaceColor = glassNavigationTint(),
+        )
     }
 }
 
