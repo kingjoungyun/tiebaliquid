@@ -676,6 +676,9 @@ fun ThreadPage(
     // 首屏内容直接贴在悬浮控件下方，滚动时内容从顶栏下穿过。
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val threadTopInset = statusBarTop + ThreadTopBarHeight
+    // 底栏在 overlay 层：列表 viewport 铺到屏幕底，用 contentPadding 让最后一条能滚到胶囊上方。
+    val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val threadBottomInset = if (glassmio) ThreadBottomBarInset + navigationBarBottom else 0.dp
     val isContentScrolled by remember {
         derivedStateOf {
             lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 6
@@ -715,6 +718,64 @@ fun ThreadPage(
         coroutineScope.launch {
             bottomSheetState.hide()
         }
+    }
+
+    // 顶栏/底栏共用的一组动作：GLASMIO 的底栏在 overlay 槽里，LEGACY 的底栏在 Scaffold 里。
+    val onReplyClick: () -> Unit = {
+        navigator.navigate(
+            ReplyPageDestination(
+                forumId = curForumId ?: 0,
+                forumName = forum?.get { name }.orEmpty(),
+                threadId = threadId,
+            )
+        )
+    }
+    val onAgreeClick: () -> Unit = {
+        val firstPostId =
+            thread?.get { firstPostId }.takeIf { it != 0L }
+                ?: firstPost?.get { id }
+                ?: 0L
+        if (firstPostId != 0L) viewModel.send(
+            ThreadUiIntent.AgreeThread(
+                threadId,
+                firstPostId,
+                !hasThreadAgreed
+            )
+        )
+    }
+    val onMoreClick: () -> Unit = {
+        if (bottomSheetState.isVisible) {
+            closeBottomSheet()
+        } else {
+            openBottomSheet()
+        }
+    }
+    val onReplyCountClick: () -> Unit = {
+        coroutineScope.launch { lazyListState.animateScrollToItem(1) }
+    }
+    val onSeeLzClick: () -> Unit = {
+        viewModel.send(
+            ThreadUiIntent.LoadFirstPage(
+                threadId,
+                forumId,
+                !isSeeLz,
+                curSortType
+            )
+        )
+    }
+    val onSortClick: () -> Unit = {
+        viewModel.send(
+            ThreadUiIntent.LoadFirstPage(
+                threadId,
+                forumId,
+                isSeeLz,
+                if (curSortType != ThreadSortType.SORT_TYPE_DESC) {
+                    ThreadSortType.SORT_TYPE_DESC
+                } else {
+                    ThreadSortType.SORT_TYPE_DEFAULT
+                }
+            )
+        )
     }
 
     MyBackHandler(
@@ -1511,6 +1572,20 @@ fun ThreadPage(
                     menuContent = { threadMenuContent { dismiss() } },
                 )
             },
+            bottomBar = {
+                ThreadGlassBottomBar(
+                    onClickReply = onReplyClick,
+                    onAgree = onAgreeClick,
+                    onReplyCountClick = onReplyCountClick,
+                    onSeeLzClick = onSeeLzClick,
+                    onSortClick = onSortClick,
+                    hasAgreed = hasThreadAgreed,
+                    agreeNum = threadAgreeNum,
+                    replyNum = (thread?.get { replyNum - 1 } ?: 0).coerceAtLeast(0),
+                    isSeeLz = isSeeLz,
+                    isDesc = curSortType == ThreadSortType.SORT_TYPE_DESC,
+                )
+            },
         ) {
             StateScreen(
                 modifier = Modifier.fillMaxSize(),
@@ -1558,77 +1633,24 @@ fun ThreadPage(
                         }
                     },
                 bottomBar = {
-                    BottomBar(
-                        user = user,
-                        onClickReply = {
-                            navigator.navigate(
-                                ReplyPageDestination(
-                                    forumId = curForumId ?: 0,
-                                    forumName = forum?.get { name }.orEmpty(),
-                                    threadId = threadId,
+                    // GLASMIO 的底栏在 ThreadPageSkin 的 overlay 槽里（能采真实内容）；
+                    // 这里只给 LEGACY 保留旧的 Scaffold 底栏。
+                    if (!glassmio) {
+                        BottomBar(
+                            user = user,
+                            onClickReply = onReplyClick,
+                            onAgree = onAgreeClick,
+                            onClickMore = onMoreClick,
+                            hasAgreed = hasThreadAgreed,
+                            agreeNum = threadAgreeNum,
+                            modifier = Modifier
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = {}
                                 )
-                            )
-                        },
-                        onAgree = {
-                            val firstPostId =
-                                thread?.get { firstPostId }.takeIf { it != 0L }
-                                    ?: firstPost?.get { id }
-                                    ?: 0L
-                            if (firstPostId != 0L) viewModel.send(
-                                ThreadUiIntent.AgreeThread(
-                                    threadId,
-                                    firstPostId,
-                                    !hasThreadAgreed
-                                )
-                            )
-                        },
-                        onClickMore = {
-                            if (bottomSheetState.isVisible) {
-                                closeBottomSheet()
-                            } else {
-                                openBottomSheet()
-                            }
-                        },
-                        hasAgreed = hasThreadAgreed,
-                        agreeNum = threadAgreeNum,
-                        replyNum = (thread?.get { replyNum - 1 } ?: 0).coerceAtLeast(0),
-                        isSeeLz = isSeeLz,
-                        isDesc = curSortType == ThreadSortType.SORT_TYPE_DESC,
-                        onReplyCountClick = {
-                            coroutineScope.launch { lazyListState.animateScrollToItem(1) }
-                        },
-                        onSeeLzClick = {
-                            viewModel.send(
-                                ThreadUiIntent.LoadFirstPage(
-                                    threadId,
-                                    forumId,
-                                    !isSeeLz,
-                                    curSortType
-                                )
-                            )
-                        },
-                        onSortClick = {
-                            viewModel.send(
-                                ThreadUiIntent.LoadFirstPage(
-                                    threadId,
-                                    forumId,
-                                    isSeeLz,
-                                    if (curSortType != ThreadSortType.SORT_TYPE_DESC) {
-                                        ThreadSortType.SORT_TYPE_DESC
-                                    } else {
-                                        ThreadSortType.SORT_TYPE_DEFAULT
-                                    }
-                                )
-                            )
-                        },
-                        glassmio = glassmio,
-                        modifier = Modifier
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = {}
-                            )
-                    )
+                        )
+                    }
                 },
             ) { paddingValues ->
                 ModalBottomSheetLayout(
@@ -1697,6 +1719,9 @@ fun ThreadPage(
                                 modifier = Modifier.fillMaxWidth(),
                                 contentPadding = PaddingValues(
                                     top = if (glassmio) threadTopInset else 0.dp,
+                                    // overlay 底栏不再占 Scaffold 高度：把「胶囊 + 边距 + 导航栏」
+                                    // 放进 contentPadding，最后一条能滚到胶囊上方，滚动时内容从底下穿过。
+                                    bottom = threadBottomInset,
                                 ),
                             ) {
                                 item(key = "FirstPost") {
@@ -2107,30 +2132,7 @@ private fun BottomBar(
     modifier: Modifier = Modifier,
     hasAgreed: Boolean = false,
     agreeNum: Long = 0,
-    replyNum: Int = 0,
-    isSeeLz: Boolean = false,
-    isDesc: Boolean = false,
-    onReplyCountClick: () -> Unit = {},
-    onSeeLzClick: () -> Unit = {},
-    onSortClick: () -> Unit = {},
-    glassmio: Boolean = false,
 ) {
-    if (glassmio) {
-        ThreadGlassBottomBar(
-            onClickReply = onClickReply,
-            onAgree = onAgree,
-            onReplyCountClick = onReplyCountClick,
-            onSeeLzClick = onSeeLzClick,
-            onSortClick = onSortClick,
-            hasAgreed = hasAgreed,
-            agreeNum = agreeNum,
-            replyNum = replyNum,
-            isSeeLz = isSeeLz,
-            isDesc = isDesc,
-            modifier = modifier,
-        )
-        return
-    }
     Column(
         modifier = Modifier.background(ExtendedTheme.colors.threadBottomBar)
     ) {
