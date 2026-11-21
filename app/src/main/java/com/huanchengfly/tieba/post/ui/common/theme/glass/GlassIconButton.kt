@@ -188,6 +188,10 @@ private fun GlassCircleHost(
     } else {
         // 自带纯色 host：尺寸 = 按钮、uniformFill（Glasmio 复用已渲染结果），
         // 既不递归、也拿得到真材质。
+        //
+        // 这类按钮采的是**纯色**底（因为它在页面的录制层里，采页面 = 自己采样自己），
+        // 所以视觉上容易变成「白盘」。给它补一圈极淡的 rim + 内发光（P2/B+C 的 C 方案）：
+        // 只加绘制、不加录制，代价 ~0，但在纯色背景上能看出玻璃壳的存在。
         GlasmioBackdropHost(
             sampledColor = fill,
             modifier = modifier.size(size),
@@ -199,6 +203,7 @@ private fun GlassCircleHost(
                 LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
                     Box(Modifier.size(size), contentAlignment = Alignment.Center) {
                         content(GlasmioLocalGlassColors.current.content)
+                        GlassInnerGlow(CircleShape)
                     }
                 }
             }

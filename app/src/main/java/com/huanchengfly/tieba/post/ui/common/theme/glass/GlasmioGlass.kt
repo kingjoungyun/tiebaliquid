@@ -330,7 +330,7 @@ fun LiquidGlassSurface(
  * 深色下白边更亮，浅色下压低，避免亮玻璃上再出现一道明显的白线。
  */
 @Composable
-private fun BoxScope.GlassInnerGlow(shape: Shape) {
+internal fun BoxScope.GlassInnerGlow(shape: Shape) {
     val dark = glassColors().isDark
     val rimAlpha = if (dark) 0.72f else 0.46f
     val glowAlpha = if (dark) 0.10f else 0.05f
