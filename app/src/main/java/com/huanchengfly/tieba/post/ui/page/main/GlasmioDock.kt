@@ -66,17 +66,21 @@ private const val PositionSettleMillis = 260L
 /** 「手指按在 dock 上」的最长冻结时间，防止漏掉抬起事件后收起状态被永久冻住。 */
 private const val DockPressWatchdogMillis = 4000L
 
-/** 选中变化后多久做一次兜底重建（要落在镜头弹簧 settling 之后，用户不可见）。 */
+/** 选中变化后多久做一次兜底重建（仅 [DockResettleEnabled] 打开时有效）。 */
 private const val ResettleDelayMillis = 700L
 
 /**
  * 兜底重建开关：选中变化后让 bar 整体重建一次，把镜头/lift/flex 和玻璃图层复位。
  *
- * 代价（真机实测）：静止时 dock 带内两帧的像素噪声是 0.000；跨一次重建是 7.9（mean abs，
- * 0..255），即玻璃会重新合成一次、有一点点亮度/色调差 —— 镜头位置和形状不变，没有跳变。
- * 如果这点差异不能接受，把这里改成 false 即可整体关掉。
+ * **默认关闭。** 上一版默认打开，被用户报“远距离（0↔3）切换变成瞬移”：700ms 是按近距离
+ * 标定的，跨三格的镜头弹簧还没走完，重建就把镜头直接摆到终点、把动画截断。
+ * 也就是说它用「吃掉动画」换「防卡死」，而卡死本身我们复现不出来 —— 这笔交易不划算。
+ *
+ * 真要重新启用，请先解决两件事：
+ * 1) 触发条件不能是“无条件延迟”，得是**检测到异常**（例如选中后 N ms 检查镜头是否已到目标）；
+ * 2) 重建要足够轻，或者接受一次玻璃重新合成。
  */
-private const val DockResettleEnabled = true
+private const val DockResettleEnabled = false
 
 /** 未读小红点：贴吧原版是 14dp 圆 + 10sp 数字，这里沿用尺寸，宽度允许被「99+」撑开。 */
 private val BadgeHeight = 14.dp
