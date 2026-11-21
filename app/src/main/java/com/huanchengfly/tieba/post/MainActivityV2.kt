@@ -84,6 +84,7 @@ import com.huanchengfly.tieba.post.components.ClipBoardLinkDetector
 import com.huanchengfly.tieba.post.components.ClipBoardThreadLink
 import com.huanchengfly.tieba.post.services.NotifyJobService
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassRootHost
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
 import com.huanchengfly.tieba.post.ui.page.NavGraphs
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
@@ -503,34 +504,38 @@ class MainActivityV2 : BaseComposeActivity() {
             }
         }
         TiebaLiteLocalProvider {
-            TranslucentThemeBackground {
-                val navController = rememberNavController()
-                val engine = TiebaNavHostDefaults.rememberNavHostEngine()
-                val navigator = TiebaNavHostDefaults.rememberBottomSheetNavigator()
-                val currentDestination by navController.currentDestinationAsState()
+            // Activity 级玻璃 backdrop host：所有页面/弹层都能采到「这一屏真实内容」。
+            // 页级 host（MainPage 的 dock/顶栏）仍然保留，内层会 shadow 掉这一层。
+            GlassRootHost {
+                TranslucentThemeBackground {
+                    val navController = rememberNavController()
+                    val engine = TiebaNavHostDefaults.rememberNavHostEngine()
+                    val navigator = TiebaNavHostDefaults.rememberBottomSheetNavigator()
+                    val currentDestination by navController.currentDestinationAsState()
 
-                navController.navigatorProvider += navigator
+                    navController.navigatorProvider += navigator
 
-                CompositionLocalProvider(
-                    LocalNavController provides navController,
-                    LocalDestination provides currentDestination,
-                ) {
-                    ModalBottomSheetLayout(
-                        bottomSheetNavigator = navigator,
-                        sheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
-                        sheetBackgroundColor = ExtendedTheme.colors.windowBackground,
-                        scrimColor = Color.Black.copy(alpha = 0.32f),
+                    CompositionLocalProvider(
+                        LocalNavController provides navController,
+                        LocalDestination provides currentDestination,
                     ) {
-                        DestinationsNavHost(
-                            navController = navController,
-                            navGraph = NavGraphs.root,
-                            engine = engine,
-                        )
+                        ModalBottomSheetLayout(
+                            bottomSheetNavigator = navigator,
+                            sheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+                            sheetBackgroundColor = ExtendedTheme.colors.windowBackground,
+                            scrimColor = Color.Black.copy(alpha = 0.32f),
+                        ) {
+                            DestinationsNavHost(
+                                navController = navController,
+                                navGraph = NavGraphs.root,
+                                engine = engine,
+                            )
+                        }
                     }
-                }
 
-                SideEffect {
-                    myNavController = navController
+                    SideEffect {
+                        myNavController = navController
+                    }
                 }
             }
         }

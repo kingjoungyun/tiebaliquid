@@ -1,12 +1,15 @@
 package com.huanchengfly.tieba.post.ui.common.theme.glass
 
 import android.os.Build
+import android.provider.Settings
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,12 +23,17 @@ import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.huanchengfly.tieba.post.BuildConfig
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.core.defaultGlassColors
 import io.github.neoruaa.glasmio.core.glasmioColorScheme
 import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
+import io.github.neoruaa.glasmio.glass.LocalBlurBackdrop
+import io.github.neoruaa.glasmio.glass.LocalGlassBackdrop
+import io.github.neoruaa.glasmio.glass.rememberCrossWindowBackdrop
 import io.github.neoruaa.glasmio.glass.GlassEmphasis
 import io.github.neoruaa.glasmio.glass.GlassSurface as GlasmioGlassSurface
 import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
@@ -43,6 +51,33 @@ import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
  * 组合期间，catch 不住也没法优雅降级。所以用我们自己的 [LocalLiquidGlassHosted] 显式判断。
  */
 val LocalLiquidGlassHosted = staticCompositionLocalOf { false }
+
+/**
+ * 「上面有 host、`LocalGlassBackdrop` / `LocalBlurBackdrop` 可以读」——**两个 slot 都是 true**。
+ *
+ * 和 [LocalLiquidGlassHosted] 的区别（很重要，踩过坑）：
+ * - 有些消费者**画在另一个 Window**（`GlasmioMenu` 的 Popup、`AnyPopDialog` 的 Dialog），
+ *   它们在组合树里位于页面内容中，但绘制不在这一层录制里，所以采样环境是安全的；
+ *   这些消费者要的是「有没有 backdrop 可读」→ 用本 local。
+ * - 画在页面内容里的玻璃控件**不能**读外层 backdrop（会自己采样自己 → HWUI
+ *   `prepareTreeImpl` 递归爆栈 SIGSEGV）→ 它们要的是 [LocalGlassSamplingSafe]。
+ */
+val LocalGlassBackdropAvailable = staticCompositionLocalOf { false }
+
+/**
+ * 「**当前这棵子树画在录制层之外**」——即采样环境里那块 backdrop 里没有自己。
+ *
+ * 为什么需要这个标记：玻璃控件只能采样「自己不在其中」的录制层，否则会自己采样自己
+ * （Glasmio 文档里明确警告的 feedback loop）。host 的 `overlayContent` 是安全的，
+ * `sampledContent`（页面内容）**不安全**。
+ *
+ * 于是：
+ * - 安全（在 overlay 里 / 页面自己用的是 `sampledColor` 纯色 host）→ 直接用环境 backdrop，
+ *   能采到真实内容（主界面 dock / 顶栏就是这条路）；
+ * - 不安全（普通页面内容里）→ 组件自己套一个 44dp 的纯色小 host（见 [com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton]），
+ *   保证「真 Glasmio 材质 + 不递归」。
+ */
+val LocalGlassSamplingSafe = staticCompositionLocalOf { false }
 
 /**
  * Glasmio 的材质渲染管线（RuntimeShader / RenderEffect）要求 API 33+；本工程 minSdk 也是 33，
@@ -65,13 +100,122 @@ fun LiquidGlassBackdropHost(
 ) {
     GlasmioBackdropHost(
         modifier = modifier,
-        sampledContent = { sampledContent() },
+        sampledContent = {
+            // 「有 backdrop 可读」为真，但**采样不安全**：这段内容正在被录进本层的 LayerBackdrop。
+            // 里面的玻璃控件必须走「自带纯色小 host」那一支（见 GlassIconButton），
+            // 否则会自己采样自己 → HWUI 渲染树递归爆栈（实测 SIGSEGV）。
+            // 显式置 false，盖掉外层 Activity 级纯色 host 给的真值。
+            CompositionLocalProvider(
+                LocalGlassBackdropAvailable provides true,
+                LocalGlassSamplingSafe provides false,
+            ) {
+                sampledContent()
+            }
+        },
         overlayContent = {
-            CompositionLocalProvider(LocalLiquidGlassHosted provides true) {
+            CompositionLocalProvider(
+                LocalLiquidGlassHosted provides true,
+                LocalGlassSamplingSafe provides true,
+                LocalGlassBackdropAvailable provides true,
+            ) {
                 overlayContent()
             }
         },
     )
+}
+
+/**
+ * **Activity 级** backdrop host：给整棵 UI 树一个可采样的 backdrop，让所有页面（包括
+ * 没有自己 host 的吧页、历史页、帖子页…）上的玻璃弹层都能采到真实内容。
+ *
+ * 为什么放在 Activity 层而不是每页各包一个：
+ * - 菜单 / Dialog 是**另一个 Window**（Popup / Dialog），它们在组合树里位于页面内部，
+ *   但绘制在另一个窗口 → 采样上层录制层是安全的（Glasmio 的 `CrossWindowBackdrop` 已处理坐标映射），
+ *   不会出现「自己采样自己」；
+ * - 页面自己若需要「玻璃控件画在页面内容之上」，仍然要像 MainPage 那样用
+ *   [LiquidGlassBackdropHost] 建**页级** host（控件进 overlay），否则控件会被录进这一层、采到自己。
+ *
+ * 代价：整页录制（每次内容变化多一次全屏离屏渲染 + 一张全屏纹理）。
+ * 这是**已知性能技术债**，主界面还叠了一层页级 host（dock/顶栏必须画在录制层之外）。
+ * 实测见简报；如果某些页太贵，可以在那一页自己包 `LiquidGlassBackdropHost`（内层会 shadow 掉这层）。
+ *
+ * API < 33 直接透传：没有 backdrop，所有玻璃控件按各自的降级路径走伪玻璃。
+ */
+@Composable
+fun GlassRootHost(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    if (!isLiquidGlassSupported() || isGlassDebugDisabled()) {
+        content()
+        return
+    }
+    // 用**纯色 host**（`sampledColor`）而不是整页录制：
+    // - 页面内容全部落到 overlay 层（Glasmio 的 `sampledColor` 变体就是这么定义的），
+    //   所以页面里的玻璃控件采样这块纯色底是安全的，不会「自己采样自己」；
+    // - 纯色源 `fillsBoundsUniformly = true`，Glasmio 会复用已渲染结果，几乎没有额外开销
+    //   （不像整页录制那样每帧多一次全屏离屏渲染）。
+    // 想要「菜单折射真实内容」的页面，自己再套一层 [LiquidGlassBackdropHost]（内层 shadow 掉这层）。
+    val background = glassColors().background
+    GlasmioBackdropHost(
+        sampledColor = background,
+        modifier = modifier.fillMaxSize(),
+    ) {
+        CompositionLocalProvider(
+            LocalLiquidGlassHosted provides true,
+            LocalGlassSamplingSafe provides true,
+            LocalGlassBackdropAvailable provides true,
+        ) {
+            content()
+        }
+    }
+}
+
+/**
+ * 调试开关（**仅 debug 包生效**）：`adb shell settings put global tieba_no_glass 1` 后重启 App，
+ * Activity 级 host 不装 → 所有玻璃弹层退回 M2、悬浮钮退回纯色。
+ *
+ * 存在的意义：拍「有/无 backdrop」的对照图（证明菜单真的在采样背景），
+ * 以及在没有 GPU 的模拟器上临时关掉玻璃排查性能。release 包里这个分支会被常量折叠掉。
+ */
+@Composable
+private fun isGlassDebugDisabled(): Boolean {
+    if (!BuildConfig.DEBUG) return false
+    val context = LocalContext.current
+    return remember(context) {
+        runCatching {
+            Settings.Global.getInt(context.contentResolver, "tieba_no_glass", 0) == 1
+        }.getOrDefault(false)
+    }
+}
+
+/**
+ * **Dialog 窗口**里的玻璃采样环境。
+ *
+ * Dialog 是独立的 Window，页面那层 `LayerBackdrop` 的坐标不能直接跨 compose owner 用；
+ * Glasmio 的 [rememberCrossWindowBackdrop] 用屏幕坐标做映射，spike 里已经逐像素验证过。
+ * 包上之后，对话框内容里的 `GlasmioCard` / `GlassSurface` / `GlasmioMenu` 都能采到页面背景
+ * （不包就只能拿到空 backdrop 或者干脆抛异常）。
+ *
+ * 没有 host / API < 33 时直接透传：对话框保持原来的 M2 外观。
+ */
+@Composable
+fun GlassDialogBackdropScope(content: @Composable () -> Unit) {
+    if (!isLiquidGlassSupported() || !LocalGlassBackdropAvailable.current) {
+        content()
+        return
+    }
+    val hostBackdrop = LocalBlurBackdrop.current
+    val crossWindow = rememberCrossWindowBackdrop(hostBackdrop)
+    CompositionLocalProvider(
+        LocalGlassBackdrop provides crossWindow,
+        LocalBlurBackdrop provides crossWindow,
+        LocalLiquidGlassHosted provides true,
+        LocalGlassSamplingSafe provides true,
+        LocalGlassBackdropAvailable provides true,
+    ) {
+        content()
+    }
 }
 
 /**
