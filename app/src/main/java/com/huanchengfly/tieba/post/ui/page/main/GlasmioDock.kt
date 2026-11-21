@@ -1,6 +1,6 @@
 package com.huanchengfly.tieba.post.ui.page.main
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -16,17 +16,21 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
@@ -44,6 +48,7 @@ import io.github.neoruaa.glasmio.ui.CompactBottomControlSize
 import io.github.neoruaa.glasmio.ui.GlasmioNavigationBar
 import io.github.neoruaa.glasmio.ui.GlasmioTabItem
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 /**
@@ -52,6 +57,12 @@ import kotlin.math.roundToInt
  */
 private val CompactEnterDistance = 96.dp
 private val CompactExitDistance = 8.dp
+
+/** 切页后的冻结窗口：新页的滚动量/内容接管之前，不要拿它去改收起状态。 */
+private const val PositionSettleMillis = 260L
+
+/** 「手指按在 dock 上」的最长冻结时间，防止漏掉抬起事件后收起状态被永久冻住。 */
+private const val DockPressWatchdogMillis = 4000L
 
 /** 未读小红点：贴吧原版是 14dp 圆 + 10sp 数字，这里沿用尺寸，宽度允许被「99+」撑开。 */
 private val BadgeHeight = 14.dp
@@ -101,23 +112,85 @@ fun GlasmioDock(
     }
 
     val density = LocalDensity.current
-    // 「用户点开过」的冻结位：收起态点一下会展开，并保持展开直到滚回顶部附近。
-    var userExpanded by remember { mutableStateOf(false) }
-    val scrollOffset = scrollOffsetPx?.invoke() ?: 0f
     val enterPx = with(density) { CompactEnterDistance.toPx() }
     val exitPx = with(density) { CompactExitDistance.toPx() }
-    val nearTop = scrollOffset <= exitPx
-    LaunchedEffect(nearTop) {
-        if (nearTop) userExpanded = false
+    val initialOffset = scrollOffsetPx?.invoke() ?: 0f
+
+    // ---- 收起/展开状态机 ----------------------------------------------------------------
+    // 为什么不再「每帧拿 offset 算 target」：offset 是按 tab 分别累计的，切页时会从 567px
+    // 突变成新页的 0px。如果每帧重算 target，animateFloatAsState 就会被反复 re-target；
+    // 快速切几个 tab / 在展开动画中间又切页时，弹簧永远走不到头，形变停在中间值 ——
+    // 这就是用户报的「动画卡住」。
+    //
+    // 现在改成三段式：
+    // 1) collapsed 是**锁存**：只在跨过阈值时翻转，同一段滚动里不会反复变；
+    // 2) 判定用**相对基线**的滚动增量（基线在切页 / 点开球时重置），切页因此不会跳变；
+    // 3) 手指按在 dock 上、以及切页后的 settling 窗口内冻结判定。
+    var collapsed by remember { mutableStateOf(false) }
+    var userExpanded by remember { mutableStateOf(false) }
+    var dockPressed by remember { mutableStateOf(false) }
+    var baseline by remember { mutableStateOf(initialOffset) }
+    var positionSettled by remember { mutableStateOf(true) }
+
+    // 切页：回到展开态（换 tab 不继承上一页的收起状态，与 iOS 26 一致），基线挪到新页。
+    LaunchedEffect(currentPosition) {
+        baseline = scrollOffsetPx?.invoke() ?: 0f
+        collapsed = false
+        userExpanded = false
+        positionSettled = false
+        delay(PositionSettleMillis)
+        positionSettled = true
     }
-    val compactTarget = if (!userExpanded && scrollOffset > enterPx) 1f else 0f
-    // 弹簧而不是 tween：Glasmio 的形变按「进度」取值，弹簧的回弹才有玻璃该有的手感。
-    // 参数抄它自己 sample 的 NavigationDemo（dampingRatio .8 / stiffness 438.64908）。
-    val compactProgress = animateFloatAsState(
-        targetValue = compactTarget,
-        animationSpec = spring(dampingRatio = 0.8f, stiffness = 438.64908f),
-        label = "mainDockCompact",
-    )
+
+    // 唯一的迁移入口：只在「跨过阈值」时翻转，迟滞 + 冻结都在这里。
+    LaunchedEffect(Unit) {
+        snapshotFlow { Triple(scrollOffsetPx?.invoke() ?: 0f, dockPressed, positionSettled) }
+            .collect { (offsetNow, pressed, settled) ->
+                if (pressed || !settled) return@collect
+                val delta = offsetNow - baseline
+                when {
+                    delta > enterPx -> if (!userExpanded) collapsed = true
+                    delta < exitPx -> {
+                        collapsed = false
+                        userExpanded = false
+                    }
+                }
+            }
+    }
+
+    val progress = remember { Animatable(if (collapsed) 1f else 0f, 0.001f) }
+    LaunchedEffect(collapsed) {
+        val target = if (collapsed) 1f else 0f
+        progress.animateTo(
+            targetValue = target,
+            animationSpec = spring(dampingRatio = 0.8f, stiffness = 438.64908f),
+        )
+        // animateTo 正常会精确落在目标值；这里再兜一次底，保证不会停在中间。
+        if (progress.value != target) progress.snapTo(target)
+    }
+    // 传给 Glasmio 的进度夹在 0..1：弹簧回弹会 undershoot 到 -0.01，而 Glasmio 的
+    // `morphing = p != 0f && p != 1f` 会因此多翻一次、把 morph 渲染器重建一遍。
+    val compactProgress = remember { derivedStateOf { progress.value.coerceIn(0f, 1f) } }
+
+    // 手指是否按在 dock 上（只观察、不消费事件，不影响组件自己的手势）。
+    val dockPressTracker = remember {
+        Modifier.pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    val pressed = event.changes.any { it.pressed }
+                    if (pressed != dockPressed) dockPressed = pressed
+                }
+            }
+        }
+    }
+    // 保险：万一收不到抬起事件（手势被上层抢走/系统取消），不能让「按下」永久冻结收起。
+    LaunchedEffect(dockPressed) {
+        if (dockPressed) {
+            delay(DockPressWatchdogMillis)
+            dockPressed = false
+        }
+    }
 
     // label 是 @Composable（要读 stringResource），只能在组合里取；再按内容做 remember key，
     // 避免每次重组都重建 items（Glasmio 内部按 items 实例做 memo）。
@@ -153,6 +226,8 @@ fun GlasmioDock(
                 top = GlassTokens.Spacing.dockMarginBottom,
                 bottom = navigationDockBottomMargin(),
             )
+            // 只观察按下状态、不消费事件：手指在 dock 上时冻结收起判定。
+            .then(dockPressTracker)
     ) {
         Box(
             modifier = Modifier
@@ -178,8 +253,13 @@ fun GlasmioDock(
                                 // 与旧 dock 一致：选中即清未读（MainPage 在 item.onClick 里发 Intent）。
                                 navigationItems.getOrNull(index)?.onClick?.invoke()
                             },
-                            // 收起态点一下 = 展开。用户主动展开后不再自动收起，直到滚回顶部附近。
-                            onExpand = { userExpanded = true },
+                            // 收起态点一下 = 展开；同时把基线挪到当前位置 —— 否则列表还在惯性
+                            // 滚动（offset 继续涨）时会立刻又被收起，看起来像「点了没反应」。
+                            onExpand = {
+                                userExpanded = true
+                                baseline = scrollOffsetPx?.invoke() ?: 0f
+                                collapsed = false
+                            },
                             compactProgress = compactProgress,
                             compactSize = CompactBottomControlSize,
                             onItemIconBoundsChanged = { index, bounds ->
@@ -267,3 +347,5 @@ private fun DockBadge(
         }
     }
 }
+
+
