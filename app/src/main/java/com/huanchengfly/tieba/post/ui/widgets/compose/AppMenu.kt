@@ -60,6 +60,7 @@ fun AppMenu(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     menuWidth: Dp = AppMenuWidth,
+    heightOverride: Dp? = null,
     backdrop: Backdrop? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -100,7 +101,7 @@ fun AppMenu(
             onExpandedChange = { opened -> if (!opened) onDismissRequest() },
             // itemCount 只在「没给 heightOverride」时用于估算；这里总是给实测高度。
             itemCount = 1,
-            heightOverride = menuHeight.takeIf { it > 0.dp },
+            heightOverride = heightOverride ?: menuHeight.takeIf { it > 0.dp },
             menuWidth = menuWidth,
             backdrop = glassBackdrop,
             // 通用菜单没有 Glasmio 玻璃触发器，不做 source transfer 形变。

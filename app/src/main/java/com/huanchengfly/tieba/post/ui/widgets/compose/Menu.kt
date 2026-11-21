@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
@@ -53,6 +54,8 @@ fun ClickMenu(
     modifier: Modifier = Modifier,
     menuState: MenuState = rememberMenuState(),
     menuShape: Shape = RoundedCornerShape(14.dp),
+    menuWidth: Dp = 240.dp,
+    menuHeight: Dp? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     indication: Indication? = LocalIndication.current,
     triggerShape: Shape? = null,
@@ -104,6 +107,8 @@ fun ClickMenu(
                 expanded = menuState.expanded,
                 onDismissRequest = { menuScope.dismiss() },
                 modifier = modifier,
+                menuWidth = menuWidth,
+                heightOverride = menuHeight,
             ) {
                 ProvideContentColor(color = ExtendedTheme.colors.text) {
                     menuScope.menuContent()

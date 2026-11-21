@@ -23,23 +23,28 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeightIn
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.DropdownMenuItem
@@ -88,6 +93,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -136,6 +142,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.compose.invertChipContent
 import com.huanchengfly.tieba.post.ui.common.theme.compose.loadMoreIndicator
 import com.huanchengfly.tieba.post.ui.common.theme.compose.pullRefreshIndicator
 import com.huanchengfly.tieba.post.ui.common.theme.compose.threadBottomBar
+import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.CopyTextDialogPageDestination
@@ -261,11 +268,12 @@ fun PostAgreeBtn(
 }
 
 @Composable
-private fun BottomBarAgreeBtn(
+internal fun BottomBarAgreeBtn(
     hasAgreed: Boolean,
     agreeNum: Long,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    transparentBackground: Boolean = false,
 ) {
     val color = if (hasAgreed) ExtendedTheme.colors.accent else ExtendedTheme.colors.textSecondary
     val animatedColor by animateColorAsState(color, label = "agreeBtnColor")
@@ -275,7 +283,7 @@ private fun BottomBarAgreeBtn(
         shape = RoundedCornerShape(0),
         contentPadding = PaddingValues(horizontal = 4.dp),
         colors = ButtonDefaults.buttonColors(
-            backgroundColor = ExtendedTheme.colors.bottomBar,
+            backgroundColor = if (transparentBackground) Color.Transparent else ExtendedTheme.colors.bottomBar,
             contentColor = animatedColor
         ),
         modifier = modifier
@@ -385,14 +393,14 @@ private fun ToggleButton(
         Box(contentAlignment = Alignment.Center) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (icon != null) {
                     icon()
                 }
                 ProvideTextStyle(
                     value = MaterialTheme.typography.subtitle1.copy(
-                        fontSize = 14.sp,
+                        fontSize = 13.sp,
                         textAlign = TextAlign.Center,
                     )
                 ) {
@@ -510,7 +518,8 @@ fun ThreadPage(
     viewModel: ThreadViewModel = pageViewModel(),
 ) {
     // 帖子页外壳的风格开关（GLASMIO / LEGACY）。楼层内容、数据流两条分支完全共用。
-    val glassmio = ThreadPageUi.DefaultStyle == ThreadPageUiStyle.GLASMIO
+    // API < 33 时 Glasmio 材质起不来，直接退回旧外观，避免玻璃组件读到不存在的 theme/host。
+    val glassmio = ThreadPageUi.DefaultStyle == ThreadPageUiStyle.GLASMIO && isLiquidGlassSupported()
     LazyLoad(loaded = viewModel.initialized) {
         viewModel.send(
             ThreadUiIntent.Init(
@@ -667,6 +676,21 @@ fun ThreadPage(
     var waitLoadSuccessAndScrollToFirstReply by remember { mutableStateOf(scrollToReply) }
 
     val lazyListState = rememberLazyListState()
+    // GLASMIO 外壳：顶栏是 overlay，列表 viewport 从 y=0 开始；把「状态栏 + 悬浮顶栏」的高度
+    // 放进 contentPadding，首屏的大标题就刚好落在悬浮钮下方，滚动时内容又能从顶栏下穿过。
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val threadTopInset = statusBarTop + ThreadTopBarHeight
+    var largeTitleHeightPx by remember { mutableIntStateOf(0) }
+    val isLargeTitleCollapsed by remember {
+        derivedStateOf {
+            // contentPadding 不进 visibleItemsInfo.offset，所以用「已滚过的距离 vs 大标题高度」判断，
+            // 而不是拿 item offset 去和顶栏高度比（那个比较在首屏就会误判成收起）。
+            val scrolled = lazyListState.firstVisibleItemScrollOffset
+            val firstIndex = lazyListState.firstVisibleItemIndex
+            firstIndex > 0 || (largeTitleHeightPx > 0 && scrolled >= largeTitleHeightPx)
+        }
+    }
+    val threadLargeTitle = curForumName?.takeIf { it.isNotBlank() } ?: "贴吧"
     val bottomSheetState = rememberModalBottomSheetState(
         initialValue = ModalBottomSheetValue.Hidden,
         skipHalfExpanded = true
@@ -1364,8 +1388,128 @@ fun ThreadPage(
         }
     }
 
+    // 页面「更多菜单」的唯一一份内容：LEGACY 走 ModalBottomSheet，GLASMIO 走 AppMenu 下拉。
+    // 每个动作先 dismiss 再执行（跳页是先关菜单再弹输入框），所以这里不再各自调 closeBottomSheet。
+    val threadMenuContent: @Composable (onDismiss: () -> Unit) -> Unit = { onDismiss ->
+        ThreadMenu(
+            isSeeLz = isSeeLz,
+            isCollected = isCollected,
+            isImmersiveMode = isImmersiveMode,
+            isDesc = curSortType == ThreadSortType.SORT_TYPE_DESC,
+            canDelete = { author?.get { id } == user.get { id } },
+            onDismiss = onDismiss,
+            showHandle = !glassmio,
+            onSeeLzClick = {
+                viewModel.send(
+                    ThreadUiIntent.LoadFirstPage(
+                        threadId,
+                        forumId,
+                        !isSeeLz,
+                        curSortType
+                    )
+                )
+            },
+            onCollectClick = {
+                if (isCollected) {
+                    val fid = forum?.get { id } ?: forumId
+                    val tbs = anti?.get { tbs }
+                    if (fid != null) {
+                        viewModel.send(
+                            ThreadUiIntent.RemoveFavorite(
+                                threadId,
+                                fid,
+                                tbs
+                            )
+                        )
+                    }
+                } else {
+                    val readItem = lastVisibilityPost
+                    if (readItem != null) {
+                        viewModel.send(
+                            ThreadUiIntent.AddFavorite(
+                                threadId,
+                                readItem.get { id },
+                                readItem.get { floor }
+                            )
+                        )
+                    }
+                }
+            },
+            onImmersiveModeClick = {
+                if (!isImmersiveMode && !isSeeLz) {
+                    viewModel.send(
+                        ThreadUiIntent.LoadFirstPage(
+                            threadId,
+                            forumId,
+                            true,
+                            curSortType
+                        )
+                    )
+                }
+                viewModel.send(ThreadUiIntent.ToggleImmersiveMode(!isImmersiveMode))
+            },
+            onDescClick = {
+                viewModel.send(
+                    ThreadUiIntent.LoadFirstPage(
+                        threadId,
+                        forumId,
+                        isSeeLz,
+                        if (curSortType != ThreadSortType.SORT_TYPE_DESC) ThreadSortType.SORT_TYPE_DESC else ThreadSortType.SORT_TYPE_DEFAULT
+                    )
+                )
+            },
+            onJumpPageClick = {
+                jumpToPageDialogState.show()
+            },
+            onShareClick = {
+                TiebaUtil.shareText(
+                    context,
+                    "https://tieba.baidu.com/p/$threadId",
+                    threadTitle
+                )
+            },
+            onCopyLinkClick = {
+                TiebaUtil.copyText(
+                    context,
+                    "https://tieba.baidu.com/p/$threadId?see_lz=${isSeeLz.booleanToString()}"
+                )
+            },
+            onReportClick = {
+                val firstPostId =
+                    thread?.get { firstPostId }.takeIf { it != 0L }
+                        ?: firstPost?.get { id }
+                        ?: 0L
+                coroutineScope.launch {
+                    TiebaUtil.reportPost(
+                        context,
+                        navigator,
+                        firstPostId.toString()
+                    )
+                }
+            },
+            onDeleteClick = {
+                deletePost = null
+                confirmDeleteDialogState.show()
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = if (glassmio) 8.dp else 16.dp)
+                .defaultMinSize(minHeight = 1.dp)
+        )
+    }
+
     ProvideNavigator(navigator = navigator) {
-        ThreadPageSkin(enabled = glassmio) {
+        ThreadPageSkin(
+            enabled = glassmio,
+            topBar = {
+                ThreadGlassTopBar(
+                    collapsed = isLargeTitleCollapsed,
+                    title = threadLargeTitle,
+                    onBack = { navigator.navigateUp() },
+                    menuContent = { threadMenuContent { dismiss() } },
+                )
+            },
+        ) {
             StateScreen(
                 modifier = Modifier.fillMaxSize(),
                 isEmpty = isEmpty,
@@ -1394,19 +1538,23 @@ fun ThreadPage(
                     scaffoldState = scaffoldState,
                     backgroundColor = if (glassmio) Color.Transparent else MaterialTheme.colors.background,
                     topBar = {
-                    TopBar(
-                        forum = forum,
-                        onBack = { navigator.navigateUp() },
-                        onForumClick = {
-                            val forumName = forum?.get { name }
-                            if (forumName != null) navigator.navigate(
-                                ForumPageDestination(
-                                    forumName
-                                )
+                        // GLASMIO 的顶栏是 overlay（见 ThreadPageSkin 的 topBar 槽），
+                        // Scaffold 这里不再占高度，内容才能从顶栏下穿过。
+                        if (!glassmio) {
+                            TopBar(
+                                forum = forum,
+                                onBack = { navigator.navigateUp() },
+                                onForumClick = {
+                                    val forumName = forum?.get { name }
+                                    if (forumName != null) navigator.navigate(
+                                        ForumPageDestination(
+                                            forumName
+                                        )
+                                    )
+                                }
                             )
                         }
-                    )
-                },
+                    },
                 bottomBar = {
                     BottomBar(
                         user = user,
@@ -1441,6 +1589,7 @@ fun ThreadPage(
                         },
                         hasAgreed = hasThreadAgreed,
                         agreeNum = threadAgreeNum,
+                        glassmio = glassmio,
                         modifier = Modifier
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
@@ -1455,118 +1604,11 @@ fun ThreadPage(
                     sheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
                     sheetBackgroundColor = ExtendedTheme.colors.windowBackground,
                     sheetContent = {
-                        ThreadMenu(
-                            isSeeLz = isSeeLz,
-                            isCollected = isCollected,
-                            isImmersiveMode = isImmersiveMode,
-                            isDesc = curSortType == ThreadSortType.SORT_TYPE_DESC,
-                            canDelete = { author?.get { id } == user.get { id } },
-                            onSeeLzClick = {
-                                if (!bottomSheetState.isVisible) return@ThreadMenu
-                                viewModel.send(
-                                    ThreadUiIntent.LoadFirstPage(
-                                        threadId,
-                                        forumId,
-                                        !isSeeLz,
-                                        curSortType
-                                    )
-                                )
-                                closeBottomSheet()
-                            },
-                            onCollectClick = {
-                                if (!bottomSheetState.isVisible) return@ThreadMenu
-                                if (isCollected) {
-                                    val fid = forum?.get { id } ?: forumId
-                                    val tbs = anti?.get { tbs }
-                                    if (fid != null) {
-                                        viewModel.send(
-                                            ThreadUiIntent.RemoveFavorite(
-                                                threadId,
-                                                fid,
-                                                tbs
-                                            )
-                                        )
-                                    }
-                                } else {
-                                    val readItem = lastVisibilityPost
-                                    if (readItem != null) {
-                                        viewModel.send(
-                                            ThreadUiIntent.AddFavorite(
-                                                threadId,
-                                                readItem.get { id },
-                                                readItem.get { floor }
-                                            )
-                                        )
-                                    }
-                                }
-                                closeBottomSheet()
-                            },
-                            onImmersiveModeClick = {
-                                if (!bottomSheetState.isVisible) return@ThreadMenu
-                                if (!isImmersiveMode && !isSeeLz) {
-                                    viewModel.send(
-                                        ThreadUiIntent.LoadFirstPage(
-                                            threadId,
-                                            forumId,
-                                            true,
-                                            curSortType
-                                        )
-                                    )
-                                }
-                                viewModel.send(ThreadUiIntent.ToggleImmersiveMode(!isImmersiveMode))
-                                closeBottomSheet()
-                            },
-                            onDescClick = {
-                                if (!bottomSheetState.isVisible) return@ThreadMenu
-                                viewModel.send(
-                                    ThreadUiIntent.LoadFirstPage(
-                                        threadId,
-                                        forumId,
-                                        isSeeLz,
-                                        if (curSortType != ThreadSortType.SORT_TYPE_DESC) ThreadSortType.SORT_TYPE_DESC else ThreadSortType.SORT_TYPE_DEFAULT
-                                    )
-                                )
-                                closeBottomSheet()
-                            },
-                            onJumpPageClick = {
-                                closeBottomSheet()
-                                jumpToPageDialogState.show()
-                            },
-                            onShareClick = {
-                                TiebaUtil.shareText(
-                                    context,
-                                    "https://tieba.baidu.com/p/$threadId",
-                                    threadTitle
-                                )
-                            },
-                            onCopyLinkClick = {
-                                TiebaUtil.copyText(
-                                    context,
-                                    "https://tieba.baidu.com/p/$threadId?see_lz=${isSeeLz.booleanToString()}"
-                                )
-                            },
-                            onReportClick = {
-                                val firstPostId =
-                                    thread?.get { firstPostId }.takeIf { it != 0L }
-                                        ?: firstPost?.get { id }
-                                        ?: 0L
-                                coroutineScope.launch {
-                                    TiebaUtil.reportPost(
-                                        context,
-                                        navigator,
-                                        firstPostId.toString()
-                                    )
-                                }
-                            },
-                            onDeleteClick = {
-                                deletePost = null
-                                confirmDeleteDialogState.show()
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 16.dp)
-                                .defaultMinSize(minHeight = 1.dp)
-                        )
+                        // LEGACY 仍然用这张 M2 bottom sheet；GLASMIO 走顶栏/底栏的 AppMenu，
+                        // sheet 永远保持隐藏（保留状态机只是为了不动旧分支）。
+                        if (!glassmio) {
+                            threadMenuContent { closeBottomSheet() }
+                        }
                     },
                     scrimColor = Color.Transparent,
                     modifier = Modifier
@@ -1620,10 +1662,29 @@ fun ThreadPage(
                         ) {
                             MyLazyColumn(
                                 state = lazyListState,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = PaddingValues(
+                                    top = if (glassmio) threadTopInset else 0.dp,
+                                ),
                             ) {
                                 item(key = "FirstPost") {
                                     if (firstPost != null) {
+                                        if (glassmio) {
+                                            // 大标题和「第一帖」共用同一个 item：不新增列表 index，
+                                            // 页面里的 scrollToItem(1/2/+n) 语义全部不变。
+                                            ThreadLargeTitle(
+                                                title = threadLargeTitle,
+                                                onForumClick = {
+                                                    val forumName = curForumName
+                                                    if (forumName != null) navigator.navigate(
+                                                        ForumPageDestination(forumName)
+                                                    )
+                                                },
+                                                modifier = Modifier.onSizeChanged {
+                                                    largeTitleHeightPx = it.height
+                                                },
+                                            )
+                                        }
                                         Container {
                                             Column {
                                                 PostCard(
@@ -1952,7 +2013,9 @@ fun ThreadPage(
                         PullRefreshIndicator(
                             refreshing = isRefreshing,
                             state = pullRefreshState,
-                            modifier = Modifier.align(Alignment.TopCenter),
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .padding(top = if (glassmio) threadTopInset else 0.dp),
                             backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
                             contentColor = ExtendedTheme.colors.primary,
                         )
@@ -2021,7 +2084,19 @@ private fun BottomBar(
     modifier: Modifier = Modifier,
     hasAgreed: Boolean = false,
     agreeNum: Long = 0,
+    glassmio: Boolean = false,
 ) {
+    if (glassmio) {
+        ThreadGlassBottomBar(
+            user = user,
+            onClickReply = onClickReply,
+            onAgree = onAgree,
+            hasAgreed = hasAgreed,
+            agreeNum = agreeNum,
+            modifier = modifier,
+        )
+        return
+    }
     Column(
         modifier = Modifier.background(ExtendedTheme.colors.threadBottomBar)
     ) {
@@ -2513,22 +2588,33 @@ private fun ThreadMenu(
     onCopyLinkClick: () -> Unit,
     onReportClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    showHandle: Boolean = true,
 ) {
     val account = LocalAccount.current
     Column(
-        modifier = modifier,
+        // 下拉菜单里内容可能超过一屏：固定最大高度 + 纵向滚动，避免 GlasmioMenu 把底部行裁掉。
+        modifier = if (showHandle) {
+            modifier
+        } else {
+            modifier
+                .heightIn(max = 420.dp)
+                .verticalScroll(rememberScrollState())
+        },
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(if (showHandle) 16.dp else 12.dp)
     ) {
-        Spacer(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .height(4.dp)
-                .fillMaxWidth(0.25f)
-                .clip(RoundedCornerShape(100))
-                .background(ExtendedTheme.colors.chip)
-        )
+        if (showHandle) {
+            Spacer(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .height(4.dp)
+                    .fillMaxWidth(0.25f)
+                    .clip(RoundedCornerShape(100))
+                    .background(ExtendedTheme.colors.chip)
+            )
+        }
         VerticalGrid(
             column = 2,
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -2545,7 +2631,10 @@ private fun ThreadMenu(
                         )
                     },
                     checked = isSeeLz,
-                    onClick = onSeeLzClick,
+                    onClick = {
+                        onDismiss()
+                        onSeeLzClick()
+                    },
                     icon = {
                         Icon(
                             imageVector = if (isSeeLz) Icons.Rounded.Face6 else Icons.Rounded.FaceRetouchingOff,
@@ -2567,7 +2656,10 @@ private fun ThreadMenu(
                             )
                         },
                         checked = isCollected,
-                        onClick = onCollectClick,
+                        onClick = {
+                            onDismiss()
+                            onCollectClick()
+                        },
                         icon = {
                             Icon(
                                 imageVector = if (isCollected) Icons.Rounded.Star else Icons.Rounded.StarBorder,
@@ -2589,7 +2681,10 @@ private fun ThreadMenu(
                         )
                     },
                     checked = isImmersiveMode,
-                    onClick = onImmersiveModeClick,
+                    onClick = {
+                        onDismiss()
+                        onImmersiveModeClick()
+                    },
                     icon = {
                         Icon(
                             imageVector = if (isImmersiveMode) Icons.AutoMirrored.Rounded.ChromeReaderMode else Icons.AutoMirrored.Outlined.ChromeReaderMode,
@@ -2610,7 +2705,10 @@ private fun ThreadMenu(
                         )
                     },
                     checked = isDesc,
-                    onClick = onDescClick,
+                    onClick = {
+                        onDismiss()
+                        onDescClick()
+                    },
                     icon = {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.Sort,
@@ -2626,21 +2724,30 @@ private fun ThreadMenu(
                 icon = Icons.Rounded.RocketLaunch,
                 text = stringResource(id = R.string.title_jump_page),
                 iconColor = ExtendedTheme.colors.text,
-                onClick = onJumpPageClick,
+                onClick = {
+                    onDismiss()
+                    onJumpPageClick()
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
             ListMenuItem(
                 icon = Icons.Rounded.Share,
                 text = stringResource(id = R.string.title_share),
                 iconColor = ExtendedTheme.colors.text,
-                onClick = onShareClick,
+                onClick = {
+                    onDismiss()
+                    onShareClick()
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
             ListMenuItem(
                 icon = Icons.Rounded.ContentCopy,
                 text = stringResource(id = R.string.title_copy_link),
                 iconColor = ExtendedTheme.colors.text,
-                onClick = onCopyLinkClick,
+                onClick = {
+                    onDismiss()
+                    onCopyLinkClick()
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
             if (account != null) {
@@ -2648,7 +2755,10 @@ private fun ThreadMenu(
                     icon = Icons.Rounded.Report,
                     text = stringResource(id = R.string.title_report),
                     iconColor = ExtendedTheme.colors.text,
-                    onClick = onReportClick,
+                    onClick = {
+                        onDismiss()
+                        onReportClick()
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -2657,7 +2767,10 @@ private fun ThreadMenu(
                     icon = Icons.Rounded.Delete,
                     text = stringResource(id = R.string.title_delete),
                     iconColor = ExtendedTheme.colors.text,
-                    onClick = onDeleteClick,
+                    onClick = {
+                        onDismiss()
+                        onDeleteClick()
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
