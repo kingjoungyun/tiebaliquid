@@ -18,6 +18,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +65,18 @@ private const val PositionSettleMillis = 260L
 
 /** 「手指按在 dock 上」的最长冻结时间，防止漏掉抬起事件后收起状态被永久冻住。 */
 private const val DockPressWatchdogMillis = 4000L
+
+/** 选中变化后多久做一次兜底重建（要落在镜头弹簧 settling 之后，用户不可见）。 */
+private const val ResettleDelayMillis = 700L
+
+/**
+ * 兜底重建开关：选中变化后让 bar 整体重建一次，把镜头/lift/flex 和玻璃图层复位。
+ *
+ * 代价（真机实测）：静止时 dock 带内两帧的像素噪声是 0.000；跨一次重建是 7.9（mean abs，
+ * 0..255），即玻璃会重新合成一次、有一点点亮度/色调差 —— 镜头位置和形状不变，没有跳变。
+ * 如果这点差异不能接受，把这里改成 false 即可整体关掉。
+ */
+private const val DockResettleEnabled = true
 
 /** 未读小红点：贴吧原版是 14dp 圆 + 10sp 数字，这里沿用尺寸，宽度允许被「99+」撑开。 */
 private val BadgeHeight = 14.dp
@@ -192,6 +206,21 @@ fun GlasmioDock(
         }
     }
 
+    // ---- 交互后的兜底重建 ---------------------------------------------------------------
+    // 用户报的「形变停在某一帧」：点 tab（尤其 0↔3 跨三格）后，镜头/抬起/图层录制如果被
+    // 内部渲染循环掐断，就会停在中间态。这里在**动画肯定走完之后**让 bar 整体重建一次，
+    // 把镜头、lift、flex 和玻璃图层全部复位到当前 selectedKey 的静止态。
+    // 时机：ResettleDelayMillis 落在弹簧 settling 之后（实测 500ms 后镜头已在终点），
+    // 所以重建对用户不可见；点得比这更密时 LaunchedEffect 会被下一次选中取消，不会叠加。
+    var resettleToken by remember { mutableIntStateOf(0) }
+    LaunchedEffect(currentPosition) {
+        if (!DockResettleEnabled) return@LaunchedEffect
+        delay(ResettleDelayMillis)
+        // 手指还按着、或收起/展开正在 morph 时不要重建（会把动画掐断）。
+        val settledProgress = progress.value <= 0.001f || progress.value >= 0.999f
+        if (!dockPressed && settledProgress) resettleToken++
+    }
+
     // label 是 @Composable（要读 stringResource），只能在组合里取；再按内容做 remember key，
     // 避免每次重组都重建 items（Glasmio 内部按 items 实例做 memo）。
     val labels = navigationItems.mapIndexed { index, item -> item.title(index == currentPosition) }
@@ -241,31 +270,33 @@ fun GlasmioDock(
                     // 那会把 minWidth 也钉成全宽，收起态的玻璃只能贴在左边（CenterStart），
                     // 外面这层 center 的 Box 就失效了（Glasmio 的 sample 也是这么摆的）。
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        GlasmioNavigationBar(
-                            items = items,
-                            selectedKey = currentPosition,
-                            onSelected = { index ->
-                                if (index == currentPosition) {
-                                    onReselected(index)
-                                } else {
-                                    onChangePosition(index)
-                                }
-                                // 与旧 dock 一致：选中即清未读（MainPage 在 item.onClick 里发 Intent）。
-                                navigationItems.getOrNull(index)?.onClick?.invoke()
-                            },
-                            // 收起态点一下 = 展开；同时把基线挪到当前位置 —— 否则列表还在惯性
-                            // 滚动（offset 继续涨）时会立刻又被收起，看起来像「点了没反应」。
-                            onExpand = {
-                                userExpanded = true
-                                baseline = scrollOffsetPx?.invoke() ?: 0f
-                                collapsed = false
-                            },
-                            compactProgress = compactProgress,
-                            compactSize = CompactBottomControlSize,
-                            onItemIconBoundsChanged = { index, bounds ->
-                                if (iconBounds[index] != bounds) iconBounds[index] = bounds
-                            },
-                        )
+                        key(resettleToken) {
+                            GlasmioNavigationBar(
+                                items = items,
+                                selectedKey = currentPosition,
+                                onSelected = { index ->
+                                    if (index == currentPosition) {
+                                        onReselected(index)
+                                    } else {
+                                        onChangePosition(index)
+                                    }
+                                    // 与旧 dock 一致：选中即清未读（MainPage 在 item.onClick 里发 Intent）。
+                                    navigationItems.getOrNull(index)?.onClick?.invoke()
+                                },
+                                // 收起态点一下 = 展开；同时把基线挪到当前位置 —— 否则列表还在惯性
+                                // 滚动（offset 继续涨）时会立刻又被收起，看起来像「点了没反应」。
+                                onExpand = {
+                                    userExpanded = true
+                                    baseline = scrollOffsetPx?.invoke() ?: 0f
+                                    collapsed = false
+                                },
+                                compactProgress = compactProgress,
+                                compactSize = CompactBottomControlSize,
+                                onItemIconBoundsChanged = { index, bounds ->
+                                    if (iconBounds[index] != bounds) iconBounds[index] = bounds
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -347,5 +378,8 @@ private fun DockBadge(
         }
     }
 }
+
+
+
 
 
