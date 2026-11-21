@@ -1,29 +1,48 @@
 package com.huanchengfly.tieba.post.ui.page.history.list
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.DropdownMenuItem
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageHost
+import com.huanchengfly.tieba.post.ui.page.subposts.SubPostsGlassTopBar
+import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageSkin
+import com.huanchengfly.tieba.post.ui.page.thread.ThreadTopBarHeight
+import io.github.neoruaa.glasmio.core.GlasmioTheme
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.arch.onEvent
@@ -32,7 +51,6 @@ import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.fromJson
 import com.huanchengfly.tieba.post.models.ThreadHistoryInfoBean
 import com.huanchengfly.tieba.post.models.database.History
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
@@ -58,8 +76,22 @@ fun HistoryListPage(
     type: Int,
     viewModel: HistoryListViewModel = if (type == HistoryUtil.TYPE_THREAD) pageViewModel<ThreadHistoryListViewModel>() else pageViewModel<ForumHistoryListViewModel>()
 ) {
-        // P1：页级 backdrop host —— 本页的菜单/动作面板要能采到这一页的真实内容。
-        // 页面内容进 sampledContent（活 backdrop，整页录制）；页内玻璃控件会自动走自带纯色 host。
+        val glassmio = HistoryListUi.DefaultStyle == HistoryListUiStyle.GLASMIO
+        val navigator = LocalNavigator.current
+        val lazyListState = rememberLazyListState()
+        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        val topInset = statusBarTop + ThreadTopBarHeight
+        val isCollapsed by remember {
+            derivedStateOf {
+                lazyListState.firstVisibleItemIndex > 0 ||
+                    lazyListState.firstVisibleItemScrollOffset > 40
+            }
+        }
+        val topScrimAlpha by animateFloatAsState(
+            targetValue = if (isCollapsed) 1f else 0f,
+            animationSpec = tween(180),
+            label = "historyTopScrim",
+        )
         GlassPageHost(modifier = Modifier.fillMaxSize()) {
             LazyLoad(loaded = viewModel.initialized) {
                 viewModel.send(HistoryListUiIntent.Refresh)
@@ -90,7 +122,6 @@ fun HistoryListPage(
             )
     
             val context = LocalContext.current
-            val navigator = LocalNavigator.current
             val snackbarHostState = LocalSnackbarHostState.current
             viewModel.onEvent<HistoryListUiEvent.Delete.Failure> {
                 snackbarHostState.showSnackbar(
@@ -103,7 +134,6 @@ fun HistoryListPage(
             viewModel.onEvent<HistoryListUiEvent.Delete.Success> {
                 snackbarHostState.showSnackbar(context.getString(R.string.delete_history_success))
             }
-            val lazyListState = rememberLazyListState()
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -118,14 +148,20 @@ fun HistoryListPage(
                     MyLazyColumn(
                         modifier = Modifier
                             .fillMaxSize(),
-                        state = lazyListState
+                        state = lazyListState,
+                        contentPadding = PaddingValues(
+                            top = 0.dp,
+                        ),
                     ) {
                         if (todayHistoryData.isNotEmpty()) {
                             stickyHeader(key = "TodayHistoryHeader") {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(ExtendedTheme.colors.background)
+                                        .background(
+                                            if (glassmio) GlasmioTheme.colors.groupedBackground
+                                            else ExtendedTheme.colors.background
+                                        )
                                         .padding(horizontal = 16.dp, vertical = 8.dp)
                                 ) {
                                     Chip(
@@ -140,6 +176,7 @@ fun HistoryListPage(
                             ) { info ->
                                 HistoryItem(
                                     info,
+                                    glassmio = glassmio,
                                     onDelete = {
                                         viewModel.send(HistoryListUiIntent.Delete(it.id))
                                     },
@@ -171,7 +208,10 @@ fun HistoryListPage(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(ExtendedTheme.colors.background)
+                                        .background(
+                                            if (glassmio) GlasmioTheme.colors.groupedBackground
+                                            else ExtendedTheme.colors.background
+                                        )
                                         .padding(horizontal = 16.dp, vertical = 8.dp)
                                 ) {
                                     Chip(text = stringResource(id = R.string.title_history_before))
@@ -183,6 +223,7 @@ fun HistoryListPage(
                             ) { info ->
                                 HistoryItem(
                                     info,
+                                    glassmio = glassmio,
                                     onDelete = {
                                         viewModel.send(HistoryListUiIntent.Delete(it.id))
                                     },
@@ -219,6 +260,7 @@ fun HistoryListPage(
 @Composable
 private fun HistoryItem(
     info: History,
+    glassmio: Boolean = false,
     modifier: Modifier = Modifier,
     onClick: (History) -> Unit = {},
     onDelete: (History) -> Unit = {},
@@ -241,6 +283,54 @@ private fun HistoryItem(
             ),
         ),
     )
+    if (glassmio) {
+        val timeText = DateTimeUtils.getRelativeTimeString(LocalContext.current, info.timestamp)
+        val primaryText = info.title ?: info.username.orEmpty()
+        val secondaryText = if (info.type == HistoryUtil.TYPE_THREAD) {
+            listOfNotNull(info.username, timeText).joinToString(" · ")
+        } else {
+            timeText
+        }
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = { onClick(info) },
+                    onLongClick = { showActions = true },
+                )
+                .padding(horizontal = 16.dp, vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Avatar(
+                data = info.avatar,
+                size = 40.dp,
+                shape = RoundedCornerShape(10.dp),
+                contentDescription = null,
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = primaryText,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ExtendedTheme.colors.text,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = secondaryText,
+                    fontSize = 13.sp,
+                    color = ExtendedTheme.colors.textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        return
+    }
     Column(
         modifier = modifier
             .combinedClickable(
