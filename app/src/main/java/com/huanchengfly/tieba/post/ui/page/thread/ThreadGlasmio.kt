@@ -1,12 +1,9 @@
 package com.huanchengfly.tieba.post.ui.page.thread
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -21,7 +18,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
@@ -34,15 +30,21 @@ import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -53,30 +55,26 @@ import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassBackdropHost
-import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassSurface
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
-import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
-import com.huanchengfly.tieba.post.ui.common.theme.glass.glassNavigationTint
 import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
-import com.huanchengfly.tieba.post.ui.widgets.compose.ClickMenu
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.MenuScope
+import com.huanchengfly.tieba.post.ui.widgets.compose.ProvideContentColor
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
+import com.huanchengfly.tieba.post.ui.widgets.compose.rememberMenuState
 import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.core.IosTypography
-import io.github.neoruaa.glasmio.glass.GlassEmphasis
-import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
+import io.github.neoruaa.glasmio.glass.GlassSurface
+import io.github.neoruaa.glasmio.ui.GlasmioIconButton
 
 /**
  * 帖子详情页的 Glasmio 外壳（`ThreadPageUiStyle.GLASMIO`）。
  *
- * 架构：
- * - `sampledContent`：页面内容被录进 LayerBackdrop；
- * - `overlayContent`：顶栏 + 底栏都画在录制层之上，因此两处的玻璃都能采到**整页真实内容**；
- * - 页面列表用 `contentPadding.top/bottom` 给两层浮层让位，滚动时内容从它们下面穿过。
- *
- * 材质只有一种：`LiquidGlassSurface(material = RegularSmall)` + `glassNavigationTint()` +
- * 1dp 浅色 rim。顶栏三控件、底栏两个胶囊全部复用 [ThreadGlassPill]。
+ * 顶栏/底栏都在 overlay 层：玻璃控件能采到页面真实内容。
+ * 材质直接使用 Glasmio 组件默认值，不再叠加 tint / rim / innerGlow 等自定义参数：
+ * - 返回 / ⋯：`GlasmioIconButton` 默认尺寸与默认材质；
+ * - 吧名胶囊、底栏两个胶囊：`GlassSurface` 默认参数 + 胶囊 shape。
  */
 @Composable
 fun ThreadPageSkin(
@@ -146,6 +144,9 @@ fun ThreadGlassTopBar(
         0.58f to colors.groupedBackground.copy(alpha = 0.48f),
         1f to Color.Transparent,
     )
+    val menuState = rememberMenuState()
+    val menuScope = remember(menuState) { MenuScope(menuState) }
+    var menuTriggerBounds by remember { mutableStateOf<Rect?>(null) }
 
     Box(modifier = modifier.fillMaxWidth()) {
         if (scrimAlpha > 0.01f) {
@@ -154,7 +155,7 @@ fun ThreadGlassTopBar(
                     .fillMaxWidth()
                     .height(scrimHeight)
                     .background(scrimBrush)
-                    .then(Modifier.alpha(scrimAlpha))
+                    .alpha(scrimAlpha)
             )
         }
         Box(
@@ -164,29 +165,27 @@ fun ThreadGlassTopBar(
                 .height(ThreadTopBarHeight)
                 .padding(horizontal = 8.dp)
         ) {
-            ThreadGlassIconButton(
+            GlasmioIconButton(
                 onClick = onBack,
-                contentDescription = stringResource(id = R.string.button_back),
                 modifier = Modifier.align(Alignment.CenterStart),
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = null,
+                    contentDescription = stringResource(id = R.string.button_back),
                     tint = colors.content,
                     modifier = Modifier.size(20.dp),
                 )
             }
 
             val forumShape = RoundedCornerShape(ThreadTopActionSize / 2)
-            ThreadGlassPill(
+            GlassSurface(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .height(ThreadTopActionSize)
                     .widthIn(max = 220.dp)
-                    .wrapContentWidth()
-                    .clip(forumShape)
-                    .debounceClickable(onClick = onForumClick),
+                    .wrapContentWidth(),
                 shape = forumShape,
+                onClick = onForumClick,
             ) {
                 Text(
                     text = forumName,
@@ -206,18 +205,31 @@ fun ThreadGlassTopBar(
                     .align(Alignment.CenterEnd)
                     .semantics { contentDescription = moreDescription },
             ) {
-                ClickMenu(
-                    menuContent = menuContent,
-                    menuWidth = 330.dp,
-                    triggerShape = CircleShape,
+                GlasmioIconButton(
+                    onClick = { menuState.expanded = true },
+                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                        if (coordinates.isAttached) {
+                            menuTriggerBounds = coordinates.boundsInWindow()
+                        }
+                    },
                 ) {
-                    ThreadGlassIconSurface {
-                        Icon(
-                            imageVector = Icons.Rounded.MoreVert,
-                            contentDescription = null,
-                            tint = colors.content,
-                            modifier = Modifier.size(20.dp),
-                        )
+                    Icon(
+                        imageVector = Icons.Rounded.MoreVert,
+                        contentDescription = null,
+                        tint = colors.content,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                AppMenu(
+                    expanded = menuState.expanded,
+                    onDismissRequest = { menuScope.dismiss() },
+                    menuWidth = 330.dp,
+                    anchorBounds = menuTriggerBounds?.let {
+                        Rect(left = it.left, top = it.bottom, right = it.right, bottom = it.bottom)
+                    },
+                ) {
+                    ProvideContentColor(color = colors.content) {
+                        menuScope.menuContent()
                     }
                 }
             }
@@ -226,83 +238,8 @@ fun ThreadGlassTopBar(
 }
 
 /**
- * 全页唯一的玻璃壳：`RegularSmall` + `glassNavigationTint()` + 细 rim。
- * 顶栏圆钮、吧名胶囊、底栏输入/信息胶囊全部走这里，避免再出现第二种材质。
- */
-@Composable
-private fun ThreadGlassPill(
-    modifier: Modifier = Modifier,
-    shape: Shape = CircleShape,
-    content: @Composable BoxScope.() -> Unit,
-) {
-    val rim = if (glassColors().isDark) {
-        Color.White.copy(alpha = 0.40f)
-    } else {
-        Color.White.copy(alpha = 0.58f)
-    }
-    LiquidGlassSurface(
-        modifier = modifier,
-        shape = shape,
-        material = NavigationGlassMaterial.RegularSmall,
-        navigationSurfaceColor = glassNavigationTint(),
-        emphasis = GlassEmphasis.Regular,
-        innerGlow = true,
-    ) {
-        content()
-        // rim 叠在玻璃之上，只做 1dp 轮廓，不做「透明线框」。
-        Box(modifier = Modifier.matchParentSize().border(1.dp, rim, shape))
-    }
-}
-
-@Composable
-private fun ThreadGlassIconButton(
-    onClick: () -> Unit,
-    contentDescription: String?,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        modifier = modifier
-            .size(ThreadTopActionSize)
-            .clip(CircleShape)
-            .semantics { this.contentDescription = contentDescription.orEmpty() }
-            .debounceClickable(onClick = onClick)
-    ) {
-        ThreadGlassPill(
-            modifier = Modifier.matchParentSize(),
-            shape = CircleShape,
-        ) {
-            Box(
-                modifier = Modifier.matchParentSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                content()
-            }
-        }
-    }
-}
-
-@Composable
-private fun ThreadGlassIconSurface(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    ThreadGlassPill(
-        modifier = modifier.size(ThreadTopActionSize),
-        shape = CircleShape,
-    ) {
-        Box(
-            modifier = Modifier.matchParentSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            content()
-        }
-    }
-}
-
-/**
- * 底栏：两个玻璃胶囊。这个 composable 只在 `ThreadPageSkin` 的 overlay 槽里调用，
- * 所以 `LiquidGlassSurface` 采到的是页面真实内容，不再有「纯色小 host」的白塑料感。
+ * 底栏：两个 GlassSurface 默认胶囊。这个 composable 只在 `ThreadPageSkin` 的 overlay 槽里调用，
+ * 所以玻璃采到的是页面真实内容。
  */
 @Composable
 fun ThreadGlassBottomBar(
@@ -337,35 +274,30 @@ fun ThreadGlassBottomBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
+            GlassSurface(
                 modifier = Modifier
                     .weight(1f)
-                    .height(ThreadBottomBarHeight)
-                    .clip(shape)
-                    .debounceClickable(onClick = onClickReply)
+                    .height(ThreadBottomBarHeight),
+                shape = shape,
+                onClick = onClickReply,
             ) {
-                ThreadGlassPill(
-                    modifier = Modifier.matchParentSize(),
-                    shape = shape,
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.CenterStart,
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp),
-                        contentAlignment = Alignment.CenterStart,
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.tip_reply_thread),
-                            style = IosTypography.subheadline,
-                            color = normal,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
+                    Text(
+                        text = stringResource(id = R.string.tip_reply_thread),
+                        style = IosTypography.subheadline,
+                        color = normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
 
-            ThreadGlassPill(
+            GlassSurface(
                 modifier = Modifier
                     .width(196.dp)
                     .height(ThreadBottomBarHeight),
