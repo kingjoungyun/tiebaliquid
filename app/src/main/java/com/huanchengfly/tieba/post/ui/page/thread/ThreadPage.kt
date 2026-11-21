@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeightIn
@@ -41,10 +40,8 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.appendInlineContent
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.DropdownMenuItem
@@ -93,7 +90,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -676,21 +672,21 @@ fun ThreadPage(
     var waitLoadSuccessAndScrollToFirstReply by remember { mutableStateOf(scrollToReply) }
 
     val lazyListState = rememberLazyListState()
-    // GLASMIO 外壳：顶栏是 overlay，列表 viewport 从 y=0 开始；把「状态栏 + 悬浮顶栏」的高度
-    // 放进 contentPadding，首屏的大标题就刚好落在悬浮钮下方，滚动时内容又能从顶栏下穿过。
+    // GLASMIO 外壳：顶栏是 overlay，列表 contentPadding 只留「状态栏 + 顶栏」，
+    // 首屏内容直接贴在悬浮控件下方，滚动时内容从顶栏下穿过。
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val threadTopInset = statusBarTop + ThreadTopBarHeight
-    var largeTitleHeightPx by remember { mutableIntStateOf(0) }
-    val isLargeTitleCollapsed by remember {
+    val isContentScrolled by remember {
         derivedStateOf {
-            // contentPadding 不进 visibleItemsInfo.offset，所以用「已滚过的距离 vs 大标题高度」判断，
-            // 而不是拿 item offset 去和顶栏高度比（那个比较在首屏就会误判成收起）。
-            val scrolled = lazyListState.firstVisibleItemScrollOffset
-            val firstIndex = lazyListState.firstVisibleItemIndex
-            firstIndex > 0 || (largeTitleHeightPx > 0 && scrolled >= largeTitleHeightPx)
+            lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 6
         }
     }
-    val threadLargeTitle = curForumName?.takeIf { it.isNotBlank() } ?: "贴吧"
+    val topScrimAlpha by animateFloatAsState(
+        targetValue = if (isContentScrolled) 1f else 0f,
+        animationSpec = tween(180),
+        label = "threadTopScrim",
+    )
+    val threadForumName = curForumName?.takeIf { it.isNotBlank() } ?: "贴吧"
     val bottomSheetState = rememberModalBottomSheetState(
         initialValue = ModalBottomSheetValue.Hidden,
         skipHalfExpanded = true
@@ -1503,9 +1499,15 @@ fun ThreadPage(
             enabled = glassmio,
             topBar = {
                 ThreadGlassTopBar(
-                    collapsed = isLargeTitleCollapsed,
-                    title = threadLargeTitle,
+                    forumName = threadForumName,
+                    scrimAlpha = topScrimAlpha,
                     onBack = { navigator.navigateUp() },
+                    onForumClick = {
+                        val forumName = curForumName
+                        if (forumName != null) navigator.navigate(
+                            ForumPageDestination(forumName)
+                        )
+                    },
                     menuContent = { threadMenuContent { dismiss() } },
                 )
             },
@@ -1589,6 +1591,36 @@ fun ThreadPage(
                         },
                         hasAgreed = hasThreadAgreed,
                         agreeNum = threadAgreeNum,
+                        replyNum = (thread?.get { replyNum - 1 } ?: 0).coerceAtLeast(0),
+                        isSeeLz = isSeeLz,
+                        isDesc = curSortType == ThreadSortType.SORT_TYPE_DESC,
+                        onReplyCountClick = {
+                            coroutineScope.launch { lazyListState.animateScrollToItem(1) }
+                        },
+                        onSeeLzClick = {
+                            viewModel.send(
+                                ThreadUiIntent.LoadFirstPage(
+                                    threadId,
+                                    forumId,
+                                    !isSeeLz,
+                                    curSortType
+                                )
+                            )
+                        },
+                        onSortClick = {
+                            viewModel.send(
+                                ThreadUiIntent.LoadFirstPage(
+                                    threadId,
+                                    forumId,
+                                    isSeeLz,
+                                    if (curSortType != ThreadSortType.SORT_TYPE_DESC) {
+                                        ThreadSortType.SORT_TYPE_DESC
+                                    } else {
+                                        ThreadSortType.SORT_TYPE_DEFAULT
+                                    }
+                                )
+                            )
+                        },
                         glassmio = glassmio,
                         modifier = Modifier
                             .clickable(
@@ -1669,22 +1701,6 @@ fun ThreadPage(
                             ) {
                                 item(key = "FirstPost") {
                                     if (firstPost != null) {
-                                        if (glassmio) {
-                                            // 大标题和「第一帖」共用同一个 item：不新增列表 index，
-                                            // 页面里的 scrollToItem(1/2/+n) 语义全部不变。
-                                            ThreadLargeTitle(
-                                                title = threadLargeTitle,
-                                                onForumClick = {
-                                                    val forumName = curForumName
-                                                    if (forumName != null) navigator.navigate(
-                                                        ForumPageDestination(forumName)
-                                                    )
-                                                },
-                                                modifier = Modifier.onSizeChanged {
-                                                    largeTitleHeightPx = it.height
-                                                },
-                                            )
-                                        }
                                         Container {
                                             Column {
                                                 PostCard(
@@ -1779,136 +1795,143 @@ fun ThreadPage(
                                         }
                                     }
                                 }
-                                stickyHeader(key = "ThreadHeader") {
-                                    Container {
-                                        Row(
-                                            modifier = Modifier
-                                                .background(MaterialTheme.colors.background)
-                                                .padding(8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-//                                            Text(
-//                                                text = stringResource(
-//                                                    R.string.title_thread_header,
-//                                                    "${thread?.get { replyNum - 1 } ?: 0}"),
-//                                                fontSize = 13.sp,
-//                                                fontWeight = FontWeight.Bold,
-//                                                color = ExtendedTheme.colors.text,
-//                                                modifier = Modifier.padding(horizontal = 8.dp),
-//                                            )
+                                if (glassmio) {
+                                    item(key = "ThreadHeader") {
+                                        // 原来的「回复数 / 只看楼主 / 正序倒序」整行已移到玻璃底栏。
+                                        // 保留一个 0 高度 item，维持 animateScrollToItem(1/2/+n) 的既有 index 语义。
+                                    }
+                                } else {
+                                    stickyHeader(key = "ThreadHeader") {
+                                        Container {
                                             Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.height(IntrinsicSize.Min)
+                                                modifier = Modifier
+                                                    .background(MaterialTheme.colors.background)
+                                                    .padding(8.dp),
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Text(
-                                                    text = stringResource(
-                                                        R.string.title_thread_header,
-                                                        "${thread?.get { replyNum - 1 } ?: 0}"),
-                                                    modifier = Modifier
-                                                        .padding(horizontal = 8.dp)
-                                                        .debounceClickable(
-                                                            interactionSource = remember { MutableInteractionSource() },
-                                                            indication = null,
-                                                            enabled = isSeeLz,
-                                                            onClick = {
-                                                                if (isSeeLz) {
-                                                                    viewModel.send(
-                                                                        ThreadUiIntent.LoadFirstPage(
-                                                                            threadId = threadId,
-                                                                            forumId = forumId,
-                                                                            seeLz = false,
-                                                                            sortType = curSortType
-                                                                        )
-                                                                    )
-                                                                }
-                                                            }),
-                                                    fontSize = 13.sp,
-                                                    fontWeight = if (!isSeeLz) FontWeight.SemiBold else FontWeight.Normal,
-                                                    color = if (!isSeeLz) ExtendedTheme.colors.text else ExtendedTheme.colors.textSecondary,
-                                                )
-                                                HorizontalDivider()
-                                                Text(
-                                                    text = stringResource(R.string.title_see_lz),
-                                                    modifier = Modifier
-                                                        .padding(horizontal = 8.dp)
-                                                        .debounceClickable(
-                                                            interactionSource = remember { MutableInteractionSource() },
-                                                            enabled = !isSeeLz,
-                                                            indication = null,
-                                                            onClick =
-                                                                {
-                                                                    if (!isSeeLz) {
+    //                                            Text(
+    //                                                text = stringResource(
+    //                                                    R.string.title_thread_header,
+    //                                                    "${thread?.get { replyNum - 1 } ?: 0}"),
+    //                                                fontSize = 13.sp,
+    //                                                fontWeight = FontWeight.Bold,
+    //                                                color = ExtendedTheme.colors.text,
+    //                                                modifier = Modifier.padding(horizontal = 8.dp),
+    //                                            )
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier.height(IntrinsicSize.Min)
+                                                ) {
+                                                    Text(
+                                                        text = stringResource(
+                                                            R.string.title_thread_header,
+                                                            "${thread?.get { replyNum - 1 } ?: 0}"),
+                                                        modifier = Modifier
+                                                            .padding(horizontal = 8.dp)
+                                                            .debounceClickable(
+                                                                interactionSource = remember { MutableInteractionSource() },
+                                                                indication = null,
+                                                                enabled = isSeeLz,
+                                                                onClick = {
+                                                                    if (isSeeLz) {
                                                                         viewModel.send(
                                                                             ThreadUiIntent.LoadFirstPage(
                                                                                 threadId = threadId,
                                                                                 forumId = forumId,
-                                                                                seeLz = true,
+                                                                                seeLz = false,
                                                                                 sortType = curSortType
                                                                             )
                                                                         )
                                                                     }
                                                                 }),
-                                                    fontSize = 13.sp,
-                                                    fontWeight = if (isSeeLz) FontWeight.SemiBold else FontWeight.Normal,
-                                                    color = if (isSeeLz) ExtendedTheme.colors.text else ExtendedTheme.colors.textSecondary,
-                                                )
-                                            }
-                                            Spacer(modifier = Modifier.weight(1f))
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.height(IntrinsicSize.Min)
-                                            ) {
-                                                Text(
-                                                    text = stringResource(R.string.title_asc),
-                                                    modifier = Modifier
-                                                        .padding(horizontal = 8.dp)
-                                                        .debounceClickable(
-                                                            interactionSource = remember { MutableInteractionSource() },
-                                                            enabled = (curSortType == 1),
-                                                            indication = null,
-                                                            onClick =
-                                                                {
-                                                                    if (curSortType == 1) {
-                                                                        viewModel.send(
-                                                                            ThreadUiIntent.LoadFirstPage(
-                                                                                threadId = threadId,
-                                                                                forumId = forumId,
-                                                                                seeLz = isSeeLz,
-                                                                                sortType = 0
+                                                        fontSize = 13.sp,
+                                                        fontWeight = if (!isSeeLz) FontWeight.SemiBold else FontWeight.Normal,
+                                                        color = if (!isSeeLz) ExtendedTheme.colors.text else ExtendedTheme.colors.textSecondary,
+                                                    )
+                                                    HorizontalDivider()
+                                                    Text(
+                                                        text = stringResource(R.string.title_see_lz),
+                                                        modifier = Modifier
+                                                            .padding(horizontal = 8.dp)
+                                                            .debounceClickable(
+                                                                interactionSource = remember { MutableInteractionSource() },
+                                                                enabled = !isSeeLz,
+                                                                indication = null,
+                                                                onClick =
+                                                                    {
+                                                                        if (!isSeeLz) {
+                                                                            viewModel.send(
+                                                                                ThreadUiIntent.LoadFirstPage(
+                                                                                    threadId = threadId,
+                                                                                    forumId = forumId,
+                                                                                    seeLz = true,
+                                                                                    sortType = curSortType
+                                                                                )
                                                                             )
-                                                                        )
-                                                                    }
-                                                                }),
-                                                    fontSize = 13.sp,
-                                                    fontWeight = if (curSortType == 0) FontWeight.SemiBold else FontWeight.Normal,
-                                                    color = if (curSortType == 0) ExtendedTheme.colors.text else ExtendedTheme.colors.textSecondary,
-                                                )
-                                                HorizontalDivider()
-                                                Text(
-                                                    text = stringResource(R.string.title_desc),
-                                                    modifier = Modifier
-                                                        .padding(horizontal = 8.dp)
-                                                        .debounceClickable(
-                                                            interactionSource = remember { MutableInteractionSource() },
-                                                            enabled = (curSortType == 0),
-                                                            indication = null,
-                                                            onClick =
-                                                                {
-                                                                    if (curSortType == 0) {
-                                                                        viewModel.send(
-                                                                            ThreadUiIntent.LoadFirstPage(
-                                                                                threadId = threadId,
-                                                                                forumId = forumId,
-                                                                                seeLz = isSeeLz,
-                                                                                sortType = 1
+                                                                        }
+                                                                    }),
+                                                        fontSize = 13.sp,
+                                                        fontWeight = if (isSeeLz) FontWeight.SemiBold else FontWeight.Normal,
+                                                        color = if (isSeeLz) ExtendedTheme.colors.text else ExtendedTheme.colors.textSecondary,
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.weight(1f))
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier.height(IntrinsicSize.Min)
+                                                ) {
+                                                    Text(
+                                                        text = stringResource(R.string.title_asc),
+                                                        modifier = Modifier
+                                                            .padding(horizontal = 8.dp)
+                                                            .debounceClickable(
+                                                                interactionSource = remember { MutableInteractionSource() },
+                                                                enabled = (curSortType == 1),
+                                                                indication = null,
+                                                                onClick =
+                                                                    {
+                                                                        if (curSortType == 1) {
+                                                                            viewModel.send(
+                                                                                ThreadUiIntent.LoadFirstPage(
+                                                                                    threadId = threadId,
+                                                                                    forumId = forumId,
+                                                                                    seeLz = isSeeLz,
+                                                                                    sortType = 0
+                                                                                )
                                                                             )
-                                                                        )
-                                                                    }
-                                                                }),
-                                                    fontSize = 13.sp,
-                                                    fontWeight = if (curSortType == 1) FontWeight.SemiBold else FontWeight.Normal,
-                                                    color = if (curSortType == 1) ExtendedTheme.colors.text else ExtendedTheme.colors.textSecondary,
-                                                )
+                                                                        }
+                                                                    }),
+                                                        fontSize = 13.sp,
+                                                        fontWeight = if (curSortType == 0) FontWeight.SemiBold else FontWeight.Normal,
+                                                        color = if (curSortType == 0) ExtendedTheme.colors.text else ExtendedTheme.colors.textSecondary,
+                                                    )
+                                                    HorizontalDivider()
+                                                    Text(
+                                                        text = stringResource(R.string.title_desc),
+                                                        modifier = Modifier
+                                                            .padding(horizontal = 8.dp)
+                                                            .debounceClickable(
+                                                                interactionSource = remember { MutableInteractionSource() },
+                                                                enabled = (curSortType == 0),
+                                                                indication = null,
+                                                                onClick =
+                                                                    {
+                                                                        if (curSortType == 0) {
+                                                                            viewModel.send(
+                                                                                ThreadUiIntent.LoadFirstPage(
+                                                                                    threadId = threadId,
+                                                                                    forumId = forumId,
+                                                                                    seeLz = isSeeLz,
+                                                                                    sortType = 1
+                                                                                )
+                                                                            )
+                                                                        }
+                                                                    }),
+                                                        fontSize = 13.sp,
+                                                        fontWeight = if (curSortType == 1) FontWeight.SemiBold else FontWeight.Normal,
+                                                        color = if (curSortType == 1) ExtendedTheme.colors.text else ExtendedTheme.colors.textSecondary,
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -2084,15 +2107,26 @@ private fun BottomBar(
     modifier: Modifier = Modifier,
     hasAgreed: Boolean = false,
     agreeNum: Long = 0,
+    replyNum: Int = 0,
+    isSeeLz: Boolean = false,
+    isDesc: Boolean = false,
+    onReplyCountClick: () -> Unit = {},
+    onSeeLzClick: () -> Unit = {},
+    onSortClick: () -> Unit = {},
     glassmio: Boolean = false,
 ) {
     if (glassmio) {
         ThreadGlassBottomBar(
-            user = user,
             onClickReply = onClickReply,
             onAgree = onAgree,
+            onReplyCountClick = onReplyCountClick,
+            onSeeLzClick = onSeeLzClick,
+            onSortClick = onSortClick,
             hasAgreed = hasAgreed,
             agreeNum = agreeNum,
+            replyNum = replyNum,
+            isSeeLz = isSeeLz,
+            isDesc = isDesc,
             modifier = modifier,
         )
         return
@@ -2594,14 +2628,9 @@ private fun ThreadMenu(
 ) {
     val account = LocalAccount.current
     Column(
-        // 下拉菜单里内容可能超过一屏：固定最大高度 + 纵向滚动，避免 GlasmioMenu 把底部行裁掉。
-        modifier = if (showHandle) {
-            modifier
-        } else {
-            modifier
-                .heightIn(max = 420.dp)
-                .verticalScroll(rememberScrollState())
-        },
+        // 不写死高度：让 AppMenu 的 rememberMenuContentHeight 按内容实测
+        // （AppMenu 会把 GlasmioContextMenu 的 20dp 内部 padding 补回来）。
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(if (showHandle) 16.dp else 12.dp)
     ) {

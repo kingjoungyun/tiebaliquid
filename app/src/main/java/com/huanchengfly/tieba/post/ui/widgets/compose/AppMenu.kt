@@ -101,7 +101,9 @@ fun AppMenu(
             onExpandedChange = { opened -> if (!opened) onDismissRequest() },
             // itemCount 只在「没给 heightOverride」时用于估算；这里总是给实测高度。
             itemCount = 1,
-            heightOverride = heightOverride ?: menuHeight.takeIf { it > 0.dp },
+            // GlasmioContextMenu 会在内容外面再套 10dp 上下 padding；实测内容高度要补回这 20dp，
+            // 否则最后一项会贴边被裁（帖子页 9 项菜单暴露了这个问题）。
+            heightOverride = heightOverride ?: (menuHeight + 24.dp).takeIf { it > 0.dp },
             menuWidth = menuWidth,
             backdrop = glassBackdrop,
             // 通用菜单没有 Glasmio 玻璃触发器，不做 source transfer 形变。
