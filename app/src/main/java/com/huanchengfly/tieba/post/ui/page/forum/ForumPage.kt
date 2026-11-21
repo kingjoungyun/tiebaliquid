@@ -74,6 +74,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
@@ -118,6 +121,9 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.FeedCardPlaceholder
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoadHorizontalPager
 import com.huanchengfly.tieba.post.ui.widgets.compose.MenuScope
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassBackdropHost
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassOverlayPage
+import com.huanchengfly.tieba.post.ui.common.theme.glass.useOverlayTopBarHost
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.PagerTabIndicator
 import com.huanchengfly.tieba.post.ui.widgets.compose.PullToRefreshLayout
@@ -656,219 +662,268 @@ fun ForumPage(
                 LoadingPlaceholder(forumName)
             }
         ) {
-            MyScaffold(
-                scaffoldState = scaffoldState,
-                backgroundColor = Color.Transparent,
-                modifier = Modifier.fillMaxSize(),
-                topBar = {
-                    // GLASMIO：顶栏本体透明、只有两个 40dp 圆形按钮（返回 / 搜索 / ⋯），
-                    // 没有标题、没有背景色——视觉上等同「无顶栏」，但保留了二级页必须的返回与菜单落点。
-                    if (!glassmio) {
-                        ForumToolbar(
-                            forumName = forumName,
-                            showTitle = !isShowTopBarArea,
-                            menuContent = forumMenuContent,
-                            forumId = forumInfo?.get { id }
-                        )
-                    } else {
-                        ForumTopBar(
-                            showSearch = forumInfo != null,
-                            menuContent = forumMenuContent,
-                            onBack = { navigator.navigateUp() },
-                            onSearch = {
-                                val forumId = forumInfo?.get { id }
-                                if (forumId != null) {
-                                    navigator.navigate(
-                                        ForumSearchPostPageDestination(forumName, forumId)
-                                    )
-                                }
-                            },
-                        )
-                    }
-                },
-                floatingActionButton = {
-                    if (context.appPreferences.forumFabFunction != "hide"
-                        && !(context.appPreferences.forumFabFunction == "post"
-                            && context.appPreferences.safeMode)
-                    ) {
-                        FloatingActionButton(
-                            onClick = {
-                                when (context.appPreferences.forumFabFunction) {
-                                    "refresh" -> {
-                                        coroutineScope.launch {
-                                            if (currentPage >= 2) {
-                                                emitGlobalEvent(GeneralTabListUiEvent.BackToTop)
-                                                emitGlobalEvent(GeneralTabListUiEvent.Refresh())
-                                            } else {
-                                                emitGlobalEventSuspend(
-                                                    ForumThreadListUiEvent.BackToTop(
-                                                        currentPage == 1
-                                                    )
-                                                )
-                                                emitGlobalEventSuspend(
-                                                    ForumThreadListUiEvent.Refresh(
-                                                        currentPage == 1,
-                                                        getSortType(
-                                                            context,
-                                                            forumName
+    // P2 试点：顶栏搬进 host 的 overlayContent（按钮才能采真实内容）。
+    val overlayTopBar = useOverlayTopBarHost(GlassOverlayPage.FORUM)
+    // 顶栏占位高度：状态栏 + 48dp（ForumTopBar 自己的高度），内容从顶栏下穿过
+    val forumTopBarInset = with(androidx.compose.ui.platform.LocalDensity.current) {
+        androidx.compose.foundation.layout.WindowInsets.statusBars
+            .getTop(this).toDp() + 48.dp
+    }
+    // 顶栏本体：玻璃分支是 ForumTopBar，老分支是 ForumToolbar。两种 host 方案共用同一个 lambda。
+    val forumTopBarSlot: @Composable () -> Unit = {
+
+                        // GLASMIO：顶栏本体透明、只有两个 40dp 圆形按钮（返回 / 搜索 / ⋯），
+                        // 没有标题、没有背景色——视觉上等同「无顶栏」，但保留了二级页必须的返回与菜单落点。
+                        if (!glassmio) {
+                            ForumToolbar(
+                                forumName = forumName,
+                                showTitle = !isShowTopBarArea,
+                                menuContent = forumMenuContent,
+                                forumId = forumInfo?.get { id }
+                            )
+                        } else {
+                            ForumTopBar(
+                                showSearch = forumInfo != null,
+                                menuContent = forumMenuContent,
+                                onBack = { navigator.navigateUp() },
+                                onSearch = {
+                                    val forumId = forumInfo?.get { id }
+                                    if (forumId != null) {
+                                        navigator.navigate(
+                                            ForumSearchPostPageDestination(forumName, forumId)
+                                        )
+                                    }
+                                },
+                            )
+                        }
+                
+    }
+
+    val forumPageScaffold: @Composable (topBarSlot: @Composable () -> Unit, extraTop: Dp) -> Unit = { topBarSlot, extraTop ->
+                MyScaffold(
+                    scaffoldState = scaffoldState,
+                    backgroundColor = Color.Transparent,
+                    modifier = Modifier.fillMaxSize(),
+                        topBar = topBarSlot,
+                    floatingActionButton = {
+                        if (context.appPreferences.forumFabFunction != "hide"
+                            && !(context.appPreferences.forumFabFunction == "post"
+                                && context.appPreferences.safeMode)
+                        ) {
+                            FloatingActionButton(
+                                onClick = {
+                                    when (context.appPreferences.forumFabFunction) {
+                                        "refresh" -> {
+                                            coroutineScope.launch {
+                                                if (currentPage >= 2) {
+                                                    emitGlobalEvent(GeneralTabListUiEvent.BackToTop)
+                                                    emitGlobalEvent(GeneralTabListUiEvent.Refresh())
+                                                } else {
+                                                    emitGlobalEventSuspend(
+                                                        ForumThreadListUiEvent.BackToTop(
+                                                            currentPage == 1
                                                         )
                                                     )
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    "back_to_top" -> {
-                                        coroutineScope.launch {
-                                            if (currentPage >= 2) {
-                                                emitGlobalEvent(GeneralTabListUiEvent.BackToTop)
-                                            } else {
-                                                emitGlobalEvent(
-                                                    ForumThreadListUiEvent.BackToTop(
-                                                        currentPage == 1
+                                                    emitGlobalEventSuspend(
+                                                        ForumThreadListUiEvent.Refresh(
+                                                            currentPage == 1,
+                                                            getSortType(
+                                                                context,
+                                                                forumName
+                                                            )
+                                                        )
                                                     )
+                                                }
+                                            }
+                                        }
+
+                                        "back_to_top" -> {
+                                            coroutineScope.launch {
+                                                if (currentPage >= 2) {
+                                                    emitGlobalEvent(GeneralTabListUiEvent.BackToTop)
+                                                } else {
+                                                    emitGlobalEvent(
+                                                        ForumThreadListUiEvent.BackToTop(
+                                                            currentPage == 1
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        else -> {
+                                            if (context.appPreferences.safeMode) {
+                                                return@FloatingActionButton
+                                            }
+                                            coroutineScope.launch {
+                                                emitGlobalEvent(
+                                                    ForumThreadListUiEvent.AddThread(forumName)
                                                 )
                                             }
                                         }
                                     }
-
-                                    else -> {
-                                        if (context.appPreferences.safeMode) {
-                                            return@FloatingActionButton
-                                        }
-                                        coroutineScope.launch {
-                                            emitGlobalEvent(
-                                                ForumThreadListUiEvent.AddThread(forumName)
-                                            )
-                                        }
-                                    }
-                                }
-                            },
-                            backgroundColor = ExtendedTheme.colors.windowBackground,
-                            contentColor = ExtendedTheme.colors.primary,
-                            modifier = Modifier.navigationBarsPadding()
-                        ) {
-                            Icon(
-                                imageVector = when (context.appPreferences.forumFabFunction) {
-                                    "refresh" -> Icons.Rounded.Refresh
-                                    "back_to_top" -> Icons.Rounded.VerticalAlignTop
-                                    else -> Icons.Rounded.Add
                                 },
-                                contentDescription = null
-                            )
+                                backgroundColor = ExtendedTheme.colors.windowBackground,
+                                contentColor = ExtendedTheme.colors.primary,
+                                modifier = Modifier.navigationBarsPadding()
+                            ) {
+                                Icon(
+                                    imageVector = when (context.appPreferences.forumFabFunction) {
+                                        "refresh" -> Icons.Rounded.Refresh
+                                        "back_to_top" -> Icons.Rounded.VerticalAlignTop
+                                        else -> Icons.Rounded.Add
+                                    },
+                                    contentDescription = null
+                                )
+                            }
                         }
                     }
-                }
-            ) { contentPadding ->
-                var isFakeLoading by remember { mutableStateOf(false) }
-                LaunchedEffect(isFakeLoading) {
-                    if (isFakeLoading) {
-                        delay(1000)
-                        isFakeLoading = false
+                ) { contentPadding ->
+                    var isFakeLoading by remember { mutableStateOf(false) }
+                    LaunchedEffect(isFakeLoading) {
+                        if (isFakeLoading) {
+                            delay(1000)
+                            isFakeLoading = false
+                        }
                     }
-                }
 
-                PullToRefreshLayout(
-                    refreshing = isFakeLoading,
-                    enabled = enablePullToRefresh,
-                    onRefresh = {
-                        coroutineScope.emitGlobalEvent(
-                            ForumThreadListUiEvent.Refresh(
-                                currentPage == 1,
-                                getSortType(
-                                    context,
-                                    forumName
+                    PullToRefreshLayout(
+                        refreshing = isFakeLoading,
+                        enabled = enablePullToRefresh,
+                        onRefresh = {
+                            coroutineScope.emitGlobalEvent(
+                                ForumThreadListUiEvent.Refresh(
+                                    currentPage == 1,
+                                    getSortType(
+                                        context,
+                                        forumName
+                                    )
                                 )
                             )
-                        )
-                        isFakeLoading = true
-                    }
-                ) {
-                    val headerNestedScrollConnection = remember {
-                        object : NestedScrollConnection {
-                            override fun onPreScroll(
-                                available: Offset,
-                                source: NestedScrollSource,
-                            ): Offset {
-                                if (available.y < 0) {
-                                    val prevHeightOffset = heightOffset
-                                    heightOffset = max(heightOffset + available.y, -headerHeight)
-                                    if (prevHeightOffset != heightOffset) {
-                                        return available.copy(x = 0f)
+                            isFakeLoading = true
+                        }
+                    ) {
+                        val headerNestedScrollConnection = remember {
+                            object : NestedScrollConnection {
+                                override fun onPreScroll(
+                                    available: Offset,
+                                    source: NestedScrollSource,
+                                ): Offset {
+                                    if (available.y < 0) {
+                                        val prevHeightOffset = heightOffset
+                                        heightOffset = max(heightOffset + available.y, -headerHeight)
+                                        if (prevHeightOffset != heightOffset) {
+                                            return available.copy(x = 0f)
+                                        }
                                     }
+
+                                    return Offset.Zero
                                 }
 
-                                return Offset.Zero
-                            }
-
-                            override fun onPostScroll(
-                                consumed: Offset,
-                                available: Offset,
-                                source: NestedScrollSource,
-                            ): Offset {
-                                if (available.y > 0f) {
-                                    // Adjust the height offset in case the consumed delta Y is less than what was
-                                    // recorded as available delta Y in the pre-scroll.
-                                    val prevHeightOffset = heightOffset
-                                    heightOffset = min(heightOffset + available.y, 0f)
-                                    if (prevHeightOffset != heightOffset) {
-                                        return available.copy(x = 0f)
+                                override fun onPostScroll(
+                                    consumed: Offset,
+                                    available: Offset,
+                                    source: NestedScrollSource,
+                                ): Offset {
+                                    if (available.y > 0f) {
+                                        // Adjust the height offset in case the consumed delta Y is less than what was
+                                        // recorded as available delta Y in the pre-scroll.
+                                        val prevHeightOffset = heightOffset
+                                        heightOffset = min(heightOffset + available.y, 0f)
+                                        if (prevHeightOffset != heightOffset) {
+                                            return available.copy(x = 0f)
+                                        }
                                     }
-                                }
 
-                                return Offset.Zero
+                                    return Offset.Zero
+                                }
                             }
                         }
-                    }
 
-                    Box(
-                        modifier = Modifier
-                            .padding(contentPadding)
-                                                        .nestedScroll(headerNestedScrollConnection)
-                    ) {
-                        Column {
-                            val containerHeight by remember {
-                                derivedStateOf {
-                                    with(density) {
-                                        (headerHeight + heightOffset).toDp()
+                        Box(
+                            modifier = Modifier
+                                .padding(contentPadding)
+                            .padding(top = extraTop)
+                                                            .nestedScroll(headerNestedScrollConnection)
+                        ) {
+                            Column {
+                                val containerHeight by remember {
+                                    derivedStateOf {
+                                        with(density) {
+                                            (headerHeight + heightOffset).toDp()
+                                        }
                                     }
                                 }
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .height(containerHeight)
-                                    .clipToBounds()
-                            ) {
                                 Box(
                                     modifier = Modifier
-                                        .wrapContentHeight(
-                                            align = Alignment.Bottom,
-                                            unbounded = true
-                                        )
-                                        .onSizeChanged {
-                                            headerHeight = it.height.toFloat()
-                                        }
+                                        .height(containerHeight)
+                                        .clipToBounds()
                                 ) {
-                                    forumInfo?.let { holder ->
-                                        if (glassmio) {
-                                            // 大标题（吧名）+ 吧头卡片：大标题随 header 一起收起。
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    // 顶部留一条给悬浮按钮（返回 / 搜索 / ⋯）：40dp 按钮 + 上下各 4dp。
-                                                    .padding(
-                                                        start = 16.dp,
-                                                        end = 16.dp,
-                                                        top = 8.dp,
-                                                        bottom = 4.dp,
-                                                    ),
-                                            ) {
-                                                ForumLargeTitle(text = stringResource(
-                                                    id = R.string.title_forum,
-                                                    forumName,
-                                                ))
-                                                Spacer(modifier = Modifier.height(10.dp))
-                                                GlasmioForumHeaderCard(
+                                    Box(
+                                        modifier = Modifier
+                                            .wrapContentHeight(
+                                                align = Alignment.Bottom,
+                                                unbounded = true
+                                            )
+                                            .onSizeChanged {
+                                                headerHeight = it.height.toFloat()
+                                            }
+                                    ) {
+                                        forumInfo?.let { holder ->
+                                            if (glassmio) {
+                                                // 大标题（吧名）+ 吧头卡片：大标题随 header 一起收起。
+                                                Column(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        // 顶部留一条给悬浮按钮（返回 / 搜索 / ⋯）：40dp 按钮 + 上下各 4dp。
+                                                        .padding(
+                                                            start = 16.dp,
+                                                            end = 16.dp,
+                                                            top = 8.dp,
+                                                            bottom = 4.dp,
+                                                        ),
+                                                ) {
+                                                    ForumLargeTitle(text = stringResource(
+                                                        id = R.string.title_forum,
+                                                        forumName,
+                                                    ))
+                                                    Spacer(modifier = Modifier.height(10.dp))
+                                                    GlasmioForumHeaderCard(
+                                                        forumInfoImmutableHolder = holder,
+                                                        onOpenForumInfo = {
+                                                            navigator.navigate(
+                                                                ForumDetailPageDestination(
+                                                                    forumId = holder.get { this.id })
+                                                            )
+                                                        },
+                                                        onBtnClick = {
+                                                            val (forum) = holder
+                                                            when {
+                                                                forum.is_like != 1 -> viewModel.send(
+                                                                    ForumUiIntent.Like(
+                                                                        forum.id,
+                                                                        forum.name,
+                                                                        tbs ?: account!!.tbs
+                                                                    )
+                                                                )
+
+                                                                forum.sign_in_info?.user_info?.is_sign_in != 1 -> {
+                                                                    viewModel.send(
+                                                                        ForumUiIntent.SignIn(
+                                                                            forum.id,
+                                                                            forum.name,
+                                                                            tbs ?: account!!.tbs
+                                                                        )
+                                                                    )
+                                                                }
+                                                            }
+                                                        },
+                                                        showAction = account != null &&
+                                                            !context.appPreferences.safeMode,
+                                                    )
+                                                }
+                                            } else {
+                                                ForumHeader(
                                                     forumInfoImmutableHolder = holder,
                                                     onOpenForumInfo = {
                                                         navigator.navigate(
@@ -898,246 +953,212 @@ fun ForumPage(
                                                             }
                                                         }
                                                     },
-                                                    showAction = account != null &&
-                                                        !context.appPreferences.safeMode,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(16.dp)
                                                 )
                                             }
-                                        } else {
-                                            ForumHeader(
-                                                forumInfoImmutableHolder = holder,
-                                                onOpenForumInfo = {
-                                                    navigator.navigate(
-                                                        ForumDetailPageDestination(
-                                                            forumId = holder.get { this.id })
-                                                    )
-                                                },
-                                                onBtnClick = {
-                                                    val (forum) = holder
-                                                    when {
-                                                        forum.is_like != 1 -> viewModel.send(
-                                                            ForumUiIntent.Like(
-                                                                forum.id,
-                                                                forum.name,
-                                                                tbs ?: account!!.tbs
-                                                            )
-                                                        )
+                                        }
+                                    }
+                                }
 
-                                                        forum.sign_in_info?.user_info?.is_sign_in != 1 -> {
-                                                            viewModel.send(
-                                                                ForumUiIntent.SignIn(
-                                                                    forum.id,
-                                                                    forum.name,
-                                                                    tbs ?: account!!.tbs
+                                val tabTextStyle = if (glassmio) {
+                                    MaterialTheme.typography.body1.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 15.sp,
+                                        letterSpacing = 0.sp
+                                    )
+                                } else {
+                                    MaterialTheme.typography.button.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        letterSpacing = 0.sp
+                                    )
+                                }
+                                val tabSelectedColor =
+                                    if (glassmio) GlasmioTheme.colors.content
+                                    else ExtendedTheme.colors.primary
+                                val tabUnselectedColor =
+                                    if (glassmio) GlasmioTheme.colors.secondaryContent
+                                    else ExtendedTheme.colors.textSecondary
+
+                                ScrollableTabRow(
+                                    selectedTabIndex = currentPage,
+                                    indicator = { tabPositions ->
+                                        PagerTabIndicator(
+                                            pagerState = pagerState,
+                                            tabPositions = tabPositions
+                                        )
+                                    },
+                                    divider = {},
+                                    backgroundColor = Color.Transparent,
+                                    contentColor = tabSelectedColor,
+                                    edgePadding = if (glassmio) 12.dp else 0.dp,
+                                    modifier = Modifier
+                                        .wrapContentWidth(align = Alignment.Start)
+                                        .align(Alignment.Start)
+                                ) {
+                                    var currentSortType by remember {
+                                        mutableIntStateOf(
+                                            getSortType(
+                                                context,
+                                                forumName
+                                            )
+                                        )
+                                    }
+                                    TabClickMenu(
+                                        selected = currentPage == 0,
+                                        onClick = {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(0)
+                                            }
+                                        },
+                                        text = {
+                                            Text(
+                                                text = stringResource(id = R.string.tab_forum_latest),
+                                                style = tabTextStyle
+                                            )
+                                        },
+                                        menuContent = {
+                                            ListSinglePicker(
+                                                itemTitles = persistentListOf(
+                                                    stringResource(id = R.string.title_sort_by_reply),
+                                                    stringResource(id = R.string.title_sort_by_send)
+                                                ),
+                                                itemValues = persistentListOf(0, 1),
+                                                selectedPosition = currentSortType,
+                                                onItemSelected = { _, _, value, changed ->
+                                                    if (changed) {
+                                                        currentSortType = value
+                                                        coroutineScope.launch {
+                                                            setSortType(context, forumName, value)
+                                                            emitGlobalEvent(
+                                                                ForumThreadListUiEvent.Refresh(
+                                                                    currentPage == 1,
+                                                                    value
                                                                 )
                                                             )
                                                         }
                                                     }
-                                                },
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(16.dp)
+                                                    dismiss()
+                                                }
+                                            )
+                                        },
+                                        selectedContentColor = tabSelectedColor,
+                                        unselectedContentColor = tabUnselectedColor
+                                    )
+                                    Tab(
+                                        selected = currentPage == 1,
+                                        onClick = {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(1)
+                                            }
+                                        },
+                                        selectedContentColor = tabSelectedColor,
+                                        unselectedContentColor = tabUnselectedColor
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier
+                                                .height(48.dp)
+                                                .padding(horizontal = 16.dp)
+                                        ) {
+                                            Text(
+                                                text = stringResource(id = R.string.tab_forum_good),
+                                                style = tabTextStyle
                                             )
                                         }
                                     }
-                                }
-                            }
-
-                            val tabTextStyle = if (glassmio) {
-                                MaterialTheme.typography.body1.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 15.sp,
-                                    letterSpacing = 0.sp
-                                )
-                            } else {
-                                MaterialTheme.typography.button.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp,
-                                    letterSpacing = 0.sp
-                                )
-                            }
-                            val tabSelectedColor =
-                                if (glassmio) GlasmioTheme.colors.content
-                                else ExtendedTheme.colors.primary
-                            val tabUnselectedColor =
-                                if (glassmio) GlasmioTheme.colors.secondaryContent
-                                else ExtendedTheme.colors.textSecondary
-
-                            ScrollableTabRow(
-                                selectedTabIndex = currentPage,
-                                indicator = { tabPositions ->
-                                    PagerTabIndicator(
-                                        pagerState = pagerState,
-                                        tabPositions = tabPositions
-                                    )
-                                },
-                                divider = {},
-                                backgroundColor = Color.Transparent,
-                                contentColor = tabSelectedColor,
-                                edgePadding = if (glassmio) 12.dp else 0.dp,
-                                modifier = Modifier
-                                    .wrapContentWidth(align = Alignment.Start)
-                                    .align(Alignment.Start)
-                            ) {
-                                var currentSortType by remember {
-                                    mutableIntStateOf(
-                                        getSortType(
-                                            context,
-                                            forumName
-                                        )
-                                    )
-                                }
-                                TabClickMenu(
-                                    selected = currentPage == 0,
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            pagerState.animateScrollToPage(0)
+                                    generalTabs.forEach { tab ->
+                                        val tabIndex = 2 + generalTabs.indexOf(tab)
+                                        var currentSortIndex by remember(tab.tabId) {
+                                            mutableIntStateOf(0)
                                         }
-                                    },
-                                    text = {
-                                        Text(
-                                            text = stringResource(id = R.string.tab_forum_latest),
-                                            style = tabTextStyle
-                                        )
-                                    },
-                                    menuContent = {
-                                        ListSinglePicker(
-                                            itemTitles = persistentListOf(
-                                                stringResource(id = R.string.title_sort_by_reply),
-                                                stringResource(id = R.string.title_sort_by_send)
-                                            ),
-                                            itemValues = persistentListOf(0, 1),
-                                            selectedPosition = currentSortType,
-                                            onItemSelected = { _, _, value, changed ->
-                                                if (changed) {
-                                                    currentSortType = value
+                                        if (tab.sort_menu.isNotEmpty()) {
+                                            TabClickMenu(
+                                                selected = currentPage == tabIndex,
+                                                onClick = {
                                                     coroutineScope.launch {
-                                                        setSortType(context, forumName, value)
-                                                        emitGlobalEvent(
-                                                            ForumThreadListUiEvent.Refresh(
-                                                                currentPage == 1,
-                                                                value
-                                                            )
-                                                        )
+                                                        pagerState.animateScrollToPage(tabIndex)
                                                     }
-                                                }
-                                                dismiss()
-                                            }
-                                        )
-                                    },
-                                    selectedContentColor = tabSelectedColor,
-                                    unselectedContentColor = tabUnselectedColor
-                                )
-                                Tab(
-                                    selected = currentPage == 1,
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            pagerState.animateScrollToPage(1)
-                                        }
-                                    },
-                                    selectedContentColor = tabSelectedColor,
-                                    unselectedContentColor = tabUnselectedColor
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier
-                                            .height(48.dp)
-                                            .padding(horizontal = 16.dp)
-                                    ) {
-                                        Text(
-                                            text = stringResource(id = R.string.tab_forum_good),
-                                            style = tabTextStyle
-                                        )
-                                    }
-                                }
-                                generalTabs.forEach { tab ->
-                                    val tabIndex = 2 + generalTabs.indexOf(tab)
-                                    var currentSortIndex by remember(tab.tabId) {
-                                        mutableIntStateOf(0)
-                                    }
-                                    if (tab.sort_menu.isNotEmpty()) {
-                                        TabClickMenu(
-                                            selected = currentPage == tabIndex,
-                                            onClick = {
-                                                coroutineScope.launch {
-                                                    pagerState.animateScrollToPage(tabIndex)
-                                                }
-                                            },
-                                            text = {
-                                                Text(
-                                                    text = tab.tabName,
-                                                    style = tabTextStyle
-                                                )
-                                            },
-                                            menuContent = {
-                                                ListSinglePicker(
-                                                    itemTitles = tab.sort_menu.map { it.text }.toImmutableList(),
-                                                    itemValues = tab.sort_menu.map { it.source_id }.toImmutableList(),
-                                                    selectedPosition = currentSortIndex,
-                                                    onItemSelected = { position, _, value, changed ->
-                                                        if (changed) {
-                                                            currentSortIndex = position
-                                                            coroutineScope.launch {
-                                                                emitGlobalEvent(GeneralTabListUiEvent.Refresh(sortType = value))
+                                                },
+                                                text = {
+                                                    Text(
+                                                        text = tab.tabName,
+                                                        style = tabTextStyle
+                                                    )
+                                                },
+                                                menuContent = {
+                                                    ListSinglePicker(
+                                                        itemTitles = tab.sort_menu.map { it.text }.toImmutableList(),
+                                                        itemValues = tab.sort_menu.map { it.source_id }.toImmutableList(),
+                                                        selectedPosition = currentSortIndex,
+                                                        onItemSelected = { position, _, value, changed ->
+                                                            if (changed) {
+                                                                currentSortIndex = position
+                                                                coroutineScope.launch {
+                                                                    emitGlobalEvent(GeneralTabListUiEvent.Refresh(sortType = value))
+                                                                }
                                                             }
+                                                            dismiss()
                                                         }
-                                                        dismiss()
+                                                    )
+                                                },
+                                                selectedContentColor = tabSelectedColor,
+                                                unselectedContentColor = tabUnselectedColor
+                                            )
+                                        } else {
+                                            Tab(
+                                                selected = currentPage == tabIndex,
+                                                onClick = {
+                                                    coroutineScope.launch {
+                                                        pagerState.animateScrollToPage(tabIndex)
                                                     }
-                                                )
-                                            },
-                                            selectedContentColor = tabSelectedColor,
-                                            unselectedContentColor = tabUnselectedColor
-                                        )
-                                    } else {
-                                        Tab(
-                                            selected = currentPage == tabIndex,
-                                            onClick = {
-                                                coroutineScope.launch {
-                                                    pagerState.animateScrollToPage(tabIndex)
-                                                }
-                                            },
-                                            selectedContentColor = tabSelectedColor,
-                                            unselectedContentColor = tabUnselectedColor
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier
-                                                    .height(48.dp)
-                                                    .padding(horizontal = 16.dp)
+                                                },
+                                                selectedContentColor = tabSelectedColor,
+                                                unselectedContentColor = tabUnselectedColor
                                             ) {
-                                                Text(
-                                                    text = tab.tabName,
-                                                    style = tabTextStyle
-                                                )
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier
+                                                        .height(48.dp)
+                                                        .padding(horizontal = 16.dp)
+                                                ) {
+                                                    Text(
+                                                        text = tab.tabName,
+                                                        style = tabTextStyle
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
 
-                            if (forumInfo != null) {
-                                LazyLoadHorizontalPager(
-                                    state = pagerState,
-                                    modifier = Modifier.fillMaxSize(),
-                                    key = { it },
-                                    verticalAlignment = Alignment.Top,
-                                    userScrollEnabled = true,
-                                ) { pageIndex ->
-                                    when (pageIndex) {
-                                        0, 1 -> ForumThreadListPage(
-                                            forumId = forumInfo!!.get { id },
-                                            forumName = forumInfo!!.get { name },
-                                            isGood = pageIndex == 1,
-                                            lazyListState = if (pageIndex == 0) latestListState else goodListState
-                                        )
-                                        else -> {
-                                            val tabIndex = pageIndex - 2
-                                            if (tabIndex < generalTabs.size) {
-                                                GeneralTabListPage(
-                                                    forumId = forumInfo!!.get { id },
-                                                    forumName = forumInfo!!.get { name },
-                                                    navTabInfo = generalTabs[tabIndex],
-                                                    viewModel = pageViewModel(key = "general_tab_$tabIndex"),
-                                                )
+                                if (forumInfo != null) {
+                                    LazyLoadHorizontalPager(
+                                        state = pagerState,
+                                        modifier = Modifier.fillMaxSize(),
+                                        key = { it },
+                                        verticalAlignment = Alignment.Top,
+                                        userScrollEnabled = true,
+                                    ) { pageIndex ->
+                                        when (pageIndex) {
+                                            0, 1 -> ForumThreadListPage(
+                                                forumId = forumInfo!!.get { id },
+                                                forumName = forumInfo!!.get { name },
+                                                isGood = pageIndex == 1,
+                                                lazyListState = if (pageIndex == 0) latestListState else goodListState
+                                            )
+                                            else -> {
+                                                val tabIndex = pageIndex - 2
+                                                if (tabIndex < generalTabs.size) {
+                                                    GeneralTabListPage(
+                                                        forumId = forumInfo!!.get { id },
+                                                        forumName = forumInfo!!.get { name },
+                                                        navTabInfo = generalTabs[tabIndex],
+                                                        viewModel = pageViewModel(key = "general_tab_$tabIndex"),
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -1146,7 +1167,24 @@ fun ForumPage(
                         }
                     }
                 }
-            }
+    }
+
+    if (overlayTopBar) {
+        // 双录：页面内容进 sampledContent，顶栏进 overlayContent。
+        // 顶栏区域在 sampledContent 里留空（contentPadding.top = 0），内容从顶栏下面穿过，
+        // 这样玻璃按钮采到的就是列表内容，而不是页面底色。
+        LiquidGlassBackdropHost(
+            modifier = Modifier.fillMaxSize(),
+            sampledContent = {
+                Box(Modifier.fillMaxSize().background(GlasmioTheme.colors.groupedBackground)) {
+                    forumPageScaffold({}, forumTopBarInset)
+                }
+            },
+            overlayContent = { forumTopBarSlot() },
+        )
+    } else {
+        forumPageScaffold(forumTopBarSlot, 0.dp)
+    }
         }
         }
     }

@@ -261,6 +261,45 @@ fun GlassDialogBackdropScope(content: @Composable () -> Unit) {
 }
 
 /**
+ * 页面顶栏是否搬进 host 的 `overlayContent`（P2：让顶栏上的悬浮钮采真实内容）。
+ *
+ * 试点页面：吧页 `ForumPage`、设置页 `PrefsScreen`。默认开；关掉就走各自的旧路径
+ * （吧页顶栏留在 Scaffold 的 topBar、设置页用纯色 host）。
+ *
+ * 真机 A/B 用（同一个 APK，不用重装）：
+ * `adb shell settings put global tieba_overlay_topbar 0` 后重启 App 即为旧路径。
+ */
+/** 顶栏进 overlay 的试点页（真机 A/B 的结论：设置页保留，吧页回退）。 */
+enum class GlassOverlayPage { PREFS, FORUM }
+
+/**
+ * 页面顶栏是否搬进 host 的 `overlayContent`（P2：让顶栏悬浮钮采真实内容）。
+ *
+ * **默认值按真机 A/B 结论定**（<device>，设备温度 ~28°C，8 轮 × 每轮一次滑动）：
+ * - `PREFS`（设置页）开启：p50 18.5 → 19.5ms（+1.0），jank 6.4% → 5.0%（变好）→ 可以推广
+ * - `FORUM`（吧页）**关闭**：p50 13.5 → 44.5ms（+31ms，远超 3ms 判据）→ 不推广，回退旧路径
+ *
+ * 覆盖开关（同一个 APK 不用重装，改完重启 App 生效）：
+ * `adb shell settings put global tieba_overlay_topbar 1|0` → 强制全开 / 全关（仅 debug）。
+ */
+@Composable
+fun useOverlayTopBarHost(page: GlassOverlayPage): Boolean {
+    if (!isLiquidGlassSupported()) return false
+    val default = when (page) {
+        GlassOverlayPage.PREFS -> true
+        GlassOverlayPage.FORUM -> false
+    }
+    if (!BuildConfig.DEBUG) return default
+    val context = LocalContext.current
+    val forced = remember(context) {
+        runCatching {
+            Settings.Global.getInt(context.contentResolver, "tieba_overlay_topbar", -1)
+        }.getOrDefault(-1)
+    }
+    return if (forced == 0 || forced == 1) forced == 1 else default
+}
+
+/**
  * 玻璃表面：真玻璃可用时用 Glasmio 的 [io.github.neoruaa.glasmio.glass.GlassSurface]，
  * 否则退回 P2 的伪玻璃（[GlassSurface]：半透明 + 1dp 描边 + 阴影）。
  *

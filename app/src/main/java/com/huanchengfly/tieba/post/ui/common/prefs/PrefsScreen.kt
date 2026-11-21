@@ -23,6 +23,10 @@ import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import androidx.compose.foundation.background
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassBackdropHost
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassOverlayPage
+import com.huanchengfly.tieba.post.ui.common.theme.glass.useOverlayTopBarHost
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassAppBackground
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
@@ -139,64 +143,94 @@ private fun GlasmioPrefsPage(
     modifier: Modifier,
 ) {
     val colors = GlasmioTheme.colors
-    GlasmioBackdropHost(
-        sampledColor = colors.groupedBackground,
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        CompositionLocalProvider(LocalLiquidGlassHosted provides true) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Container {
-                    LazyColumn(
-                        state = listState,
-                        modifier = modifier.fillMaxSize(),
-                        contentPadding = prefsPageContentPadding(
-                            horizontal = PrefsGlasmioDefaults.PageHorizontalPadding,
-                            topGap = 0.dp,
-                            bottomGap = PrefsGlasmioDefaults.PageBottomPadding,
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(PrefsGlasmioDefaults.GroupGap),
-                    ) {
-                        if (header != null) {
-                            item(key = "prefs-header") {
-                                // 大标题与卡片左边缘对齐（16dp）；分组标题自己再缩 16dp 对齐卡片内容
-                                header()
-                            }
+
+    // 列表本体（两种 host 方案共用，避免复制一份）
+    val pageList: @Composable () -> Unit = {
+        Container {
+            LazyColumn(
+                state = listState,
+                modifier = modifier.fillMaxSize(),
+                contentPadding = prefsPageContentPadding(
+                    horizontal = PrefsGlasmioDefaults.PageHorizontalPadding,
+                    topGap = 0.dp,
+                    bottomGap = PrefsGlasmioDefaults.PageBottomPadding,
+                ),
+                verticalArrangement = Arrangement.spacedBy(PrefsGlasmioDefaults.GroupGap),
+            ) {
+                if (header != null) {
+                    item(key = "prefs-header") {
+                        // 大标题与卡片左边缘对齐（16dp）；分组标题自己再缩 16dp 对齐卡片内容
+                        header()
+                    }
+                }
+                items(
+                    count = prefsScope.sections.size,
+                    key = { index -> "prefs-card-$index" },
+                ) { index ->
+                    val section = prefsScope.sections[index]
+                    if (section.itemIndexes.isEmpty()) return@items
+                    // 一张卡片：可选分组标题 + 卡片本体（分隔线由行自己画）
+                    val cardHeader: (@Composable () -> Unit)? =
+                        section.headerIndex?.let { headerIndex ->
+                            { prefsScope.getPrefsItem(headerIndex)() }
                         }
-                        items(
-                            count = prefsScope.sections.size,
-                            key = { index -> "prefs-card-$index" },
-                        ) { index ->
-                            val section = prefsScope.sections[index]
-                            if (section.itemIndexes.isEmpty()) return@items
-                            // 一张卡片：可选分组标题 + 卡片本体（分隔线由行自己画）
-                            val cardHeader: (@Composable () -> Unit)? =
-                                section.headerIndex?.let { headerIndex ->
-                                    { prefsScope.getPrefsItem(headerIndex)() }
-                                }
-                            // 组尾 footnote 的收集器：行在组合时把「装不下一行」的解释登记进来。
-                            // 键用分组下标（不是 PrefsSection 对象）：PrefsScopeImpl 每次 PrefsScreen
-                            // 重组都会重建，用对象做键会让收集器跟着重置、footnote 闪一下再回来。
-                            val footnotes = remember(index) { PrefsFootnoteState() }
-                            CompositionLocalProvider(LocalPrefsFootnotes provides footnotes) {
-                                PrefsCard(
-                                    header = cardHeader,
-                                    headerTopSpacing = 0.dp,
-                                    footer = section.footer,
+                    // 组尾 footnote 的收集器：行在组合时把「装不下一行」的解释登记进来。
+                    // 键用分组下标（不是 PrefsSection 对象）：PrefsScopeImpl 每次 PrefsScreen
+                    // 重组都会重建，用对象做键会让收集器跟着重置、footnote 闪一下再回来。
+                    val footnotes = remember(index) { PrefsFootnoteState() }
+                    CompositionLocalProvider(LocalPrefsFootnotes provides footnotes) {
+                        PrefsCard(
+                            header = cardHeader,
+                            headerTopSpacing = 0.dp,
+                            footer = section.footer,
+                        ) {
+                            section.itemIndexes.forEachIndexed { rowIndex, itemIndex ->
+                                CompositionLocalProvider(
+                                    LocalPrefsRowIndex provides rowIndex
                                 ) {
-                                    section.itemIndexes.forEachIndexed { rowIndex, itemIndex ->
-                                        CompositionLocalProvider(
-                                            LocalPrefsRowIndex provides rowIndex
-                                        ) {
-                                            prefsScope.getPrefsItem(itemIndex)()
-                                        }
-                                    }
+                                    prefsScope.getPrefsItem(itemIndex)()
                                 }
                             }
                         }
                     }
                 }
+            }
+        }
+    }
+
+    if (useOverlayTopBarHost(GlassOverlayPage.PREFS)) {
+        // P2 试点：双层 host —— 列表进 sampledContent（被录制），返回钮进 overlayContent。
+        // overlay 里的按钮不在录制层内，GlassIconButton 会走「采真实内容」分支 → 真玻璃，
+        // 而列表从返回钮下面滚过时玻璃能折射出下面的卡片。
+        LiquidGlassBackdropHost(
+            modifier = Modifier.fillMaxSize(),
+            sampledContent = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(colors.groupedBackground),
+                ) {
+                    pageList()
+                }
+            },
+            overlayContent = {
                 if (onBack != null) {
                     PrefsBackButtonOverlay(onBack = onBack)
+                }
+            },
+        )
+    } else {
+        // 回退路径（原来的纯色 host）：按钮只能自采样纯色 + rim。
+        GlasmioBackdropHost(
+            sampledColor = colors.groupedBackground,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            CompositionLocalProvider(LocalLiquidGlassHosted provides true) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    pageList()
+                    if (onBack != null) {
+                        PrefsBackButtonOverlay(onBack = onBack)
+                    }
                 }
             }
         }
