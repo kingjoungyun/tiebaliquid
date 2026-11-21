@@ -116,7 +116,7 @@ import com.huanchengfly.tieba.post.utils.registerPickMediasLauncher
 import com.huanchengfly.tieba.post.utils.requestIgnoreBatteryOptimizations
 import com.huanchengfly.tieba.post.utils.requestPermission
 import com.ramcosta.composedestinations.DestinationsNavHost
-import com.ramcosta.composedestinations.animations.defaults.RootNavGraphDefaultAnimations
+import com.huanchengfly.tieba.post.ui.nav.TiebaNavTransitions
 import com.ramcosta.composedestinations.animations.rememberAnimatedNavHostEngine
 import com.ramcosta.composedestinations.spec.DestinationSpec
 import com.ramcosta.composedestinations.spec.Direction
@@ -608,45 +608,13 @@ class MainActivityV2 : BaseComposeActivity() {
 }
 
 private object TiebaNavHostDefaults {
-    private val AnimationSpec = spring(
-        stiffness = Spring.StiffnessMediumLow,
-        visibilityThreshold = IntOffset.VisibilityThreshold
-    )
-
     @Composable
     @OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
     fun rememberNavHostEngine() = rememberAnimatedNavHostEngine(
         navHostContentAlignment = Alignment.TopStart,
-        rootDefaultAnimations = RootNavGraphDefaultAnimations(
-            enterTransition = {
-                slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = AnimationSpec,
-                    initialOffset = { it }
-                )
-            },
-            exitTransition = {
-                slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = AnimationSpec,
-                    targetOffset = { -it }
-                )
-            },
-            popEnterTransition = {
-                slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = AnimationSpec,
-                    initialOffset = { -it }
-                )
-            },
-            popExitTransition = {
-                slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = AnimationSpec,
-                    targetOffset = { it }
-                )
-            },
-        ),
+        // iOS push/pop 复刻（compose-destinations 的根图默认转场）。
+        // 回滚：把 TiebaNavTransitions.EnableIosPush 置 false 即可一行退回 spring 版。
+        rootDefaultAnimations = TiebaNavTransitions.current(),
     )
 
     @OptIn(ExperimentalMaterialApi::class)
