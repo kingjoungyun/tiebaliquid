@@ -47,6 +47,12 @@ import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.arch.BaseComposeActivity.Companion.LocalWindowSizeClass
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.windowsizeclass.WindowWidthSizeClass
+import android.provider.Settings
+import androidx.compose.ui.platform.LocalContext
+import com.huanchengfly.tieba.post.BuildConfig
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassSurface
+import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
+import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
 import com.huanchengfly.tieba.post.ui.widgets.compose.dialogs.AnyPopDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.dialogs.AnyPopDialogProperties
 import com.huanchengfly.tieba.post.ui.widgets.compose.dialogs.DirectionState
@@ -391,24 +397,11 @@ fun Dialog(
         cancelable = cancelable,
         cancelableOnTouchOutside = cancelableOnTouchOutside,
     ) {
-        ConstraintLayout(
-            modifier = modifier
-                .wrapContentHeight()
-                .animateContentSize()
-                .fillMaxWidth(
-                    fraction = if (windowWidthSizeClass == WindowWidthSizeClass.Compact) {
-                        1f
-                    } else {
-                        0.6f
-                    }
-                )
-                .padding(16.dp)
-                .background(
-                    color = ExtendedTheme.colors.windowBackground,
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .padding(vertical = 24.dp),
-        ) {
+        // P2：共享弹窗外壳（玻璃 / 老白框共用同一份布局，只是外壳不同）。
+        // 所有 AlertDialog / ConfirmDialog / PromptDialog / TimePickerDialog 都走这里，
+        // 所以玻璃化只改这一处，业务调用点零改动。
+        val cardContent: @Composable (Modifier) -> Unit = { cardModifier ->
+            ConstraintLayout(modifier = cardModifier) {
             val (titleRef, contentRef, buttonsRef) = createRefs()
             Column(
                 modifier = Modifier
@@ -461,7 +454,61 @@ fun Dialog(
             ) {
                 buttons()
             }
+            }
         }
+        val cardOuterModifier = modifier
+            .wrapContentHeight()
+            .animateContentSize()
+            .fillMaxWidth(
+                fraction = if (windowWidthSizeClass == WindowWidthSizeClass.Compact) {
+                    1f
+                } else {
+                    0.6f
+                }
+            )
+            .padding(16.dp)
+        if (dialogUsesGlassShell()) {
+            LiquidGlassSurface(
+                modifier = cardOuterModifier,
+                shape = RoundedCornerShape(24.dp),
+                material = NavigationGlassMaterial.RegularLarge,
+                innerGlow = true,
+            ) {
+                cardContent(Modifier.fillMaxWidth().padding(vertical = 24.dp))
+            }
+        } else {
+            // 降级 / A-B：改造前的白框
+            cardContent(
+                cardOuterModifier
+                    .background(
+                        color = ExtendedTheme.colors.windowBackground,
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                    .padding(vertical = 24.dp)
+            )
+        }
+    }
+}
+
+/**
+ * 共享弹窗外壳是否玻璃化（P2）。
+ *
+ * 收编链路：`Dialog` → `BaseDialog` → `AnyPopDialog`（已带跨窗口 backdrop），
+ * 因此 `AlertDialog` / `ConfirmDialog` / `PromptDialog` / `TimePickerDialog` 的**所有**调用点
+ * 一次性拿到玻璃壳，业务代码零改动。
+ *
+ * 降级：API < 33 → 老白框（`windowBackground`），行为不变。
+ * 调试开关（仅 debug 包）：`adb shell settings put global tieba_dlg_flat 1` 强制回白框做 A/B。
+ */
+@Composable
+private fun dialogUsesGlassShell(): Boolean {
+    if (!isLiquidGlassSupported()) return false
+    if (!BuildConfig.DEBUG) return true
+    val context = LocalContext.current
+    return remember(context) {
+        runCatching {
+            Settings.Global.getInt(context.contentResolver, "tieba_dlg_flat", 0) == 0
+        }.getOrDefault(true)
     }
 }
 

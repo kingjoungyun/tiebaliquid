@@ -32,6 +32,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
+import com.huanchengfly.tieba.post.ui.widgets.compose.AlertDialog
+import com.huanchengfly.tieba.post.ui.widgets.compose.ConfirmDialog
+import com.huanchengfly.tieba.post.ui.widgets.compose.DialogNegativeButton
+import com.huanchengfly.tieba.post.ui.widgets.compose.DialogPositiveButton
+import com.huanchengfly.tieba.post.ui.widgets.compose.DialogState
+import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import com.huanchengfly.tieba.post.ui.widgets.compose.ActionSheetItem
 import com.huanchengfly.tieba.post.ui.widgets.compose.AppActionSheet
 import io.github.neoruaa.glasmio.core.GlasmioTheme
@@ -123,6 +129,8 @@ private fun GalleryContent() {
     var sheetOpen by remember { mutableStateOf(false) }
     var actionSheetOpen by remember { mutableStateOf(false) }
     var alertOpen by remember { mutableStateOf(false) }
+    var confirmOpen by remember { mutableStateOf(false) }
+    val confirmState = rememberDialogState()
 
     LazyColumn(
         modifier = Modifier
@@ -250,6 +258,13 @@ private fun GalleryContent() {
                 modifier = Modifier.padding(vertical = 8.dp),
             )
         }
+        item {
+            Label("共享弹窗外壳（Dialog → BaseDialog → AnyPopDialog）：AlertDialog / ConfirmDialog / PromptDialog")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                GlasmioButton(onClick = { confirmOpen = true }) { Text("ConfirmDialog") }
+                GlasmioButton(onClick = { confirmState.show() }) { Text("AlertDialog") }
+            }
+        }
         item { Spacer(Modifier.height(80.dp)) }
     }
 
@@ -287,6 +302,25 @@ private fun GalleryContent() {
             ActionSheetItem("分享", systemName = "square.and.arrow.up", onClick = {}),
             ActionSheetItem("删除", systemName = "trash", destructive = true, onClick = {}),
         ),
+    )
+    if (confirmOpen) {
+        ConfirmDialog(
+            dialogState = remember { DialogState().apply { show() } },
+            title = { Text("取消关注") },
+            content = { Text("确定不再关注「植物吧」吗？") },
+            confirmText = "取消关注",
+            onConfirm = { confirmOpen = false },
+            onDismiss = { confirmOpen = false },
+        )
+    }
+    AlertDialog(
+        dialogState = confirmState,
+        title = { Text("AlertDialog（共享外壳）") },
+        content = { Text("标题 / 正文 / 确认 / 取消 都走同一个玻璃壳。") },
+        buttons = {
+            DialogPositiveButton(text = "确定") { confirmState.show = false }
+            DialogNegativeButton(text = "取消") { confirmState.show = false }
+        },
     )
     // 没有 host 时的对照：GlasmioActionSheetContent 直接嵌在页面上
     if (false) {
