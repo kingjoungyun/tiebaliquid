@@ -66,6 +66,7 @@ import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
 import com.huanchengfly.tieba.post.ui.page.main.home.PostCard
 import com.huanchengfly.tieba.post.ui.page.main.home.PostCardUi
 import com.huanchengfly.tieba.post.ui.page.main.home.PostCardUiStyle
@@ -269,11 +270,15 @@ fun PersonalizedPage(
 }
 
 /**
- * 信息流的页面皮肤：**只是**底色 + Glasmio 语义色，不碰布局。
+ * 信息流的页面皮肤：**只是**底色 + Glasmio 语义色 + 鸿蒙字族，不碰布局。
  *
  * - `TWITTER`：`LiquidGlassTheme`（注入 `GlasmioTheme.colors`）+ `groupedBackground` 铺满本页
  *   （深色纯黑 / 浅色 #F2F2F7），与 `GlasmioCard` 的 `elevatedBackground` 成对使用；
  * - `LEGACY`：原样透传（旧卡片自己带背景，页面底色沿用 App 主题）。
+ *
+ * [HarmonyTextProvider] 是必须的：`LiquidGlassTheme` 只换了 M3 的排版表，而本页（含卡片）里的
+ * `Text` 全是 M2 的，只读 M2 `LocalTextStyle`。不换字族的话 `FontWeight(600)` 会落到系统字体上
+ * 做合成加粗，观感就是「字发虚」。
  */
 @Composable
 private fun FeedPageSkin(content: @Composable () -> Unit) {
@@ -282,12 +287,14 @@ private fun FeedPageSkin(content: @Composable () -> Unit) {
         return
     }
     LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(GlasmioTheme.colors.groupedBackground),
-        ) {
-            content()
+        HarmonyTextProvider {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(GlasmioTheme.colors.groupedBackground),
+            ) {
+                content()
+            }
         }
     }
 }

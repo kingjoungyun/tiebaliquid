@@ -14,12 +14,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.LocalTextStyle
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -30,7 +34,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.huanchengfly.tieba.post.api.models.protos.Agree
@@ -45,8 +52,10 @@ import com.huanchengfly.tieba.post.arch.ImmutableHolder
 import com.huanchengfly.tieba.post.arch.wrapImmutable
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyFontFamily
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.page.main.explore.personalized.DislikeMoreButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
 import com.huanchengfly.tieba.post.ui.page.main.home.PostCard
 import com.huanchengfly.tieba.post.utils.ThemeUtil
 import io.github.neoruaa.glasmio.core.GlasmioTheme
@@ -88,14 +97,19 @@ class PostCardPreviewActivity : ComponentActivity() {
 
         val scrollDp = intent.getIntExtra(EXTRA_SCROLL_DP, 0)
         val likedFirst = intent.getBooleanExtra(EXTRA_LIKED, false)
+        val fontAb = intent.getBooleanExtra(EXTRA_FONT_AB, false)
 
         setContent {
             TiebaLiteTheme {
-                PostCardPreviewPage(
-                    window = window,
-                    initialScrollDp = scrollDp,
-                    likedFirst = likedFirst,
-                )
+                if (fontAb) {
+                    FontAbPage(window = window)
+                } else {
+                    PostCardPreviewPage(
+                        window = window,
+                        initialScrollDp = scrollDp,
+                        likedFirst = likedFirst,
+                    )
+                }
             }
         }
     }
@@ -104,6 +118,9 @@ class PostCardPreviewActivity : ComponentActivity() {
         const val EXTRA_DARK = "dark"
         const val EXTRA_SCROLL_DP = "scroll_dp"
         const val EXTRA_LIKED = "liked"
+
+        /** `--ez fontab true`：只渲染字重/字族对照页（验收鸿蒙 600 不是合成加粗）。 */
+        const val EXTRA_FONT_AB = "fontab"
     }
 }
 
@@ -122,6 +139,7 @@ private fun PostCardPreviewPage(
     }
 
     LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+        HarmonyTextProvider {
         val colors = GlasmioTheme.colors
         val context = LocalContext.current
         val photos = remember { PreviewPhotos(context) }
@@ -178,11 +196,101 @@ private fun PostCardPreviewPage(
                 }
             }
         }
+        }
     }
 }
 
-private fun Context.findWindow() = (this as? android.app.Activity)?.window
-    ?: throw IllegalStateException("PostCardPreviewActivity context is not an Activity")
+/**
+ * 字体/字重对照页（`--ez fontab true`）。
+ *
+ * 同一句话、同一个字号，三种渲染并排：
+ * 1. **系统字体（Roboto）+ w600**：Roboto 没有 600 档，走合成加粗 —— 笔画会糊、边缘发虚；
+ * 2. **鸿蒙 + w600**：`HarmonyFontFamily` 声明了 600 档（Semibold ttf），是真字重；
+ * 3. **鸿蒙 + w400**：Regular，用来对比 600 确实更粗而不是「同一档变模糊」。
+ *
+ * 三行都用同一个 `Text`（M2）与同样的字号/行高，只有 `fontFamily` / `fontWeight` 不同。
+ */
+@Composable
+private fun FontAbPage(window: android.view.Window) {
+    val isDark = ExtendedTheme.colors.isNightMode
+    SideEffect {
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = !isDark
+            isAppearanceLightNavigationBars = !isDark
+        }
+    }
+    val sample = "折腾了一下午，终于把龟背竹救活了"
+    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+        HarmonyTextProvider {
+        val colors = GlasmioTheme.colors
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.groupedBackground)
+                .statusBarsPadding(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp),
+            ) {
+                FontAbRow(
+                    label = "系统字族（FontFamily.Default）· w600",
+                    text = sample,
+                    family = FontFamily.Default,
+                    weight = FontWeight(600),
+                )
+                FontAbRow(
+                    label = "鸿蒙（显式 fontFamily）· w600",
+                    text = sample,
+                    family = HarmonyFontFamily,
+                    weight = FontWeight(600),
+                )
+                FontAbRow(
+                    label = "鸿蒙（靠 HarmonyTextProvider 注入，不写 fontFamily）· w600",
+                    text = sample,
+                    family = null,
+                    weight = FontWeight(600),
+                )
+                FontAbRow(
+                    label = "鸿蒙（显式 fontFamily）· w400",
+                    text = sample,
+                    family = HarmonyFontFamily,
+                    weight = FontWeight(400),
+                )
+            }
+        }
+        }
+    }
+}
+
+@Composable
+private fun FontAbRow(
+    label: String,
+    text: String,
+    family: FontFamily?,
+    weight: FontWeight,
+) {
+    val colors = GlasmioTheme.colors
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = colors.secondaryContent,
+            fontFamily = HarmonyFontFamily,
+        )
+        Text(
+            text = text,
+            fontSize = 17.sp,
+            lineHeight = 23.sp,
+            fontWeight = weight,
+            color = colors.content,
+            // family == null：不写 fontFamily，只沿用 M2 LocalTextStyle —— 也就是 HarmonyTextProvider 注入的鸿蒙。
+            style = if (family == null) LocalTextStyle.current else LocalTextStyle.current.copy(fontFamily = family),
+        )
+    }
+}
 
 private fun previewPersonalized(threadId: Long): ImmutableHolder<ThreadPersonalized> = wrapImmutable(
     ThreadPersonalized(
