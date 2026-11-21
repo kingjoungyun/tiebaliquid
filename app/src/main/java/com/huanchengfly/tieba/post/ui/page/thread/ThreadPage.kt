@@ -133,6 +133,7 @@ import com.huanchengfly.tieba.post.ui.common.PbContentRender
 import com.huanchengfly.tieba.post.ui.common.PicContentRender
 import com.huanchengfly.tieba.post.ui.common.PbContentText
 import com.huanchengfly.tieba.post.ui.common.LocalThreadImageRadius
+import com.huanchengfly.tieba.post.ui.common.LocalThreadImagesEnabled
 import com.huanchengfly.tieba.post.ui.common.PicWaterfallContentRender
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.invertChipBackground
@@ -197,6 +198,7 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import io.github.neoruaa.glasmio.core.GlasmioTheme
@@ -678,6 +680,12 @@ fun ThreadPage(
     var waitLoadSuccessAndScrollToFirstReply by remember { mutableStateOf(scrollToReply) }
 
     val lazyListState = rememberLazyListState()
+    // 转场期间先不发起首屏图片请求：350ms 后再打开，保证最终一定会加载。
+    var imagesEnabled by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(350)
+        imagesEnabled = true
+    }
     // GLASMIO 外壳：顶栏是 overlay，列表 contentPadding 只留「状态栏 + 顶栏」，
     // 首屏内容直接贴在悬浮控件下方，滚动时内容从顶栏下穿过。
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -1598,7 +1606,10 @@ fun ThreadPage(
                 modifier = Modifier.fillMaxSize(),
                 isEmpty = isEmpty,
                 isError = isError,
-                isLoading = isRefreshing,
+                isLoading = isRefreshing || (isEmpty && !isError),
+                loadingScreen = {
+                    ThreadSkeleton(glassmio = glassmio)
+                },
                 errorScreen = {
                     error?.let {
                         val (e) = it
@@ -1618,6 +1629,7 @@ fun ThreadPage(
                     )
                 }
             ) {
+                CompositionLocalProvider(LocalThreadImagesEnabled provides imagesEnabled) {
                 MyScaffold(
                     scaffoldState = scaffoldState,
                     backgroundColor = if (glassmio) Color.Transparent else MaterialTheme.colors.background,
@@ -2070,6 +2082,7 @@ fun ThreadPage(
                             contentColor = ExtendedTheme.colors.primary,
                         )
                     }
+                }
                 }
             }
             }

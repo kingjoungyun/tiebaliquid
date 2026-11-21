@@ -1,5 +1,6 @@
 package com.huanchengfly.tieba.post.ui.common
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -47,6 +48,7 @@ import com.github.panpf.sketch.compose.AsyncImage
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.arch.BaseComposeActivity.Companion.LocalWindowSizeClass
 import com.huanchengfly.tieba.post.models.PhotoViewData
+import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.windowsizeclass.WindowWidthSizeClass
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
@@ -63,6 +65,12 @@ import com.huanchengfly.tieba.post.utils.launchUrl
  * 默认 null，其它页面仍沿用用户设置的 `appPreferences.radius`。
  */
 val LocalThreadImageRadius = compositionLocalOf<Dp?> { null }
+
+/**
+ * 帖子页首屏转场期间先不发起图片请求，等转场结束再置 true。
+ * 默认 true，其它页面行为不变。
+ */
+val LocalThreadImagesEnabled = compositionLocalOf { true }
 
 @Stable
 interface PbContentRender {
@@ -149,37 +157,57 @@ data class PicContentRender(
         val context = LocalContext.current
         val radius = LocalThreadImageRadius.current ?: context.appPreferences.radius.dp
 
-        NetworkImage(
-            imageUri = picUrl,
-            contentDescription = stringResource(id = R.string.desc_image),
-            modifier = Modifier
-                .focusable()
-                .clip(RoundedCornerShape(radius))
-                .fillMaxWidth(widthFraction)
-                .aspectRatio(width * 1f / height),
-            photoViewData = photoViewData,
-            contentScale = ContentScale.Crop
-        )
+        if (LocalThreadImagesEnabled.current) {
+            NetworkImage(
+                imageUri = picUrl,
+                contentDescription = stringResource(id = R.string.desc_image),
+                modifier = Modifier
+                    .focusable()
+                    .clip(RoundedCornerShape(radius))
+                    .fillMaxWidth(widthFraction)
+                    .aspectRatio(width * 1f / height),
+                photoViewData = photoViewData,
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .focusable()
+                    .clip(RoundedCornerShape(radius))
+                    .fillMaxWidth(widthFraction)
+                    .aspectRatio(width * 1f / height)
+                    .background(ExtendedTheme.colors.chip)
+            )
+        }
     }
 
     @Composable
     fun FullWidthRender() {
         val context = LocalContext.current
         val radius = LocalThreadImageRadius.current ?: context.appPreferences.radius.dp
-        NetworkImage(
-            imageUri = picUrl,
-            contentDescription = stringResource(id = R.string.desc_image),
-            modifier = Modifier
-                .focusable()
-                .clip(RoundedCornerShape(radius))
-                .fillMaxWidth()
-                .aspectRatio(
-                    if (width > 0 && height > 0) width * 1f / height
-                    else 1f
-                ),
-            photoViewData = photoViewData,
-            contentScale = ContentScale.Crop
-        )
+        val aspectRatio = if (width > 0 && height > 0) width * 1f / height else 1f
+        if (LocalThreadImagesEnabled.current) {
+            NetworkImage(
+                imageUri = picUrl,
+                contentDescription = stringResource(id = R.string.desc_image),
+                modifier = Modifier
+                    .focusable()
+                    .clip(RoundedCornerShape(radius))
+                    .fillMaxWidth()
+                    .aspectRatio(aspectRatio),
+                photoViewData = photoViewData,
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .focusable()
+                    .clip(RoundedCornerShape(radius))
+                    .fillMaxWidth()
+                    .aspectRatio(aspectRatio)
+                    .background(ExtendedTheme.colors.chip)
+            )
+        }
     }
 
     override fun toString(): String {
