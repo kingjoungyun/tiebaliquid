@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -58,11 +60,15 @@ import com.huanchengfly.tieba.post.arch.onGlobalEvent
 import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.pullRefreshIndicator
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.models.ThreadItemData
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
+import com.huanchengfly.tieba.post.ui.page.main.home.PostCard
+import com.huanchengfly.tieba.post.ui.page.main.home.PostCardUi
+import com.huanchengfly.tieba.post.ui.page.main.home.PostCardUiStyle
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockTip
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockableContent
 import com.huanchengfly.tieba.post.ui.widgets.compose.Container
@@ -73,6 +79,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.LoadMoreLayout
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
 import com.huanchengfly.tieba.post.ui.widgets.compose.VerticalDivider
 import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreen
+import io.github.neoruaa.glasmio.core.GlasmioTheme
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
@@ -167,92 +174,120 @@ fun PersonalizedPage(
 //            }
 //        }
 //    }
-    StateScreen(
-        modifier = Modifier.fillMaxSize(),
-        isEmpty = isEmpty,
-        isError = isError,
-        isLoading = isRefreshing,
-        onReload = { viewModel.send(PersonalizedUiIntent.Refresh) },
-        errorScreen = {
-            error?.let {
-                ErrorScreen(
-                    error = it.get()
+    // 推特式卡片要求页面底色走 Glasmio 的 groupedBackground（深色纯黑），
+    // 并给卡片提供 GlasmioTheme 的语义色。LEGACY 时整块透传，旧版式一个像素都不变。
+    FeedPageSkin {
+        StateScreen(
+            modifier = Modifier.fillMaxSize(),
+            isEmpty = isEmpty,
+            isError = isError,
+            isLoading = isRefreshing,
+            onReload = { viewModel.send(PersonalizedUiIntent.Refresh) },
+            errorScreen = {
+                error?.let {
+                    ErrorScreen(
+                        error = it.get()
+                    )
+                }
+            }
+        ) {
+            Box(modifier = Modifier.pullRefresh(pullRefreshState)) {
+                LoadMoreLayout(
+                    isLoading = isLoadingMore,
+                    onLoadMore = { viewModel.send(PersonalizedUiIntent.LoadMore(currentPage + 1)) },
+                    loadEnd = false,
+                    lazyListState = lazyListState,
+                    isEmpty = data.isEmpty()
+                ) {
+                    FeedList(
+                        state = lazyListState,
+                        dataProvider = { data },
+                        refreshPositionProvider = { refreshPosition },
+                        hiddenThreadIdsProvider = { hiddenThreadIds },
+                        onItemClick = {
+                            navigator.navigate(
+                                ThreadPageDestination(
+                                    it.id,
+                                    it.forumId,
+                                    threadInfo = it
+                                )
+                            )
+                        },
+                        onItemReplyClick = {
+                            navigator.navigate(
+                                ThreadPageDestination(
+                                    it.id,
+                                    it.forumId,
+                                    scrollToReply = true
+                                )
+                            )
+                        },
+                        onAgree = {
+                            viewModel.send(
+                                PersonalizedUiIntent.Agree(
+                                    it.threadId,
+                                    it.firstPostId,
+                                    it.agree?.hasAgree ?: 0
+                                )
+                            )
+                        },
+                        onDislike = { item, clickTime, reasons ->
+                            viewModel.send(
+                                PersonalizedUiIntent.Dislike(
+                                    item.forumInfo?.id ?: 0,
+                                    item.threadId,
+                                    reasons,
+                                    clickTime
+                                )
+                            )
+                        },
+                        onRefresh = { viewModel.send(PersonalizedUiIntent.Refresh) },
+                        onOpenForum = { navigator.navigate(ForumPageDestination(it)) },
+                        onClickUser = { navigator.navigate(UserProfilePageDestination(it.id)) }
+                    )
+                }
+
+                PullRefreshIndicator(
+                    refreshing = isRefreshing,
+                    state = pullRefreshState,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
+                    contentColor = ExtendedTheme.colors.primary,
                 )
+
+                AnimatedVisibility(
+                    visible = showRefreshTip,
+                    enter = fadeIn() + slideInVertically(),
+                    exit = slideOutVertically() + fadeOut(),
+                    modifier = Modifier.align(Alignment.TopCenter)
+                ) {
+                    RefreshTip(refreshCount = refreshCount)
+                }
             }
         }
-    ) {
-        Box(modifier = Modifier.pullRefresh(pullRefreshState)) {
-            LoadMoreLayout(
-                isLoading = isLoadingMore,
-                onLoadMore = { viewModel.send(PersonalizedUiIntent.LoadMore(currentPage + 1)) },
-                loadEnd = false,
-                lazyListState = lazyListState,
-                isEmpty = data.isEmpty()
-            ) {
-                FeedList(
-                    state = lazyListState,
-                    dataProvider = { data },
-                    refreshPositionProvider = { refreshPosition },
-                    hiddenThreadIdsProvider = { hiddenThreadIds },
-                    onItemClick = {
-                        navigator.navigate(
-                            ThreadPageDestination(
-                                it.id,
-                                it.forumId,
-                                threadInfo = it
-                            )
-                        )
-                    },
-                    onItemReplyClick = {
-                        navigator.navigate(
-                            ThreadPageDestination(
-                                it.id,
-                                it.forumId,
-                                scrollToReply = true
-                            )
-                        )
-                    },
-                    onAgree = {
-                        viewModel.send(
-                            PersonalizedUiIntent.Agree(
-                                it.threadId,
-                                it.firstPostId,
-                                it.agree?.hasAgree ?: 0
-                            )
-                        )
-                    },
-                    onDislike = { item, clickTime, reasons ->
-                        viewModel.send(
-                            PersonalizedUiIntent.Dislike(
-                                item.forumInfo?.id ?: 0,
-                                item.threadId,
-                                reasons,
-                                clickTime
-                            )
-                        )
-                    },
-                    onRefresh = { viewModel.send(PersonalizedUiIntent.Refresh) },
-                    onOpenForum = { navigator.navigate(ForumPageDestination(it)) },
-                    onClickUser = { navigator.navigate(UserProfilePageDestination(it.id)) }
-                )
-            }
+    }
+}
 
-            PullRefreshIndicator(
-                refreshing = isRefreshing,
-                state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter),
-                backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                contentColor = ExtendedTheme.colors.primary,
-            )
-
-            AnimatedVisibility(
-                visible = showRefreshTip,
-                enter = fadeIn() + slideInVertically(),
-                exit = slideOutVertically() + fadeOut(),
-                modifier = Modifier.align(Alignment.TopCenter)
-            ) {
-                RefreshTip(refreshCount = refreshCount)
-            }
+/**
+ * 信息流的页面皮肤：**只是**底色 + Glasmio 语义色，不碰布局。
+ *
+ * - `TWITTER`：`LiquidGlassTheme`（注入 `GlasmioTheme.colors`）+ `groupedBackground` 铺满本页
+ *   （深色纯黑 / 浅色 #F2F2F7），与 `GlasmioCard` 的 `elevatedBackground` 成对使用；
+ * - `LEGACY`：原样透传（旧卡片自己带背景，页面底色沿用 App 主题）。
+ */
+@Composable
+private fun FeedPageSkin(content: @Composable () -> Unit) {
+    if (PostCardUi.DefaultStyle == PostCardUiStyle.LEGACY) {
+        content()
+        return
+    }
+    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(GlasmioTheme.colors.groupedBackground),
+        ) {
+            content()
         }
     }
 }
@@ -279,6 +314,149 @@ private fun BoxScope.RefreshTip(refreshCount: Int) {
 
 @Composable
 private fun FeedList(
+    state: LazyListState,
+    dataProvider: () -> ImmutableList<ThreadItemData>,
+    refreshPositionProvider: () -> Int,
+    hiddenThreadIdsProvider: () -> ImmutableList<Long>,
+    onItemClick: (ThreadInfo) -> Unit,
+    onItemReplyClick: (ThreadInfo) -> Unit,
+    onAgree: (ThreadInfo) -> Unit,
+    onDislike: (ThreadInfo, Long, ImmutableList<ImmutableHolder<DislikeReason>>) -> Unit,
+    onRefresh: () -> Unit,
+    onOpenForum: (forumName: String) -> Unit = {},
+    onClickUser: (User) -> Unit = {},
+) {
+    // 卡片风格的唯一分叉点：TWITTER = PostCard，LEGACY = 原来的 FeedCard 列表。
+    when (PostCardUi.DefaultStyle) {
+        PostCardUiStyle.TWITTER -> TwitterFeedList(
+            state = state,
+            dataProvider = dataProvider,
+            refreshPositionProvider = refreshPositionProvider,
+            hiddenThreadIdsProvider = hiddenThreadIdsProvider,
+            onItemClick = onItemClick,
+            onItemReplyClick = onItemReplyClick,
+            onAgree = onAgree,
+            onDislike = onDislike,
+            onRefresh = onRefresh,
+            onOpenForum = onOpenForum,
+            onClickUser = onClickUser,
+        )
+
+        PostCardUiStyle.LEGACY -> LegacyFeedList(
+            state = state,
+            dataProvider = dataProvider,
+            refreshPositionProvider = refreshPositionProvider,
+            hiddenThreadIdsProvider = hiddenThreadIdsProvider,
+            onItemClick = onItemClick,
+            onItemReplyClick = onItemReplyClick,
+            onAgree = onAgree,
+            onDislike = onDislike,
+            onRefresh = onRefresh,
+            onOpenForum = onOpenForum,
+            onClickUser = onClickUser,
+        )
+    }
+}
+
+/**
+ * 推特式卡片列表（`PostCardUiStyle.TWITTER`）。
+ *
+ * 与旧列表的差异只在「外壳」：16dp 页边、10dp 卡间距、无分隔线、页面底色见 [FeedPageSkin]，
+ * 卡片本身是 [PostCard]。点击 / 回复 / 点赞 / 不感兴趣 / 屏蔽 / 刷新分界线这些行为照搬旧列表。
+ */
+@Composable
+private fun TwitterFeedList(
+    state: LazyListState,
+    dataProvider: () -> ImmutableList<ThreadItemData>,
+    refreshPositionProvider: () -> Int,
+    hiddenThreadIdsProvider: () -> ImmutableList<Long>,
+    onItemClick: (ThreadInfo) -> Unit,
+    onItemReplyClick: (ThreadInfo) -> Unit,
+    onAgree: (ThreadInfo) -> Unit,
+    onDislike: (ThreadInfo, Long, ImmutableList<ImmutableHolder<DislikeReason>>) -> Unit,
+    onRefresh: () -> Unit,
+    onOpenForum: (forumName: String) -> Unit = {},
+    onClickUser: (User) -> Unit = {},
+) {
+    val data = dataProvider()
+    val refreshPosition = refreshPositionProvider()
+    val hiddenThreadIds = hiddenThreadIdsProvider()
+
+    // 卡片之间是固定的 10dp 间距：隐藏项（被屏蔽 / 刚点过「不感兴趣」）必须整个从列表里拿掉，
+    // 否则会留下一段「双倍间距」的空白。这里保留原始下标，给下面的「刷新分界线」用。
+    val visibleItems = remember(data, hiddenThreadIds) {
+        data.mapIndexedNotNull { index, item ->
+            val isHidden = hiddenThreadIds.contains(item.thread.get { threadId }) || item.hidden
+            if (isHidden) null else index to item
+        }
+    }
+
+    MyLazyColumn(
+        state = state,
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            end = 16.dp,
+            top = 10.dp,
+            bottom = 16.dp,
+        ),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        items(
+            items = visibleItems,
+            key = { (_, item) -> "${item.thread.get { id }}" },
+            contentType = { (_, item) ->
+                when {
+                    item.thread.get { videoInfo } != null -> "Video"
+                    item.thread.get { media }.size == 1 -> "SingleMedia"
+                    item.thread.get { media }.size > 1 -> "MultiMedia"
+                    else -> "PlainText"
+                }
+            },
+        ) { (index, item) ->
+            Column {
+                BlockableContent(
+                    blocked = item.blocked,
+                    blockedTip = {
+                        BlockTip(text = { Text(text = stringResource(id = R.string.tip_blocked_thread)) })
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    PostCard(
+                        item = item.thread,
+                        onClick = onItemClick,
+                        onClickReply = onItemReplyClick,
+                        onAgree = onAgree,
+                        onClickForum = { forum -> onOpenForum(forum.name) },
+                        onClickUser = onClickUser,
+                        menuAction = {
+                            // 旧版的「不感兴趣」菜单（DropdownMenu）原样保留，触发器换成右上角 ⋯。
+                            // 只有 personalized 数据存在时才有菜单内容，普通帖本轮不显示 ⋯（见 PostCard TODO）。
+                            item.personalized?.let { personalized ->
+                                DislikeMoreButton(
+                                    personalized = personalized,
+                                    onDislike = { clickTime, reasons ->
+                                        onDislike(item.thread.get(), clickTime, reasons)
+                                    }
+                                )
+                            }
+                        },
+                    )
+                }
+                if (index + 1 == refreshPosition) {
+                    RefreshTip(onRefresh)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 迁移前的信息流列表（`PostCardUiStyle.LEGACY`）：`FeedCard` + 16dp 页边 + 分隔线。
+ * **代码原样保留**，只把函数名从 `FeedList` 改成 `LegacyFeedList`，便于一行回滚。
+ */
+@Composable
+private fun LegacyFeedList(
     state: LazyListState,
     dataProvider: () -> ImmutableList<ThreadItemData>,
     refreshPositionProvider: () -> Int,

@@ -4,19 +4,21 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -45,10 +47,58 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.rememberMenuState
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
+/**
+ * 「不感兴趣」入口（旧卡片用）：竖直箭头触发。
+ *
+ * 只保留触发器的差异，菜单内容 / 状态全部在 [DislikeMenu] 里，两种触发器共用同一份实现。
+ */
 @Composable
 fun Dislike(
     personalized: ImmutableHolder<ThreadPersonalized>,
     onDislike: (clickTime: Long, reasons: ImmutableList<ImmutableHolder<DislikeReason>>) -> Unit,
+) {
+    DislikeMenu(personalized = personalized, onDislike = onDislike) {
+        Box(
+            modifier = Modifier.size(24.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.KeyboardArrowDown,
+                contentDescription = null,
+                tint = ExtendedTheme.colors.textSecondary
+            )
+        }
+    }
+}
+
+/**
+ * 「不感兴趣」入口（推特式卡片用）：右上角的 `⋯`。
+ *
+ * 仍是原来的 `DropdownMenu`（`ClickMenu`），本轮不做跨窗口玻璃菜单；只是把触发器从
+ * 竖直箭头换成 `⋯` 并交给 `PostCard` 的右上角插槽摆放（尺寸由卡片给，这里铺满即可）。
+ */
+@Composable
+fun DislikeMoreButton(
+    personalized: ImmutableHolder<ThreadPersonalized>,
+    onDislike: (clickTime: Long, reasons: ImmutableList<ImmutableHolder<DislikeReason>>) -> Unit,
+) {
+    DislikeMenu(personalized = personalized, onDislike = onDislike) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = Icons.Rounded.MoreHoriz,
+                contentDescription = stringResource(id = R.string.title_more_options),
+                tint = ExtendedTheme.colors.textSecondary,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun DislikeMenu(
+    personalized: ImmutableHolder<ThreadPersonalized>,
+    onDislike: (clickTime: Long, reasons: ImmutableList<ImmutableHolder<DislikeReason>>) -> Unit,
+    trigger: @Composable () -> Unit,
 ) {
     var clickTime by remember { mutableStateOf(0L) }
     val selectedReasons = remember { mutableStateListOf<ImmutableHolder<DislikeReason>>() }
@@ -148,15 +198,6 @@ fun Dislike(
         },
         menuState = menuState,
     ) {
-        IconButton(
-            onClick = { menuState.expanded = true },
-            modifier = Modifier.size(24.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.KeyboardArrowDown,
-                contentDescription = null,
-                tint = ExtendedTheme.colors.textSecondary
-            )
-        }
+        trigger()
     }
 }
