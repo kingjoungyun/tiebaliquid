@@ -1,6 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.history.list
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,9 @@ import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -32,6 +36,8 @@ import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageFrom
+import com.huanchengfly.tieba.post.ui.widgets.compose.ActionSheetItem
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppActionSheet
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.Chip
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
@@ -204,6 +210,7 @@ fun HistoryListPage(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HistoryItem(
     info: History,
@@ -211,24 +218,33 @@ private fun HistoryItem(
     onClick: (History) -> Unit = {},
     onDelete: (History) -> Unit = {},
 ) {
-    val menuState = rememberMenuState()
-    LongClickMenu(
-        menuContent = {
-            DropdownMenuItem(onClick = {
-                onDelete(info)
-                menuState.expanded = false
-            }) {
-                Text(text = stringResource(id = R.string.title_delete))
-            }
-        },
-        menuState = menuState,
-        onClick = { onClick(info) }
+    // P2/B：长按不再弹下拉菜单，改用 iOS 动作面板（底部升起 + 拖拽关闭 + 玻璃）。
+    // 这是全 App 第一个接入 AppActionSheet 的真实流程；下拉菜单（AppMenu）保持不动，两者并存。
+    var showActions by remember { mutableStateOf(false) }
+    val itemTitle = (if (info.type == HistoryUtil.TYPE_THREAD) info.username else info.title) ?: ""
+    AppActionSheet(
+        visible = showActions,
+        onDismiss = { showActions = false },
+        title = itemTitle,
+        message = stringResource(id = R.string.title_history),
+        items = listOf(
+            ActionSheetItem(
+                label = stringResource(id = R.string.title_delete),
+                systemName = "trash",
+                destructive = true,
+                onClick = { onDelete(info) },
+            ),
+        ),
+    )
+    Column(
+        modifier = modifier
+            .combinedClickable(
+                onClick = { onClick(info) },
+                onLongClick = { showActions = true },
+            )
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Column(
-            modifier = modifier
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
             UserHeader(
                 avatar = {
                     Avatar(
@@ -261,5 +277,4 @@ private fun HistoryItem(
                 )
             }
         }
-    }
 }
