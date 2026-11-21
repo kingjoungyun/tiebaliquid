@@ -44,6 +44,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.compose.ui.window.SecureFlagPolicy
 import androidx.core.view.WindowCompat
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassDialogBackdropScope
 import kotlinx.coroutines.delay
 
 
@@ -170,7 +171,10 @@ private fun DialogFullScreen(
                         else -> fadeOut() + slideOutVertically(targetOffsetY = { it })
                     }
                 ) {
-                    content()
+                    // 对话框是独立 Window：包一层跨窗口 backdrop，内容里的玻璃控件才能采到页面背景。
+                    GlassDialogBackdropScope {
+                        content()
+                    }
                 }
             }
             BackHandler(enabled = properties.dismissOnBackPress, onBack = handleBackPress)
