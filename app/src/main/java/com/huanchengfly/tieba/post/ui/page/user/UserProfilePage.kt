@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,11 +28,13 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Tab
@@ -41,6 +44,7 @@ import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.NoAccounts
 import androidx.compose.material.icons.rounded.Verified
@@ -75,7 +79,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEachIndexed
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageHost
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.api.models.PermissionListBean
 import com.huanchengfly.tieba.post.api.models.protos.User
@@ -102,6 +108,8 @@ import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
+import io.github.neoruaa.glasmio.glass.render.backdrops.emptyBackdrop
+import io.github.neoruaa.glasmio.ui.GlasmioCard
 import com.huanchengfly.tieba.post.ui.common.windowsizeclass.WindowWidthSizeClass
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.settings.LeadingIcon
@@ -165,7 +173,13 @@ fun UserProfilePage(
 ) {
         // P1：页级 backdrop host —— 本页的菜单/动作面板要能采到这一页的真实内容。
         // 页面内容进 sampledContent（活 backdrop，整页录制）；页内玻璃控件会自动走自带纯色 host。
-        GlassPageHost(modifier = Modifier.fillMaxSize()) {
+        GlassPageHost(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    if (ExtendedTheme.colors.isNightMode) Color.Black else Color(0xFFF2F2F7)
+                )
+        ) {
             val account = LocalAccount.current
     
             val isSelf = remember(account, uid) {
@@ -216,6 +230,8 @@ fun UserProfilePage(
                 }
             )
     
+            LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+                HarmonyTextProvider {
             ProvideNavigator(navigator = navigator) {
                 StateScreen(
                     modifier = Modifier.fillMaxSize(),
@@ -251,6 +267,8 @@ fun UserProfilePage(
                             onSetUserBlack = { viewModel.send(UserProfileUiIntent.GetUserBlackInfo(uid)) },
                         )
                     }
+                }
+            }
                 }
             }
         }
@@ -517,6 +535,7 @@ private fun UserProfileContentNormal(
     val navigator = LocalNavigator.current
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
+    val glassmio = UserProfileUi.DefaultStyle == UserProfileUiStyle.GLASMIO
 
     var heightOffset by rememberSaveable { mutableFloatStateOf(0f) }
     var headerHeight by rememberSaveable {
@@ -535,13 +554,30 @@ private fun UserProfileContentNormal(
 
     MyScaffold(
         topBar = {
-            UserProfileToolbar(
-                user = user,
-                isSelf = isSelf,
-                showTitle = !isShowHeaderArea,
-                onBack = onBack,
-                onSetUserBlack = onSetUserBlack,
-            )
+            if (glassmio) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .height(52.dp)
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    GlassIconButton(
+                        onClick = onBack,
+                        icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = stringResource(id = R.string.button_back),
+                    )
+                }
+            } else {
+                UserProfileToolbar(
+                    user = user,
+                    isSelf = isSelf,
+                    showTitle = !isShowHeaderArea,
+                    onBack = onBack,
+                    onSetUserBlack = onSetUserBlack,
+                )
+            }
         }
     ) { paddingValues ->
         var isFakeRefreshing by remember { mutableStateOf(false) }
@@ -684,9 +720,12 @@ private fun UserProfileContentNormal(
                         ) {
                             UserProfileDetail(
                                 user = user,
-                                modifier = Modifier
-                                    .padding(16.dp)
-                                    .padding(top = 8.dp),
+                                glassmio = glassmio,
+                                modifier = if (glassmio) {
+                                    Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp)
+                                } else {
+                                    Modifier.padding(16.dp).padding(top = 8.dp)
+                                },
                                 showBtn = showActionBtn,
                                 isSelf = isSelf,
                                 onBtnClick = {
@@ -1005,14 +1044,23 @@ private fun ToolbarUserTitle(
 private fun UserProfileDetail(
     user: ImmutableHolder<User>,
     modifier: Modifier = Modifier,
+    glassmio: Boolean = false,
     showBtn: Boolean = true,
     isSelf: Boolean = false,
     onBtnClick: () -> Unit = {},
     onCopyIdClick: () -> Unit = {},
 ) {
     val navigator = LocalNavigator.current
+    val containerModifier = if (glassmio) {
+        modifier
+            .clip(RoundedCornerShape(26.dp))
+            .background(GlasmioTheme.colors.elevatedBackground)
+            .padding(16.dp)
+    } else {
+        modifier
+    }
     Column(
-        modifier = modifier,
+        modifier = containerModifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
@@ -1027,9 +1075,9 @@ private fun UserProfileDetail(
 //            )
             Box(
                 modifier = Modifier
-                    .padding(bottom = 16.dp)
-                    .size(96.dp)
-                    .clip(CircleShape)
+                    .padding(bottom = if (glassmio) 0.dp else 16.dp)
+                    .size(if (glassmio) 64.dp else 96.dp)
+                    .clip(if (glassmio) RoundedCornerShape(16.dp) else CircleShape)
             ) {
                 val imageUri = StringUtil.getBigAvatarUrl(user.get { portrait })
                 NetworkImage(
@@ -1094,7 +1142,11 @@ private fun UserProfileDetail(
                 user.get { nameShow },
                 LocalContentColor.current
             ),
-            style = MaterialTheme.typography.h6,
+            style = if (glassmio) {
+                LocalTextStyle.current.copy(fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
+            } else {
+                MaterialTheme.typography.h6
+            },
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             fontWeight = FontWeight.Bold
