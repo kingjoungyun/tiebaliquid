@@ -509,6 +509,8 @@ fun ThreadPage(
     scrollToReply: Boolean = false,
     viewModel: ThreadViewModel = pageViewModel(),
 ) {
+    // 帖子页外壳的风格开关（GLASMIO / LEGACY）。楼层内容、数据流两条分支完全共用。
+    val glassmio = ThreadPageUi.DefaultStyle == ThreadPageUiStyle.GLASMIO
     LazyLoad(loaded = viewModel.initialized) {
         viewModel.send(
             ThreadUiIntent.Init(
@@ -1363,33 +1365,35 @@ fun ThreadPage(
     }
 
     ProvideNavigator(navigator = navigator) {
-        StateScreen(
-            modifier = Modifier.fillMaxSize(),
-            isEmpty = isEmpty,
-            isError = isError,
-            isLoading = isRefreshing,
-            errorScreen = {
-                error?.let {
-                    val (e) = it
-                    ErrorScreen(error = e)
-                }
-            },
-            onReload = {
-                viewModel.send(
-                    ThreadUiIntent.Load(
-                        threadId,
-                        page = 0,
-                        postId = postId,
-                        forumId = forumId,
-                        seeLz = seeLz,
-                        sortType = sortType
+        ThreadPageSkin(enabled = glassmio) {
+            StateScreen(
+                modifier = Modifier.fillMaxSize(),
+                isEmpty = isEmpty,
+                isError = isError,
+                isLoading = isRefreshing,
+                errorScreen = {
+                    error?.let {
+                        val (e) = it
+                        ErrorScreen(error = e)
+                    }
+                },
+                onReload = {
+                    viewModel.send(
+                        ThreadUiIntent.Load(
+                            threadId,
+                            page = 0,
+                            postId = postId,
+                            forumId = forumId,
+                            seeLz = seeLz,
+                            sortType = sortType
+                        )
                     )
-                )
-            }
-        ) {
-            MyScaffold(
-                scaffoldState = scaffoldState,
-                topBar = {
+                }
+            ) {
+                MyScaffold(
+                    scaffoldState = scaffoldState,
+                    backgroundColor = if (glassmio) Color.Transparent else MaterialTheme.colors.background,
+                    topBar = {
                     TopBar(
                         forum = forum,
                         onBack = { navigator.navigateUp() },
@@ -1954,6 +1958,7 @@ fun ThreadPage(
                         )
                     }
                 }
+            }
             }
         }
     }
