@@ -99,6 +99,7 @@ import com.huanchengfly.tieba.post.ui.page.main.MainCollapsingTitle
 import com.huanchengfly.tieba.post.ui.page.main.MainTabScaffold
 import com.huanchengfly.tieba.post.ui.page.main.MainTopBarRow
 import com.huanchengfly.tieba.post.ui.page.main.LocalMainTabTopInset
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.ActionItem
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.Button
@@ -364,10 +365,9 @@ private fun HomeMoreMenu(
     onSelectSort: (Int) -> Unit,
     onToggleHistoryForum: () -> Unit,
 ) {
-    DropdownMenu(
+    AppMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
-        modifier = Modifier.background(color = ExtendedTheme.colors.menuBackground)
     ) {
         DropdownMenuItem(
             onClick = {

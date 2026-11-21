@@ -99,10 +99,11 @@ fun ClickMenu(
                     )
                 }
         ) {
-            DropdownMenu(
+            // 玻璃菜单：有 backdrop 时是 Glasmio 的材质/动效，没有时 AppMenu 内部自动退回 M2。
+            AppMenu(
                 expanded = menuState.expanded,
                 onDismissRequest = { menuScope.dismiss() },
-                modifier = modifier.background(color = MaterialTheme.colors.surface)
+                modifier = modifier,
             ) {
                 ProvideContentColor(color = ExtendedTheme.colors.text) {
                     menuScope.menuContent()
@@ -164,10 +165,9 @@ fun LongClickMenu(
                     )
                 }
         ) {
-            DropdownMenu(
+            AppMenu(
                 expanded = menuState.expanded,
                 onDismissRequest = { menuState.expanded = false },
-                modifier = Modifier.background(color = ExtendedTheme.colors.menuBackground)
             ) {
                 ProvideContentColor(color = ExtendedTheme.colors.text) {
                     menuContent()

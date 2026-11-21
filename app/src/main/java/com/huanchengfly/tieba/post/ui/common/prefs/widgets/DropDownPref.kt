@@ -15,6 +15,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsDataStore
 import kotlinx.coroutines.launch
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppMenu
 
 /**
  * Preference that shows a list of entries in a DropDown
@@ -93,10 +94,15 @@ fun DropDownPref(
             modifier = Modifier
                 .padding(start = 16.dp)
         ) {
-            DropdownMenu(
+            AppMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
-                modifier = if (dropdownBackgroundColor != null) Modifier.background(dropdownBackgroundColor) else Modifier
+                // 只有 LEGACY 渲染路径需要自定义底色；玻璃菜单自带材质，传了也不画（见 AppMenu 注释）。
+                modifier = if (dropdownBackgroundColor != null) {
+                    Modifier.background(dropdownBackgroundColor)
+                } else {
+                    Modifier
+                },
             ) {
                 entries.forEach { item ->
                     DropdownMenuItem(
