@@ -1,18 +1,26 @@
 package com.huanchengfly.tieba.post.ui.page.subposts
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -22,13 +30,19 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.OpenInBrowser
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -36,10 +50,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
 import com.huanchengfly.tieba.post.App
 import com.huanchengfly.tieba.post.R
@@ -51,11 +69,17 @@ import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.arch.onEvent
 import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.arch.wrapImmutable
+import com.huanchengfly.tieba.post.ui.common.LocalThreadImageRadius
 import com.huanchengfly.tieba.post.ui.common.PicContentRender
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.threadBottomBar
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
+import com.huanchengfly.tieba.post.ui.page.thread.ThreadBottomBarInset
+import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageSkin
+import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageUi
+import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageUiStyle
+import com.huanchengfly.tieba.post.ui.page.thread.ThreadTopBarHeight
 import com.huanchengfly.tieba.post.ui.page.destinations.CopyTextDialogPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
@@ -85,12 +109,14 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreen
 import com.huanchengfly.tieba.post.utils.AccountUtil.LocalAccount
 import com.huanchengfly.tieba.post.utils.DateTimeUtils
 import com.huanchengfly.tieba.post.utils.StringUtil
+import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
 import com.huanchengfly.tieba.post.utils.TiebaUtil
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.huanchengfly.tieba.post.ui.utils.getPhotoViewData
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.spec.DestinationStyleBottomSheet
+import io.github.neoruaa.glasmio.core.GlasmioTheme
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -295,6 +321,69 @@ internal fun SubPostsContent(
         replyDialogState.show()
     }
 
+    val glassmio = ThreadPageUi.DefaultStyle == ThreadPageUiStyle.GLASMIO
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val topInset = statusBarTop + ThreadTopBarHeight
+    val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val bottomInset = if (glassmio) ThreadBottomBarInset + navigationBarBottom else 0.dp
+    var largeTitleHeightPx by remember { mutableIntStateOf(0) }
+    val isLargeTitleCollapsed by remember {
+        derivedStateOf {
+            val offset = lazyListState.firstVisibleItemScrollOffset
+            lazyListState.firstVisibleItemIndex > 0 ||
+                (largeTitleHeightPx > 0 && offset >= largeTitleHeightPx)
+        }
+    }
+    val topScrimAlpha by animateFloatAsState(
+        targetValue = if (isLargeTitleCollapsed) 1f else 0f,
+        animationSpec = tween(180),
+        label = "subPostsTopScrim",
+    )
+    val largeTitle = stringResource(id = R.string.title_sub_posts_page)
+    val smallTitle = post?.let {
+        stringResource(id = R.string.title_sub_posts, it.get { floor })
+    }
+
+    ThreadPageSkin(
+        enabled = glassmio,
+        topBar = {
+            SubPostsGlassTopBar(
+                title = largeTitle,
+                collapsed = isLargeTitleCollapsed,
+                scrimAlpha = topScrimAlpha,
+                onBack = onNavigateUp,
+                onOpenOrigin = if (isSheet) null else {
+                    {
+                        navigator.navigate(
+                            ThreadPageDestination(
+                                forumId = forum?.get { id } ?: forumId,
+                                threadId = threadId,
+                                postId = post?.get { id } ?: postId
+                            )
+                        )
+                    }
+                },
+            )
+        },
+        bottomBar = {
+            SubPostsGlassBottomBar(
+                onClickReply = {
+                    val fid = forum?.get { id } ?: forumId
+                    val forumName = forum?.get { name }
+                    if (fid != 0L) {
+                        showReplyDialog(
+                            ReplyArgs(
+                                forumId = fid,
+                                forumName = forumName.toString(),
+                                threadId = threadId,
+                                postId = post?.get { id } ?: postId,
+                            )
+                        )
+                    }
+                }
+            )
+        },
+    ) {
     StateScreen(
         modifier = Modifier.fillMaxSize(),
         isEmpty = subPosts.isEmpty(),
@@ -303,7 +392,9 @@ internal fun SubPostsContent(
     ) {
         MyScaffold(
             modifier = Modifier.fillMaxSize(),
+            backgroundColor = if (glassmio) Color.Transparent else MaterialTheme.colors.background,
             topBar = {
+                if (!glassmio) {
                 TitleCentredToolbar(
                     title = {
                         Text(text = post?.let {
@@ -340,8 +431,10 @@ internal fun SubPostsContent(
                         }
                     }
                 )
+                }
             },
             bottomBar = {
+                if (!glassmio) {
                 if (account != null && !LocalContext.current.appPreferences.safeMode) {
                     Column(
                         modifier = Modifier.background(ExtendedTheme.colors.threadBottomBar)
@@ -413,6 +506,7 @@ internal fun SubPostsContent(
                         }
                     }
                 }
+                }
             }
         ) { paddingValues ->
             LoadMoreLayout(
@@ -433,15 +527,31 @@ internal fun SubPostsContent(
                 lazyListState = lazyListState,
                 isEmpty = post == null && subPosts.isEmpty(),
             ) {
-                MyLazyColumn(state = lazyListState) {
+                MyLazyColumn(
+                    state = lazyListState,
+                    contentPadding = PaddingValues(
+                        top = if (glassmio) topInset else 0.dp,
+                        bottom = bottomInset,
+                    ),
+                ) {
                     item(key = "Post$postId") {
                         post?.let {
                             Column {
+                                if (glassmio) {
+                                    SubPostsLargeTitle(
+                                        title = largeTitle,
+                                        smallTitle = smallTitle,
+                                        onHeightChanged = { largeTitleHeightPx = it },
+                                    )
+                                }
                                 PostCard(
                                     postHolder = it,
                                     contentRenders = postContentRenders,
+                                    threadAuthorId = thread?.get { author?.id } ?: 0L,
                                     canDelete = { it.author_id == account?.uid?.toLongOrNull() || it.author?.id == account?.uid?.toLongOrNull() || thread?.get { author?.id } ==  account?.uid?.toLongOrNull() },
-                                        showSubPosts = false,
+                                    showSubPosts = false,
+                                    glassmio = glassmio,
+                                    forceGlassCard = glassmio,
                                     onUserClick = {
                                         navigator.navigate(UserProfilePageDestination(it.id))
                                     },
@@ -482,10 +592,13 @@ internal fun SubPostsContent(
                                     deleteSubPost = null
                                     confirmDeleteDialogState.show()
                                 }
-                                VerticalDivider(thickness = 2.dp)
                             }
                         }
                     }
+                    if (glassmio) {
+                        // 0 高度 item 维持 scrollToItem(2 + index) 的既有 index 语义。
+                        item(key = "SubPostsHeader") {}
+                    } else {
                     stickyHeader(key = "SubPostsHeader") {
                         Row(
                             modifier = Modifier
@@ -502,6 +615,7 @@ internal fun SubPostsContent(
                             )
                         }
                     }
+                    }
                     itemsIndexed(
                         items = subPosts,
                         key = { _, subPost -> subPost.id }
@@ -510,6 +624,7 @@ internal fun SubPostsContent(
                         if (item.hidden) return@itemsIndexed
                         SubPostItem(
                             item = item,
+                            glassmio = glassmio,
                             forumId = forum?.get { id } ?: forumId,
                             forumName = forum?.get { name } ?: "",
                             threadId = threadId,
@@ -565,22 +680,26 @@ internal fun SubPostsContent(
         }
     }
 }
+}
 
 private fun getDescText(
     time: Long?,
+    floor: Int = 0,
     ipAddress: String?
 ): String {
     val texts = listOfNotNull(
         time?.let { DateTimeUtils.getRelativeTimeString(App.INSTANCE, it) },
+        if (floor > 0) App.INSTANCE.getString(R.string.tip_post_floor, floor) else null,
         ipAddress?.let { App.INSTANCE.getString(R.string.text_ip_location, it) }
     )
     if (texts.isEmpty()) return ""
-    return texts.joinToString(" ")
+    return texts.joinToString(" · ")
 }
 
 @Composable
 private fun SubPostItem(
     item: SubPostItemData,
+    glassmio: Boolean = false,
     forumId: Long = 0L,
     forumName: String = "",
     threadId: Long = 0L,
@@ -637,7 +756,10 @@ private fun SubPostItem(
         blockedTip = { BlockTip(text = { Text(text = stringResource(id = R.string.tip_blocked_sub_post)) }) },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .then(
+                if (glassmio) Modifier
+                else Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            ),
     ) {
         LongClickMenu(
             menuState = menuState,
@@ -694,6 +816,112 @@ private fun SubPostItem(
                 context.appPreferences.safeMode || account == null
             }
         ) {
+            if (glassmio) {
+                val colors = GlasmioTheme.colors
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 7.dp),
+                ) {
+                    if (author != null) {
+                        Avatar(
+                            data = StringUtil.getAvatarUrl(author.get { portrait }),
+                            size = 36.dp,
+                            contentDescription = null,
+                            modifier = Modifier.debounceClickable(
+                                onClick = { onUserClick(author.get()) }
+                            ),
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        if (author != null) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .debounceClickable(onClick = { onUserClick(author.get()) }),
+                            ) {
+                                ProvideTextStyle(
+                                    MaterialTheme.typography.body1.copy(
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.content,
+                                    )
+                                ) {
+                                    UserNameText(
+                                        userName = StringUtil.getUsernameAnnotatedString(
+                                            LocalContext.current,
+                                            author.get { name },
+                                            author.get { nameShow },
+                                        ),
+                                        userLevel = author.get { level_id },
+                                        isLz = author.get { id } == threadAuthorId,
+                                        bawuType = author.get { bawuType },
+                                    )
+                                }
+                                Text(
+                                    text = getDescText(
+                                        time = subPost.get { time }.toLong(),
+                                        floor = subPost.get { floor },
+                                        ipAddress = author.get { ip_address },
+                                    ),
+                                    fontSize = 13.sp,
+                                    color = colors.secondaryContent,
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        CompositionLocalProvider(LocalThreadImageRadius provides 12.dp) {
+                            ProvideTextStyle(
+                                MaterialTheme.typography.body1.copy(
+                                    fontSize = 15.sp,
+                                    lineHeight = 22.sp,
+                                    color = colors.content,
+                                )
+                            ) {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    renders.fastForEach { it.Render() }
+                                }
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.End,
+                        ) {
+                            val tint = if (hasAgreed) colors.accent else colors.secondaryContent
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(100))
+                                    .debounceClickable(onClick = { onAgree(subPost.get()) })
+                                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Icon(
+                                    imageVector = if (hasAgreed) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                                    contentDescription = stringResource(id = R.string.title_agree),
+                                    tint = tint,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                if (agreeNum > 0) {
+                                    Text(
+                                        text = agreeNum.getShortNumString(),
+                                        fontSize = 13.sp,
+                                        color = tint,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
             Card(
                 header = {
                     if (author != null) {
@@ -720,8 +948,9 @@ private fun SubPostItem(
                             desc = {
                                 Text(
                                     text = getDescText(
-                                        subPost.get { time }.toLong(),
-                                        author.get { ip_address })
+                                        time = subPost.get { time }.toLong(),
+                                        ipAddress = author.get { ip_address },
+                                    )
                                 )
                             },
                             onClick = {
@@ -747,6 +976,7 @@ private fun SubPostItem(
                     }
                 }
             )
+            }
         }
     }
 }

@@ -2548,6 +2548,8 @@ fun PostCard(
     onMenuCopyClick: ((String) -> Unit)? = null,
     onMenuFavoriteClick: ((Post) -> Unit)? = null,
     glassmio: Boolean = false,
+    // 楼中楼页把「被回复的楼层」也用 GlasmioCard 突出，即使 post.floor > 1。
+    forceGlassCard: Boolean = false,
     onMenuDeleteClick: ((Post) -> Unit)? = null,
 ) {
     val context = LocalContext.current
@@ -2656,7 +2658,7 @@ fun PostCard(
                 }
             }
         ) {
-            if (glassmio && post.floor <= 1) {
+            if (glassmio && (post.floor <= 1 || forceGlassCard)) {
                 GlasmioMainPostCard(
                     post = post,
                     author = author,
