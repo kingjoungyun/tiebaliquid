@@ -48,6 +48,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.ClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.MenuScope
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassCircleSurface
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageHost
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
@@ -86,7 +87,10 @@ fun ForumPageSkin(enabled: Boolean, content: @Composable () -> Unit) {
     }
     LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
         HarmonyTextProvider {
-            Box(
+            // 页级 backdrop host：本页的玻璃弹层（⋯ 菜单等）要采到「这一页的真实内容」。
+            // 页面内容进 sampledContent（被录进 LayerBackdrop）；页面里的玻璃控件（顶栏圆钮）
+            // 会自动走「自带纯色小 host」那一支，不会自己采样自己。
+            GlassPageHost(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(GlasmioTheme.colors.groupedBackground),

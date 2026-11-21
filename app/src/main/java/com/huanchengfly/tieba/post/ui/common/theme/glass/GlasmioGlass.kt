@@ -125,37 +125,61 @@ fun LiquidGlassBackdropHost(
 }
 
 /**
- * **Activity 级** backdrop host：给整棵 UI 树一个可采样的 backdrop，让所有页面（包括
- * 没有自己 host 的吧页、历史页、帖子页…）上的玻璃弹层都能采到真实内容。
+ * **页级** backdrop host：页面内容进 `sampledContent`（被录进 LayerBackdrop），
+ * 页面里的玻璃弹层（Popup 菜单、Dialog）就能采到这一页的真实内容。
  *
- * 为什么放在 Activity 层而不是每页各包一个：
- * - 菜单 / Dialog 是**另一个 Window**（Popup / Dialog），它们在组合树里位于页面内部，
- *   但绘制在另一个窗口 → 采样上层录制层是安全的（Glasmio 的 `CrossWindowBackdrop` 已处理坐标映射），
- *   不会出现「自己采样自己」；
- * - 页面自己若需要「玻璃控件画在页面内容之上」，仍然要像 MainPage 那样用
- *   [LiquidGlassBackdropHost] 建**页级** host（控件进 overlay），否则控件会被录进这一层、采到自己。
+ * 用在「需要靠背景折射出内容的页面」上（吧页、历史页…），一行接入：
+ * ```
+ * GlassPageHost(modifier = Modifier.fillMaxSize()) { pageContent() }
+ * ```
  *
- * 代价：整页录制（每次内容变化多一次全屏离屏渲染 + 一张全屏纹理）。
- * 这是**已知性能技术债**，主界面还叠了一层页级 host（dock/顶栏必须画在录制层之外）。
- * 实测见简报；如果某些页太贵，可以在那一页自己包 `LiquidGlassBackdropHost`（内层会 shadow 掉这层）。
+ * 注意：页面自己画在内容里的玻璃控件（悬浮圆钮等）**不能**采样这层 backdrop，
+ * 它们在 `sampledContent` 里，`LocalGlassSamplingSafe = false` 会让
+ * [GlassIconButton] / [GlassCircleSurface] 自动改用「自带纯色小 host」那一支。
  *
- * API < 33 直接透传：没有 backdrop，所有玻璃控件按各自的降级路径走伪玻璃。
+ * 代价：整页录制（内容变化时每帧多一次离屏渲染 + 一张全屏纹理）。
+ * 只在需要的页面上开，见简报里的接入清单。
+ */
+@Composable
+fun GlassPageHost(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    if (!isLiquidGlassSupported()) {
+        content()
+        return
+    }
+    LiquidGlassBackdropHost(
+        modifier = modifier,
+        sampledContent = { content() },
+        overlayContent = {},
+    )
+}
+
+/**
+ * **Activity 级** backdrop host（当前默认关闭，见 `enabled`）。
+ *
+ * 设计意图：包一层就让所有页面/弹层都有 backdrop，菜单在哪儿都能采到背景。
+ *
+ * **为什么默认关**：实测在这台模拟器（SwiftShader，无 GPU）上，Activity 级 host +
+ * 页面里再套页级 host 的层级，会在 HWUI 的 `RenderNode::prepareTreeImpl` 里递归爆栈
+ * （`Fatal signal 11 … Cause: stack pointer is not in a rw map; likely due to stack overflow`，
+ * 512 帧同一个函数来回递归），冷启动 ~25s 内必崩；同一个交互脚本在基线 commit 上不崩。
+ * 关掉它之后（页级 host 方案）反复切页/开菜单不再复现。
+ *
+ * 想重新评估（比如真机上）时把 `enabled` 打开，或者直接调 [GlassPageHost]。
  */
 @Composable
 fun GlassRootHost(
     modifier: Modifier = Modifier,
+    enabled: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    if (!isLiquidGlassSupported() || isGlassDebugDisabled()) {
+    if (!enabled || !isLiquidGlassSupported() || isGlassDebugDisabled()) {
         content()
         return
     }
-    // 用**纯色 host**（`sampledColor`）而不是整页录制：
-    // - 页面内容全部落到 overlay 层（Glasmio 的 `sampledColor` 变体就是这么定义的），
-    //   所以页面里的玻璃控件采样这块纯色底是安全的，不会「自己采样自己」；
-    // - 纯色源 `fillsBoundsUniformly = true`，Glasmio 会复用已渲染结果，几乎没有额外开销
-    //   （不像整页录制那样每帧多一次全屏离屏渲染）。
-    // 想要「菜单折射真实内容」的页面，自己再套一层 [LiquidGlassBackdropHost]（内层 shadow 掉这层）。
+    // 纯色 host：页面内容全部落到 overlay 层，页面里的玻璃控件采样它是安全的。
     val background = glassColors().background
     GlasmioBackdropHost(
         sampledColor = background,
