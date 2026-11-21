@@ -21,5 +21,10 @@
             android:name=".debug.GlassFeedPreviewActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+        <!-- 推特式帖子卡（生产组件 PostCard）的静态数据验收页：浅色/深色/点赞/多图。 -->
+        <activity
+            android:name=".debug.PostCardPreviewActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
     </application>
 </manifest>
