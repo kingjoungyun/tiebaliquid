@@ -38,6 +38,7 @@ import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -64,13 +65,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -91,6 +97,8 @@ import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.menuBackground
 import com.huanchengfly.tieba.post.ui.common.theme.compose.pullRefreshIndicator
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.LoginPageDestination
@@ -121,6 +129,10 @@ import com.huanchengfly.tieba.post.utils.ImageUtil
 import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
 import com.huanchengfly.tieba.post.utils.TiebaUtil
 import com.huanchengfly.tieba.post.utils.appPreferences
+import io.github.neoruaa.glasmio.core.GlasmioTheme
+import io.github.neoruaa.glasmio.glass.render.backdrops.emptyBackdrop
+import io.github.neoruaa.glasmio.ui.GlasmioCard
+import io.github.neoruaa.glasmio.ui.GlasmioIconButton
 import kotlinx.collections.immutable.persistentListOf
 
 private fun getGridCells(
@@ -207,12 +219,13 @@ fun SearchBox(
 private fun Header(
     text: String,
     modifier: Modifier = Modifier,
-    invert: Boolean = false
+    invert: Boolean = false,
+    startPadding: Dp = 16.dp,
 ) {
     Chip(
         text = text,
         modifier = Modifier
-            .padding(start = 16.dp)
+            .padding(start = startPadding)
             .then(modifier),
         invertColor = invert
     )
@@ -364,10 +377,12 @@ private fun HomeMoreMenu(
     onToggleListSingle: () -> Unit,
     onSelectSort: (Int) -> Unit,
     onToggleHistoryForum: () -> Unit,
+    anchorBounds: Rect? = null,
 ) {
     AppMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
+        anchorBounds = anchorBounds,
     ) {
         DropdownMenuItem(
             onClick = {
@@ -442,6 +457,7 @@ private fun HomeMoreMenu(
 private fun ForumAvatar(
     forum: HomeUiState.Forum,
     size: Dp,
+    shape: Shape = CircleShape,
 ) {
     val context = LocalContext.current
     val fallbackColor = remember(forum.forumId) {
@@ -470,7 +486,7 @@ private fun ForumAvatar(
     Box(
         modifier = Modifier
             .size(size)
-            .clip(CircleShape)
+            .clip(shape)
             .background(color = fallbackColor.copy(alpha = 0.16f)),
         contentAlignment = Center
     ) {
@@ -489,6 +505,23 @@ private fun ForumAvatar(
             )
         }
     }
+}
+
+@Composable
+private fun HomeLargeTitle(
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = stringResource(id = R.string.title_explore),
+        style = LocalTextStyle.current.copy(
+            fontSize = 34.sp,
+            lineHeight = 40.sp,
+            fontWeight = FontWeight.Bold,
+        ),
+        color = ExtendedTheme.colors.text,
+        maxLines = 1,
+        modifier = modifier.padding(vertical = 8.dp),
+    )
 }
 
 @Composable
@@ -577,6 +610,46 @@ private fun ForumItemContent(
 }
 
 @Composable
+private fun ForumCardContent(
+    item: HomeUiState.Forum,
+) {
+    val colors = GlasmioTheme.colors
+    val backdrop = remember { emptyBackdrop() }
+    GlasmioCard(
+        backdrop = backdrop,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            ForumAvatar(
+                forum = item,
+                size = 48.dp,
+                shape = RoundedCornerShape(12.dp),
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = item.forumName,
+                color = colors.content,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(
+                    R.string.hot_num,
+                    item.hotNum.getShortNumString()
+                ) + " · Lv.${item.levelId}",
+                color = colors.secondaryContent,
+                fontSize = 13.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
 private fun ForumItem(
     item: HomeUiState.Forum,
     onClick: (HomeUiState.Forum) -> Unit,
@@ -584,6 +657,7 @@ private fun ForumItem(
     onAddTopForum: (HomeUiState.Forum) -> Unit,
     onDeleteTopForum: (HomeUiState.Forum) -> Unit,
     isTopForum: Boolean = false,
+    glassmio: Boolean = false,
 ) {
     val context = LocalContext.current
     val menuState = rememberMenuState()
@@ -605,7 +679,11 @@ private fun ForumItem(
             onClick(item)
         }
     ) {
-        ForumItemContent(item = item)
+        if (glassmio) {
+            ForumCardContent(item = item)
+        } else {
+            ForumItemContent(item = item)
+        }
     }
 }
 
@@ -619,6 +697,7 @@ fun HomePage(
     val account = LocalAccount.current
     val context = LocalContext.current
     val navigator = LocalNavigator.current
+    val glassmio = HomePageUi.DefaultStyle == HomePageUiStyle.GLASMIO
     val isLoading by viewModel.uiState.collectPartialAsState(
         prop1 = HomeUiState::isLoading,
         initial = false
@@ -662,6 +741,7 @@ fun HomePage(
         derivedStateOf { showHistoryForumState && historyForums.isNotEmpty() }
     }
     var moreMenuExpanded by remember { mutableStateOf(false) }
+    var moreButtonBounds by remember { mutableStateOf(Rect.Zero) }
     val isError by remember { derivedStateOf { error != null } }
     val gridCells by remember { derivedStateOf { getGridCells(context, listSingle) } }
 
@@ -723,31 +803,53 @@ fun HomePage(
         }
     }
 
+    val homeScaffold: @Composable () -> Unit = {
     MainTabScaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .then(
+                if (glassmio) Modifier.background(
+                    if (ExtendedTheme.colors.isNightMode) Color.Black else Color(0xFFF2F2F7)
+                ) else Modifier
+            ),
         topBar = {
-            // 顶栏 = 72dp 标题行 + 可收起的搜索框；整块登记给 MainPage 的 overlay host。
-            // 搜索框高度变化会让 host 重新量高度，玻璃层跟着动画走（不写死）。
-            Column {
-                MainTopBarRow(
-                    navigationIcon = toolboxAccountNavIconIfCompact(navigator),
-                    actions = {
-                        // 安全模式下隐藏「一键签到」入口（签到属写操作，会被网络层拦截）
-                        if (!context.appPreferences.safeMode) {
-                            ActionItem(
-                                icon = ImageVector.vectorResource(id = R.drawable.ic_oksign),
-                                contentDescription = stringResource(id = R.string.title_oksign)
-                            ) {
-                                TiebaUtil.startSign(context)
-                            }
+            if (glassmio) {
+                // 无实体栏：只把两个 44dp 悬浮圆钮登记给 MainPage 的 overlay host。
+                // 大标题在网格首项里，随内容滚走。
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        GlasmioIconButton(
+                            onClick = { navigator.navigate(SearchPageDestination) },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Search,
+                                contentDescription = stringResource(id = R.string.hint_search),
+                                tint = ExtendedTheme.colors.text,
+                                modifier = Modifier.size(20.dp),
+                            )
                         }
-                        // 一个按钮收纳：单列/双列、排序方式、最近访问吧开关
                         Box {
-                            ActionItem(
-                                icon = Icons.Outlined.ViewAgenda,
-                                contentDescription = stringResource(id = R.string.title_more_options)
+                            GlasmioIconButton(
+                                onClick = { moreMenuExpanded = true },
+                                modifier = Modifier.onGloballyPositioned {
+                                    moreButtonBounds = it.boundsInWindow()
+                                },
                             ) {
-                                moreMenuExpanded = true
+                                Icon(
+                                    imageVector = Icons.Outlined.ViewAgenda,
+                                    contentDescription = stringResource(id = R.string.title_more_options),
+                                    tint = ExtendedTheme.colors.text,
+                                    modifier = Modifier.size(20.dp),
+                                )
                             }
                             HomeMoreMenu(
                                 expanded = moreMenuExpanded,
@@ -768,17 +870,70 @@ fun HomePage(
                                         !context.appPreferences.homePageShowHistoryForum
                                     showHistoryForumState =
                                         context.appPreferences.homePageShowHistoryForum
-                                }
+                                },
+                                anchorBounds = if (moreButtonBounds == Rect.Zero) null else Rect(
+                                    moreButtonBounds.left,
+                                    moreButtonBounds.bottom,
+                                    moreButtonBounds.right,
+                                    moreButtonBounds.bottom,
+                                ),
                             )
                         }
-                    },
-                ) {
-                    MainCollapsingTitle(text = stringResource(id = R.string.title_explore))
+                    }
                 }
-                HomeSearchArea(
-                    visible = searchBarVisible,
-                    onOpenSearch = { navigator.navigate(SearchPageDestination) }
-                )
+            } else {
+                Column {
+                    MainTopBarRow(
+                        navigationIcon = toolboxAccountNavIconIfCompact(navigator),
+                        actions = {
+                            // 安全模式下隐藏「一键签到」入口（签到属写操作，会被网络层拦截）
+                            if (!context.appPreferences.safeMode) {
+                                ActionItem(
+                                    icon = ImageVector.vectorResource(id = R.drawable.ic_oksign),
+                                    contentDescription = stringResource(id = R.string.title_oksign)
+                                ) {
+                                    TiebaUtil.startSign(context)
+                                }
+                            }
+                            // 一个按钮收纳：单列/双列、排序方式、最近访问吧开关
+                            Box {
+                                ActionItem(
+                                    icon = Icons.Outlined.ViewAgenda,
+                                    contentDescription = stringResource(id = R.string.title_more_options)
+                                ) {
+                                    moreMenuExpanded = true
+                                }
+                                HomeMoreMenu(
+                                    expanded = moreMenuExpanded,
+                                    listSingle = listSingle,
+                                    sortType = sortType,
+                                    showHistoryForum = showHistoryForumState,
+                                    onDismiss = { moreMenuExpanded = false },
+                                    onToggleListSingle = {
+                                        context.appPreferences.listSingle = !listSingle
+                                        listSingle = !listSingle
+                                    },
+                                    onSelectSort = { type ->
+                                        context.appPreferences.homeSortType = type
+                                        sortType = type
+                                    },
+                                    onToggleHistoryForum = {
+                                        context.appPreferences.homePageShowHistoryForum =
+                                            !context.appPreferences.homePageShowHistoryForum
+                                        showHistoryForumState =
+                                            context.appPreferences.homePageShowHistoryForum
+                                    }
+                                )
+                            }
+                        },
+                    ) {
+                        MainCollapsingTitle(text = stringResource(id = R.string.title_explore))
+                    }
+                    HomeSearchArea(
+                        visible = searchBarVisible,
+                        onOpenSearch = { navigator.navigate(SearchPageDestination) }
+                    )
+                }
             }
         },
     ) { contentPaddings ->
@@ -803,11 +958,24 @@ fun HomePage(
                         if (isLoggedIn) viewModel.send(HomeUiIntent.Refresh)
                     },
                     emptyScreen = {
-                        EmptyScreen(
-                            loggedIn = isLoggedIn,
-                            canOpenExplore = canOpenExplore,
-                            onOpenExplore = onOpenExplore
-                        )
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            if (glassmio) {
+                                HomeLargeTitle(
+                                    modifier = Modifier.padding(
+                                        start = 16.dp,
+                                        end = 16.dp,
+                                        top = LocalMainTabTopInset.current,
+                                    )
+                                )
+                            }
+                            Box(modifier = Modifier.weight(1f)) {
+                                EmptyScreen(
+                                    loggedIn = isLoggedIn,
+                                    canOpenExplore = canOpenExplore,
+                                    onOpenExplore = onOpenExplore
+                                )
+                            }
+                        }
                     },
                     loadingScreen = {
                         HomePageSkeletonScreen(listSingle = listSingle, gridCells = gridCells)
@@ -818,10 +986,30 @@ fun HomePage(
                 ) {
                     MyLazyVerticalGrid(
                         columns = gridCells,
-                        contentPadding = PaddingValues(bottom = 12.dp),
+                        contentPadding = PaddingValues(
+                            start = if (glassmio) 16.dp else 0.dp,
+                            end = if (glassmio) 16.dp else 0.dp,
+                            top = if (glassmio) 8.dp else 0.dp,
+                            bottom = 12.dp,
+                        ),
+                        horizontalArrangement = if (glassmio) {
+                            Arrangement.spacedBy(10.dp)
+                        } else {
+                            Arrangement.Start
+                        },
+                        verticalArrangement = if (glassmio) {
+                            Arrangement.spacedBy(10.dp)
+                        } else {
+                            Arrangement.Top
+                        },
                         state = gridState,
                         modifier = Modifier.fillMaxSize(),
                     ) {
+                        if (glassmio) {
+                            item(key = "HomeTitle", span = { GridItemSpan(maxLineSpan) }) {
+                                HomeLargeTitle()
+                            }
+                        }
                         if (showHistoryForum) {
                             item(key = "HistoryForums", span = { GridItemSpan(maxLineSpan) }) {
                                 val rotate by animateFloatAsState(
@@ -847,7 +1035,8 @@ fun HomePage(
                                     ) {
                                         Header(
                                             text = stringResource(id = R.string.title_history_forum),
-                                            invert = false
+                                            invert = false,
+                                            startPadding = if (glassmio) 0.dp else 16.dp,
                                         )
 
                                         Spacer(modifier = Modifier.weight(1f))
@@ -918,7 +1107,8 @@ fun HomePage(
                                 ) {
                                     Header(
                                         text = stringResource(id = R.string.title_top_forum),
-                                        invert = true
+                                        invert = true,
+                                        startPadding = if (glassmio) 0.dp else 16.dp,
                                     )
                                 }
                             }
@@ -942,7 +1132,8 @@ fun HomePage(
                                     onDeleteTopForum = {
                                         viewModel.send(HomeUiIntent.TopForums.Delete(it.forumId))
                                     },
-                                    isTopForum = true
+                                    isTopForum = true,
+                                    glassmio = glassmio,
                                 )
                             }
                         }
@@ -951,7 +1142,10 @@ fun HomePage(
                                 Column(
                                     modifier = Modifier.padding(vertical = 8.dp)
                                 ) {
-                                    Header(text = stringResource(id = R.string.forum_list_title))
+                                    Header(
+                                        text = stringResource(id = R.string.forum_list_title),
+                                        startPadding = if (glassmio) 0.dp else 16.dp,
+                                    )
                                 }
                             }
                         }
@@ -974,7 +1168,8 @@ fun HomePage(
                                 },
                                 onDeleteTopForum = {
                                     viewModel.send(HomeUiIntent.TopForums.Delete(it.forumId))
-                                }
+                                },
+                                glassmio = glassmio,
                             )
                         }
                     }
@@ -991,6 +1186,16 @@ fun HomePage(
                 contentColor = ExtendedTheme.colors.primary,
             )
         }
+    }
+    }
+    if (glassmio) {
+        LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+            HarmonyTextProvider {
+                homeScaffold()
+            }
+        }
+    } else {
+        homeScaffold()
     }
 }
 
