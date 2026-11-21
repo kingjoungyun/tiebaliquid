@@ -1,11 +1,23 @@
 package com.huanchengfly.tieba.post.ui.page.main.notifications
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Tab
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -13,8 +25,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import androidx.compose.material.Icon
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.SearchPageDestination
@@ -34,6 +53,8 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.accountNavIconIfCompact
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import io.github.neoruaa.glasmio.core.GlasmioTheme
+import io.github.neoruaa.glasmio.ui.GlasmioIconButton
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -58,47 +79,25 @@ fun NotificationsPage(
     val pagerState = rememberPagerState(
         initialPage = initialTab,
     ) { pages.size }
-    val coroutineScope = rememberCoroutineScope()
-    ProvideNavigator(navigator = navigator) {
-        MyScaffold(
-            backgroundColor = Color.Transparent,
-            topBar = {
-                TitleCentredToolbar(
-                    title = { Text(text = stringResource(id = R.string.title_notifications)) },
-                    navigationIcon = {
-                        BackNavigationIcon {
-                            navigator.navigateUp()
-                        }
-                    }
-                ) {
-                    TabRow(
-                        selectedTabIndex = pagerState.currentPage,
-                        indicator = { tabPositions ->
-                            PagerTabIndicator(
-                                pagerState = pagerState,
-                                tabPositions = tabPositions
-                            )
-                        },
-                        divider = {},
-                        backgroundColor = Color.Transparent,
-                        contentColor = ExtendedTheme.colors.onTopBar,
-                    ) {
-                        pages.forEachIndexed { index, pair ->
-                            Tab(
-                                text = { Text(text = pair.first) },
-                                selected = pagerState.currentPage == index,
-                                onClick = {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(index)
-                                    }
-                                },
-                            )
-                        }
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxSize(),
-        ) { paddingValues ->
+    val glassmio = NotificationsUi.DefaultStyle == NotificationsUiStyle.GLASMIO
+    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+        HarmonyTextProvider {
+            ProvideNavigator(navigator = navigator) {
+                MyScaffold(
+                    backgroundColor = if (glassmio) GlasmioTheme.colors.groupedBackground
+                    else Color.Transparent,
+                    topBar = {
+                        NotificationsHeader(
+                            pagerState = pagerState,
+                            pages = pages,
+                            showBack = true,
+                            withStatusBarPadding = true,
+                            onBack = { navigator.navigateUp() },
+                            onSearch = { navigator.navigate(SearchPageDestination) },
+                        )
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                ) { paddingValues ->
             LazyLoadHorizontalPager(
                 state = pagerState,
                 contentPadding = paddingValues,
@@ -111,6 +110,8 @@ fun NotificationsPage(
             }
         }
     }
+}
+}
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -131,45 +132,19 @@ fun NotificationsPage(
         initialPage = initialTab,
     ) { pages.size }
     val coroutineScope = rememberCoroutineScope()
+    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+        HarmonyTextProvider {
     MainTabScaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            MainTopBarRow(
-                navigationIcon = accountNavIconIfCompact(),
-                actions = {
-                    ActionItem(
-                        icon = Icons.Rounded.Search,
-                        contentDescription = stringResource(id = R.string.title_search)
-                    ) {
-                        navigator.navigate(SearchPageDestination)
-                    }
-                },
-            ) {
-                TabRow(
-                    selectedTabIndex = pagerState.currentPage,
-                    indicator = { tabPositions ->
-                        PagerTabIndicator(
-                            pagerState = pagerState,
-                            tabPositions = tabPositions
-                        )
-                    },
-                    divider = {},
-                    backgroundColor = Color.Transparent,
-                    contentColor = ExtendedTheme.colors.onTopBar,
-                ) {
-                    pages.forEachIndexed { index, pair -> 
-                        Tab(
-                            text = { Text(text = pair.first) },
-                            selected = pagerState.currentPage == index,
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(index)
-                                }
-                            },
-                        )
-                    }
-                }
-            }
+            NotificationsHeader(
+                pagerState = pagerState,
+                pages = pages,
+                showBack = false,
+                withStatusBarPadding = false,
+                onBack = {},
+                onSearch = { navigator.navigate(SearchPageDestination) },
+            )
         },
     ) { paddingValues ->
         LazyLoadHorizontalPager(
@@ -181,6 +156,89 @@ fun NotificationsPage(
             userScrollEnabled = true,
         ) {
             pages[it].second()
+        }
+    }
+}
+}
+}
+
+@Composable
+private fun NotificationsHeader(
+    pagerState: PagerState,
+    pages: List<Pair<String, (@Composable () -> Unit)>>,
+    showBack: Boolean,
+    withStatusBarPadding: Boolean,
+    onBack: () -> Unit,
+    onSearch: () -> Unit,
+) {
+    val coroutineScope = rememberCoroutineScope()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(GlasmioTheme.colors.groupedBackground)
+            .then(if (withStatusBarPadding) Modifier.statusBarsPadding() else Modifier),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (showBack) {
+                GlassIconButton(
+                    onClick = onBack,
+                    icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = stringResource(id = R.string.button_back),
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            GlassIconButton(
+                onClick = onSearch,
+                icon = Icons.Rounded.Search,
+                contentDescription = stringResource(id = R.string.title_search),
+            )
+        }
+        Text(
+            text = stringResource(id = R.string.title_notifications),
+            style = LocalTextStyle.current.copy(
+                fontSize = 34.sp,
+                lineHeight = 40.sp,
+                fontWeight = FontWeight.Bold,
+            ),
+            color = ExtendedTheme.colors.text,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        )
+        TabRow(
+            selectedTabIndex = pagerState.currentPage,
+            indicator = { tabPositions ->
+                PagerTabIndicator(pagerState = pagerState, tabPositions = tabPositions)
+            },
+            divider = {},
+            backgroundColor = Color.Transparent,
+            contentColor = ExtendedTheme.colors.primary,
+        ) {
+            pages.forEachIndexed { index, pair ->
+                Tab(
+                    text = {
+                        Text(
+                            text = pair.first,
+                            fontSize = 15.sp,
+                            fontWeight = if (pagerState.currentPage == index) {
+                                FontWeight.SemiBold
+                            } else {
+                                FontWeight.Normal
+                            },
+                        )
+                    },
+                    selected = pagerState.currentPage == index,
+                    onClick = {
+                        coroutineScope.launch { pagerState.animateScrollToPage(index) }
+                    },
+                    selectedContentColor = ExtendedTheme.colors.onTopBar,
+                    unselectedContentColor = ExtendedTheme.colors.onTopBarSecondary,
+                )
+            }
         }
     }
 }

@@ -27,12 +27,22 @@ import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.arch.pageViewModel
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.remember
+import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.pullRefreshIndicator
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.SubPostsPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
+import com.huanchengfly.tieba.post.ui.page.main.notifications.NotificationsUi
+import com.huanchengfly.tieba.post.ui.page.main.notifications.NotificationsUiStyle
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockTip
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockableContent
@@ -46,6 +56,10 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.UserHeader
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import com.huanchengfly.tieba.post.utils.DateTimeUtils
 import com.huanchengfly.tieba.post.utils.StringUtil
+import io.github.neoruaa.glasmio.core.GlasmioTheme
+import io.github.neoruaa.glasmio.core.systemGray5
+import io.github.neoruaa.glasmio.glass.render.backdrops.emptyBackdrop
+import io.github.neoruaa.glasmio.ui.GlasmioCard
 import kotlinx.collections.immutable.persistentListOf
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -83,6 +97,7 @@ fun NotificationsListPage(
         prop1 = NotificationsListUiState::currentPage,
         initial = 1
     )
+    val glassmio = NotificationsUi.DefaultStyle == NotificationsUiStyle.GLASMIO
     val pullRefreshState = rememberPullRefreshState(
         refreshing = isRefreshing,
         onRefresh = { viewModel.send(NotificationsListUiIntent.Refresh) }
@@ -116,8 +131,15 @@ fun NotificationsListPage(
                                 }
                             },
                             modifier = Modifier
-                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                                .padding(
+                                    horizontal = 16.dp,
+                                    vertical = if (glassmio) 5.dp else 12.dp,
+                                )
                         ) {
+                            NotificationCardWrapper(
+                                enabled = glassmio,
+                                unread = glassmio && info.unread != null && info.unread != "0",
+                            ) {
                             Column(
                                 modifier = Modifier
                                     .debounceClickable(onClick =  {
@@ -150,7 +172,7 @@ fun NotificationsListPage(
                                         avatar = {
                                             Avatar(
                                                 data = StringUtil.getAvatarUrl(info.replyer.portrait),
-                                                size = Sizes.Small,
+                                                size = if (glassmio) 36.dp else Sizes.Small,
                                                 contentDescription = null
                                             )
                                         },
@@ -213,8 +235,9 @@ fun NotificationsListPage(
                                                 }
                                             })
                                             .background(
-                                                ExtendedTheme.colors.chip,
-                                                RoundedCornerShape(6.dp)
+                                                if (glassmio) GlasmioTheme.colors.systemGray5
+                                                else ExtendedTheme.colors.chip,
+                                                RoundedCornerShape(12.dp)
                                             )
                                             .padding(8.dp),
                                         color = ExtendedTheme.colors.onChip,
@@ -223,6 +246,7 @@ fun NotificationsListPage(
                                 }
                             }
                         }
+                            }
                     }
                 }
             }
@@ -235,5 +259,36 @@ fun NotificationsListPage(
             backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
             contentColor = ExtendedTheme.colors.primary,
         )
+    }
+}
+
+@Composable
+private fun NotificationCardWrapper(
+    enabled: Boolean,
+    unread: Boolean,
+    content: @Composable () -> Unit,
+) {
+    if (!enabled) {
+        content()
+        return
+    }
+    GlasmioCard(
+        backdrop = remember { emptyBackdrop() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            content()
+            if (unread) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 14.dp, end = 14.dp)
+                        .size(8.dp)
+                        .background(ExtendedTheme.colors.primary, CircleShape)
+                )
+            }
+        }
     }
 }
