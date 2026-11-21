@@ -61,6 +61,11 @@ fun AppMenu(
     modifier: Modifier = Modifier,
     menuWidth: Dp = AppMenuWidth,
     heightOverride: Dp? = null,
+    /**
+     * 触发器在 **窗口坐标** 里的矩形。传了就用它做锚点，不再依赖下面那个 0 尺寸盒子；
+     * [ClickMenu] 会把真实触发器的 bounds 传进来，菜单才能贴住按钮而不是跑到左上角。
+     */
+    anchorBounds: Rect? = null,
     backdrop: Backdrop? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -77,7 +82,8 @@ fun AppMenu(
 
     val glassBackdrop = backdrop ?: LocalBlurBackdrop.current
     val menuHeight = rememberMenuContentHeight(menuWidth = menuWidth, content = content)
-    var anchorBounds by remember { mutableStateOf<Rect?>(null) }
+    var measuredAnchorBounds by remember { mutableStateOf<Rect?>(null) }
+    val resolvedAnchorBounds = anchorBounds ?: measuredAnchorBounds
 
     // 注意 1：玻璃路径**不**把 caller 的 modifier（历史上只用来刷 menuBackground）套到锚点盒子上，
     // 否则会在触发器的位置画出一块矩形。玻璃材质自己就是背景。
@@ -85,9 +91,9 @@ fun AppMenu(
     // 所以必须用 positionInWindow() + size 自己拼 Rect（否则菜单会被钳到屏幕左上角）。
     Box(
         modifier = Modifier.onGloballyPositioned { coordinates ->
-            if (coordinates.isAttached) {
+            if (coordinates.isAttached && anchorBounds == null) {
                 val position = coordinates.positionInWindow()
-                anchorBounds = Rect(
+                measuredAnchorBounds = Rect(
                     left = position.x,
                     top = position.y,
                     right = position.x + coordinates.size.width,
@@ -110,7 +116,7 @@ fun AppMenu(
             morphFromAnchor = false,
             // 触发器是我们布局里的普通内容，别让菜单淡入淡出把它带走。
             keepAnchorVisible = true,
-            externalAnchorBounds = anchorBounds,
+            externalAnchorBounds = resolvedAnchorBounds,
             anchor = {},
         ) { _, _ ->
             content()

@@ -27,7 +27,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -64,6 +67,9 @@ fun ClickMenu(
 ) {
     val menuScope = MenuScope(menuState, onDismiss)
     var lastClickTime by remember { mutableLongStateOf(0L) }
+    // 真实触发器的窗口坐标。AppMenu 的 0 尺寸锚点盒算不出这个位置（boundsInWindow 会返回 Zero），
+    // 必须由触发器自己上报，否则玻璃菜单会跑到屏幕左上角。
+    var triggerBounds by remember { mutableStateOf<Rect?>(null) }
     val clickableInterval = 500L
     LaunchedEffect(key1 = null) {
         launch {
@@ -78,6 +84,11 @@ fun ClickMenu(
         val triggerModifier = if (triggerShape != null) Modifier.clip(triggerShape) else Modifier
         Box(
             modifier = triggerModifier
+                .onGloballyPositioned { coordinates ->
+                    if (coordinates.isAttached) {
+                        triggerBounds = coordinates.boundsInWindow()
+                    }
+                }
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = indication,
@@ -109,6 +120,11 @@ fun ClickMenu(
                 modifier = modifier,
                 menuWidth = menuWidth,
                 heightOverride = menuHeight,
+                // 用触发器的「底边」当锚点：菜单右边缘对齐按钮右边缘，从按钮下方展开；
+                // 空间不够时 Glasmio 的 IosPopupPositionProvider 会自己翻到上方。
+                anchorBounds = triggerBounds?.let {
+                    Rect(left = it.left, top = it.bottom, right = it.right, bottom = it.bottom)
+                },
             ) {
                 ProvideContentColor(color = ExtendedTheme.colors.text) {
                     menuScope.menuContent()

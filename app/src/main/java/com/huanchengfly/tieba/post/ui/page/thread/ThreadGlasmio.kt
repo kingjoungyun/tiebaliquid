@@ -179,16 +179,16 @@ fun ThreadGlassTopBar(
             ) {
                 Text(
                     text = forumName,
-                    // 44dp 宽度的胶囊里，10sp 刚好能放下 4 个汉字（“动漫壁纸”不省略）；
+                    // 44dp 宽度的圆内留 2dp 内边距，9sp 放 4 个汉字（“动漫壁纸”）仍不压边；
                     // 更长的吧名按 spec 截断省略。
-                    fontSize = 10.sp,
+                    fontSize = 9.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colors.content,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .padding(horizontal = 1.dp)
+                        .padding(horizontal = 2.dp)
                         .semantics { contentDescription = forumName },
                 )
             }
