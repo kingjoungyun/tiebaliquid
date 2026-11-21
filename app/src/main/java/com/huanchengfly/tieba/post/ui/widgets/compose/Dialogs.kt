@@ -471,9 +471,22 @@ fun Dialog(
             LiquidGlassSurface(
                 modifier = cardOuterModifier,
                 shape = RoundedCornerShape(24.dp),
-                material = NavigationGlassMaterial.RegularLarge,
+                // 苹果的 alert 是很厚的材质：Medium 档（文档口径「Medium 服务菜单和 alert」）
+                material = NavigationGlassMaterial.RegularMedium,
                 innerGlow = true,
             ) {
+                // 正文可读性优先：玻璃下面垫一层 elevatedBackground 的高不透明度实底，
+                // 玻璃只负责质感 + 边缘高光/折射。不做这层的话背景文字会透上来（文字叠文字）。
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(
+                            color = ExtendedTheme.colors.windowBackground.copy(
+                                alpha = if (ExtendedTheme.colors.isNightMode) 0.86f else 0.85f
+                            ),
+                            shape = RoundedCornerShape(24.dp),
+                        )
+                )
                 cardContent(Modifier.fillMaxWidth().padding(vertical = 24.dp))
             }
         } else {
