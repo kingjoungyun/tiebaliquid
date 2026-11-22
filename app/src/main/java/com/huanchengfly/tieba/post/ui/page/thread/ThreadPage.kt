@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.thread
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -255,7 +257,7 @@ fun PostAgreeBtn(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Icon(
-                imageVector = if (hasAgreed) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                imageVector = if (hasAgreed) PhosphorIcons["heart"] ?: Icons.Rounded.Favorite else PhosphorIcons["heart"] ?: Icons.Rounded.FavoriteBorder,
                 contentDescription = stringResource(id = R.string.title_agree),
                 tint = animatedColor,
                 modifier = Modifier.size(16.dp)
@@ -298,7 +300,7 @@ internal fun BottomBarAgreeBtn(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = if (hasAgreed) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                imageVector = if (hasAgreed) PhosphorIcons["heart"] ?: Icons.Rounded.Favorite else PhosphorIcons["heart"] ?: Icons.Rounded.FavoriteBorder,
                 contentDescription = stringResource(id = R.string.title_agree),
                 tint = animatedColor
             )
@@ -357,7 +359,7 @@ private fun BottomBarPlaceholder() {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Rounded.MoreVert,
+                imageVector = PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreVert,
                 contentDescription = stringResource(id = R.string.btn_more),
                 tint = AppTokens.textSecondary,
             )
@@ -2006,7 +2008,7 @@ fun ThreadPage(
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 Icon(
-                                                    imageVector = Icons.Rounded.AlignVerticalTop,
+                                                    imageVector = PhosphorIcons["arrow-line-up"] ?: Icons.Rounded.AlignVerticalTop,
                                                     contentDescription = null,
                                                     modifier = Modifier.size(16.dp)
                                                 )
@@ -2207,7 +2209,7 @@ private fun BottomBar(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.MoreVert,
+                    imageVector = PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreVert,
                     contentDescription = stringResource(id = R.string.btn_more),
                     tint = AppTokens.textSecondary,
                 )
@@ -2330,7 +2332,7 @@ private fun GlasmioMainPostCard(
                     invertColor = true,
                     prefixIcon = {
                         Icon(
-                            imageVector = Icons.Rounded.Star,
+                            imageVector = PhosphorIcons["star"] ?: Icons.Rounded.Star,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                         )
@@ -2434,7 +2436,7 @@ private fun GlasmioFloorRow(
                                 invertColor = true,
                                 prefixIcon = {
                                     Icon(
-                                        imageVector = Icons.Rounded.Star,
+                                        imageVector = PhosphorIcons["star"] ?: Icons.Rounded.Star,
                                         contentDescription = null,
                                         modifier = Modifier.size(16.dp),
                                     )
@@ -2524,7 +2526,7 @@ private fun GlasmioFloorRow(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         Icon(
-                            imageVector = if (hasAgreed) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                            imageVector = if (hasAgreed) PhosphorIcons["heart"] ?: Icons.Rounded.Favorite else PhosphorIcons["heart"] ?: Icons.Rounded.FavoriteBorder,
                             contentDescription = stringResource(id = R.string.title_agree),
                             tint = tint,
                             modifier = Modifier.size(18.dp),
@@ -2768,7 +2770,7 @@ fun PostCard(
                                 invertColor = true,
                                 prefixIcon = {
                                     Icon(
-                                        imageVector = Icons.Rounded.Star,
+                                        imageVector = PhosphorIcons["star"] ?: Icons.Rounded.Star,
                                         contentDescription = null,
                                         modifier = Modifier.size(16.dp)
                                     )
@@ -3038,7 +3040,7 @@ private fun ThreadMenu(
                     },
                     icon = {
                         Icon(
-                            imageVector = if (isSeeLz) Icons.Rounded.Face6 else Icons.Rounded.FaceRetouchingOff,
+                            imageVector = if (isSeeLz) PhosphorIcons["smiley"] ?: Icons.Rounded.Face6 else PhosphorIcons["smiley-sad"] ?: Icons.Rounded.FaceRetouchingOff,
                             contentDescription = null
                         )
                     },
@@ -3063,7 +3065,7 @@ private fun ThreadMenu(
                         },
                         icon = {
                             Icon(
-                                imageVector = if (isCollected) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+                                imageVector = if (isCollected) PhosphorIcons["star"] ?: Icons.Rounded.Star else PhosphorIcons["star"] ?: Icons.Rounded.StarBorder,
                                 contentDescription = null
                             )
                         },
@@ -3122,7 +3124,7 @@ private fun ThreadMenu(
         }
         Column {
             ListMenuItem(
-                icon = Icons.Rounded.RocketLaunch,
+                icon = PhosphorIcons["rocket-launch"] ?: Icons.Rounded.RocketLaunch,
                 text = stringResource(id = R.string.title_jump_page),
                 iconColor = AppTokens.text,
                 onClick = {
@@ -3132,7 +3134,7 @@ private fun ThreadMenu(
                 modifier = Modifier.fillMaxWidth(),
             )
             ListMenuItem(
-                icon = Icons.Rounded.Share,
+                icon = PhosphorIcons["export"] ?: Icons.Rounded.Share,
                 text = stringResource(id = R.string.title_share),
                 iconColor = AppTokens.text,
                 onClick = {
@@ -3142,7 +3144,7 @@ private fun ThreadMenu(
                 modifier = Modifier.fillMaxWidth(),
             )
             ListMenuItem(
-                icon = Icons.Rounded.ContentCopy,
+                icon = PhosphorIcons["copy"] ?: Icons.Rounded.ContentCopy,
                 text = stringResource(id = R.string.title_copy_link),
                 iconColor = AppTokens.text,
                 onClick = {
@@ -3153,7 +3155,7 @@ private fun ThreadMenu(
             )
             if (account != null) {
                 ListMenuItem(
-                    icon = Icons.Rounded.Report,
+                    icon = PhosphorIcons["flag"] ?: Icons.Rounded.Report,
                     text = stringResource(id = R.string.title_report),
                     iconColor = AppTokens.destructive,
                     textColor = AppTokens.destructive,
@@ -3166,7 +3168,7 @@ private fun ThreadMenu(
             }
             if (canDelete()) {
                 ListMenuItem(
-                    icon = Icons.Rounded.Delete,
+                    icon = PhosphorIcons["trash"] ?: Icons.Rounded.Delete,
                     text = stringResource(id = R.string.title_delete),
                     iconColor = AppTokens.destructive,
                     textColor = AppTokens.destructive,

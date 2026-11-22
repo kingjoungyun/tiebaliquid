@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.main.explore
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
@@ -147,7 +149,7 @@ fun ExplorePage() {
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Search,
+                                imageVector = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
                                 contentDescription = null,
                                 tint = AppTokens.textSecondary,
                                 modifier = Modifier.size(18.dp),
@@ -212,7 +214,7 @@ fun ExplorePage() {
                 navigationIcon = toolboxAccountNavIconIfCompact(navigator),
                 actions = {
                     ActionItem(
-                        icon = Icons.Rounded.Search,
+                        icon = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
                         contentDescription = stringResource(id = R.string.title_search)
                     ) {
                         navigator.navigate(SearchPageDestination)

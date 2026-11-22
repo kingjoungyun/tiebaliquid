@@ -459,7 +459,7 @@ private fun PostMedia(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Icon(
-                imageVector = if (videoInfo != null) Icons.Rounded.PlayArrow else Icons.Rounded.Photo,
+                imageVector = if (videoInfo != null) PhosphorIcons["play"] ?: Icons.Rounded.PlayArrow else PhosphorIcons["image"] ?: Icons.Rounded.Photo,
                 contentDescription = null,
                 tint = colors.secondaryContent,
                 modifier = Modifier.size(16.dp),
@@ -485,7 +485,7 @@ private fun PostMedia(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Rounded.PlayArrow,
+                imageVector = PhosphorIcons["play"] ?: Icons.Rounded.PlayArrow,
                 contentDescription = stringResource(id = R.string.desc_video),
                 tint = colors.secondaryContent,
                 modifier = Modifier.size(36.dp),

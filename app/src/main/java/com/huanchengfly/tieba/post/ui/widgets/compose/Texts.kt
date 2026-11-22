@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.widgets.compose
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -229,7 +231,7 @@ fun IconText(
                     ),
                     children = {
                         Icon(
-                            Icons.Rounded.Link,
+                            PhosphorIcons["link"] ?: Icons.Rounded.Link,
                             contentDescription = stringResource(id = R.string.link),
                             modifier = Modifier.size(sizeDp),
                             tint = AppTokens.accent,
@@ -244,7 +246,7 @@ fun IconText(
                     ),
                     children = {
                         Icon(
-                            Icons.Rounded.SlowMotionVideo,
+                            PhosphorIcons["video-camera"] ?: Icons.Rounded.SlowMotionVideo,
                             contentDescription = stringResource(id = R.string.desc_video),
                             modifier = Modifier.size(sizeDp),
                             tint = AppTokens.accent,
@@ -259,7 +261,7 @@ fun IconText(
                     ),
                     children = {
                         Icon(
-                            Icons.Rounded.AccountCircle,
+                            PhosphorIcons["user-circle"] ?: Icons.Rounded.AccountCircle,
                             contentDescription = stringResource(id = R.string.user),
                             modifier = Modifier.size(sizeDp),
                             tint = AppTokens.accent,

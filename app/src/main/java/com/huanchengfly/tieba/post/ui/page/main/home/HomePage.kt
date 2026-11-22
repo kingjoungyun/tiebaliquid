@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.main.home
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -199,7 +201,7 @@ fun SearchBox(
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Search,
+                    imageVector = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
                     contentDescription = null,
                     modifier = Modifier
                         .align(CenterVertically)
@@ -395,7 +397,7 @@ private fun HomeMoreMenu(
             Spacer(modifier = Modifier.weight(1f, fill = true))
             if (listSingle) {
                 Icon(
-                    imageVector = Icons.Rounded.Check,
+                    imageVector = PhosphorIcons["check"] ?: Icons.Rounded.Check,
                     contentDescription = null,
                     tint = AppTokens.primary
                 )
@@ -428,7 +430,7 @@ private fun HomeMoreMenu(
                 Spacer(modifier = Modifier.weight(1f, fill = true))
                 if (sortType == type) {
                     Icon(
-                        imageVector = Icons.Rounded.Check,
+                        imageVector = PhosphorIcons["check"] ?: Icons.Rounded.Check,
                         contentDescription = null,
                         tint = AppTokens.primary
                     )
@@ -445,7 +447,7 @@ private fun HomeMoreMenu(
             Spacer(modifier = Modifier.weight(1f, fill = true))
             if (showHistoryForum) {
                 Icon(
-                    imageVector = Icons.Rounded.Check,
+                    imageVector = PhosphorIcons["check"] ?: Icons.Rounded.Check,
                     contentDescription = null,
                     tint = AppTokens.primary
                 )
@@ -596,7 +598,7 @@ private fun ForumItemContent(
                     if (item.isSign) {
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
-                            imageVector = Icons.Rounded.Check,
+                            imageVector = PhosphorIcons["check"] ?: Icons.Rounded.Check,
                             contentDescription = stringResource(id = R.string.tip_signed),
                             modifier = Modifier
                                 .size(12.dp)
@@ -832,7 +834,7 @@ fun HomePage(
                             onClick = { navigator.navigate(SearchPageDestination) },
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Search,
+                                imageVector = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
                                 contentDescription = stringResource(id = R.string.hint_search),
                                 tint = AppTokens.text,
                                 modifier = Modifier.size(20.dp),
@@ -846,7 +848,7 @@ fun HomePage(
                                 },
                             ) {
                                 Icon(
-                                    imageVector = Icons.Outlined.ViewAgenda,
+                                    imageVector = PhosphorIcons["list-bullets"] ?: Icons.Outlined.ViewAgenda,
                                     contentDescription = stringResource(id = R.string.title_more_options),
                                     tint = AppTokens.text,
                                     modifier = Modifier.size(20.dp),
@@ -899,7 +901,7 @@ fun HomePage(
                             // 一个按钮收纳：单列/双列、排序方式、最近访问吧开关
                             Box {
                                 ActionItem(
-                                    icon = Icons.Outlined.ViewAgenda,
+                                    icon = PhosphorIcons["list-bullets"] ?: Icons.Outlined.ViewAgenda,
                                     contentDescription = stringResource(id = R.string.title_more_options)
                                 ) {
                                     moreMenuExpanded = true

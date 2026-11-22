@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.widgets.compose
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -382,7 +384,7 @@ fun SearchMedia(
                 }
                 if (hasMoreMedia) {
                     Badge(
-                        icon = Icons.Rounded.PhotoSizeSelectActual,
+                        icon = PhosphorIcons["image-square"] ?: Icons.Rounded.PhotoSizeSelectActual,
                         text = "${medias.size}",
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -492,7 +494,7 @@ fun SearchBox(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Search,
+                            imageVector = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
                             contentDescription = stringResource(id = R.string.button_search)
                         )
                     }

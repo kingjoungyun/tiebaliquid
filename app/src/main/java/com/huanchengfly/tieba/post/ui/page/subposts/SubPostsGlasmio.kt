@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.subposts
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -127,7 +129,7 @@ fun SubPostsGlassTopBar(
                     modifier = Modifier.align(Alignment.CenterEnd),
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.OpenInBrowser,
+                        imageVector = PhosphorIcons["arrow-square-out"] ?: Icons.Rounded.OpenInBrowser,
                         contentDescription = stringResource(id = R.string.btn_open_origin_thread),
                         tint = colors.content,
                         modifier = Modifier.size(20.dp),

@@ -338,7 +338,7 @@ fun ForumTopBar(
         if (showSearch) {
             GlassIconButton(
                 onClick = onSearch,
-                icon = Icons.Rounded.Search,
+                icon = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
                 contentDescription = stringResource(id = R.string.btn_search_in_forum),
                 size = GlassTokens.Spacing.topBarActionSize,
                 iconSize = GlassTokens.Spacing.topBarActionIconSize,

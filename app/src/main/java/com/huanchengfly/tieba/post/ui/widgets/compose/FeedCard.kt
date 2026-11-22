@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.widgets.compose
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.content.pm.ActivityInfo
 import android.util.Log
 import androidx.compose.animation.animateColorAsState
@@ -471,7 +473,7 @@ private fun ThreadMedia(
                     MediaPlaceholder(
                         icon = {
                             Icon(
-                                imageVector = Icons.Rounded.OndemandVideo,
+                                imageVector = PhosphorIcons["film-strip"] ?: Icons.Rounded.OndemandVideo,
                                 contentDescription = stringResource(id = R.string.desc_video)
                             )
                         },
@@ -528,7 +530,7 @@ private fun ThreadMedia(
                     MediaPlaceholder(
                         icon = {
                             Icon(
-                                imageVector = if (isSinglePhoto) Icons.Rounded.Photo else Icons.Rounded.PhotoLibrary,
+                                imageVector = if (isSinglePhoto) PhosphorIcons["image"] ?: Icons.Rounded.Photo else PhosphorIcons["images"] ?: Icons.Rounded.PhotoLibrary,
                                 contentDescription = stringResource(id = R.string.desc_photo)
                             )
                         },
@@ -584,7 +586,7 @@ private fun ThreadMedia(
                         }
                         if (hasMoreMedia) {
                             Badge(
-                                icon = Icons.Rounded.PhotoSizeSelectActual,
+                                icon = PhosphorIcons["image-square"] ?: Icons.Rounded.PhotoSizeSelectActual,
                                 text = "${medias.size}",
                                 modifier = Modifier
                                     .align(Alignment.BottomEnd)
@@ -710,7 +712,7 @@ fun ThreadAgreeBtn(
     ActionBtn(
         icon = {
             Icon(
-                imageVector = if (hasAgree) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                imageVector = if (hasAgree) PhosphorIcons["heart"] ?: Icons.Rounded.Favorite else PhosphorIcons["heart"] ?: Icons.Rounded.FavoriteBorder,
                 contentDescription = stringResource(id = R.string.desc_like),
             )
         },
@@ -736,7 +738,7 @@ fun ThreadShareBtn(
     ActionBtn(
         icon = {
             Icon(
-                imageVector = Icons.Rounded.SwapCalls,
+                imageVector = PhosphorIcons["repeat"] ?: Icons.Rounded.SwapCalls,
                 contentDescription = stringResource(id = R.string.desc_share),
             )
         },

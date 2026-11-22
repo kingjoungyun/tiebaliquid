@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.forum
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
@@ -770,9 +772,9 @@ fun ForumPage(
                             ) {
                                 Icon(
                                     imageVector = when (context.appPreferences.forumFabFunction) {
-                                        "refresh" -> Icons.Rounded.Refresh
-                                        "back_to_top" -> Icons.Rounded.VerticalAlignTop
-                                        else -> Icons.Rounded.Add
+                                        "refresh" -> PhosphorIcons["arrow-clockwise"] ?: Icons.Rounded.Refresh
+                                        "back_to_top" -> PhosphorIcons["arrow-line-up"] ?: Icons.Rounded.VerticalAlignTop
+                                        else -> PhosphorIcons["plus"] ?: Icons.Rounded.Add
                                     },
                                     contentDescription = null
                                 )
@@ -1309,7 +1311,7 @@ private fun ForumToolbar(
                     }
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Search,
+                        imageVector = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
                         contentDescription = stringResource(id = R.string.btn_search_in_forum)
                     )
                 }
@@ -1327,7 +1329,7 @@ private fun ForumToolbar(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.MoreVert,
+                                imageVector = PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreVert,
                                 contentDescription = stringResource(id = R.string.btn_more)
                             )
                         }
