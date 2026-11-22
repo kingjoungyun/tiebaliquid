@@ -57,6 +57,7 @@ import com.huanchengfly.tieba.post.api.models.SearchThreadBean
 import com.huanchengfly.tieba.post.arch.BaseComposeActivity
 import com.huanchengfly.tieba.post.ui.common.PbContentText
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import io.github.neoruaa.glasmio.glass.GlassSurface
 import com.huanchengfly.tieba.post.ui.common.windowsizeclass.WindowWidthSizeClass
 import com.huanchengfly.tieba.post.utils.DateTimeUtils
 import com.huanchengfly.tieba.post.utils.StringUtil
@@ -406,16 +407,25 @@ fun SearchBox(
     color: Color = ExtendedTheme.colors.topBarSurface,
     contentColor: Color = ExtendedTheme.colors.onTopBarSurface,
     elevation: Dp = 0.dp,
+    glassmio: Boolean = false,
+    showSubmitIcon: Boolean = true,
 ) {
     val isKeywordNotEmpty = remember(keyword) { keyword.isNotEmpty() }
     var isFocused by remember { mutableStateOf(false) }
-    Surface(
-        modifier = modifier,
-        shape = shape,
-        color = color,
-        contentColor = contentColor,
-        elevation = elevation
-    ) {
+    Box(modifier = modifier) {
+        if (glassmio) {
+            GlassSurface(
+                modifier = Modifier.matchParentSize(),
+                shape = shape,
+            ) {}
+        }
+        Surface(
+            modifier = Modifier.matchParentSize(),
+            shape = shape,
+            color = if (glassmio) Color.Transparent else color,
+            contentColor = contentColor,
+            elevation = if (glassmio) 0.dp else elevation
+        ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -468,23 +478,26 @@ fun SearchBox(
                     }
                 }
             }
-            AnimatedVisibility(visible = isKeywordNotEmpty) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(100))
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = LocalIndication.current,
-                            role = Role.Button
-                        ) { onKeywordSubmit(keyword) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Search,
-                        contentDescription = stringResource(id = R.string.button_search)
-                    )
+            if (showSubmitIcon) {
+                AnimatedVisibility(visible = isKeywordNotEmpty) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(100))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = LocalIndication.current,
+                                role = Role.Button
+                            ) { onKeywordSubmit(keyword) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Search,
+                            contentDescription = stringResource(id = R.string.button_search)
+                        )
+                    }
                 }
             }
         }
+    }
     }
 }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Tab
@@ -71,6 +73,10 @@ import com.huanchengfly.tieba.post.arch.onEvent
 import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.models.database.SearchHistory
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageHost
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.SearchPageDestination
@@ -88,6 +94,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.PagerTabIndicator
 import com.huanchengfly.tieba.post.ui.widgets.compose.SearchBox
 import com.huanchengfly.tieba.post.ui.widgets.compose.TabClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.TabRow
+import io.github.neoruaa.glasmio.core.GlasmioTheme
 import com.huanchengfly.tieba.post.ui.widgets.compose.TopAppBarContainer
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import com.huanchengfly.tieba.post.ui.widgets.compose.picker.ListSinglePicker
@@ -127,10 +134,7 @@ fun SearchPage(
         listOf(SearchUiIntent.Init)
     ),
 ) {
-        // P1：页级 backdrop host —— 本页的菜单/动作面板要能采到这一页的真实内容。
-        // 页面内容进 sampledContent（活 backdrop，整页录制）；页内玻璃控件会自动走自带纯色 host。
-        GlassPageHost(modifier = Modifier.fillMaxSize()) {
-            val context = LocalContext.current
+        val context = LocalContext.current
             val searchHistories by viewModel.uiState.collectPartialAsState(
                 prop1 = SearchUiState::searchHistories,
                 initial = persistentListOf()
@@ -238,33 +242,57 @@ fun SearchPage(
                 }
             }
             val pagerState = rememberPagerState { pages.size }
+            val glassmio = SearchPageUi.DefaultStyle == SearchPageUiStyle.GLASMIO
+            LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+                HarmonyTextProvider {
             MyScaffold(
+                backgroundColor = if (glassmio) GlasmioTheme.colors.groupedBackground
+                else ExtendedTheme.colors.background,
                 topBar = {
-                    TopAppBarContainer(
-                        topBar = {
-                            Box(
-                                modifier = Modifier
-                                    .height(64.dp)
-                                    .background(ExtendedTheme.colors.topBar)
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                            ) {
-                                SearchTopBar(
-                                    keyword = inputKeyword,
-                                    onKeywordChange = { inputKeyword = it },
-                                    onKeywordSubmit = {
-                                        viewModel.send(SearchUiIntent.SubmitKeyword(it))
-                                    },
-                                    onBack = {
-                                        if (isKeywordEmpty) {
-                                            navigator.navigateUp()
-                                        } else {
-                                            viewModel.send(SearchUiIntent.SubmitKeyword(""))
-                                        }
-                                    }
-                                )
-                            }
-                        },
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(GlasmioTheme.colors.groupedBackground)
+                            .statusBarsPadding(),
                     ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp)
+                                .padding(horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            GlassIconButton(
+                                onClick = { navigator.navigateUp() },
+                                icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = stringResource(id = R.string.button_back),
+                            )
+                        }
+                        Text(
+                            text = stringResource(id = R.string.title_search),
+                            style = LocalTextStyle.current.copy(
+                                fontSize = 34.sp,
+                                lineHeight = 40.sp,
+                                fontWeight = FontWeight.Bold,
+                            ),
+                            color = ExtendedTheme.colors.text,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            SearchTopBar(
+                                keyword = inputKeyword,
+                                onKeywordChange = { inputKeyword = it },
+                                onKeywordSubmit = {
+                                    viewModel.send(SearchUiIntent.SubmitKeyword(it))
+                                },
+                                glassmio = glassmio,
+                            )
+                        }
                         if (!isKeywordEmpty) {
                             SearchTabRow(pagerState = pagerState, pages = pages)
                         }
@@ -309,7 +337,8 @@ fun SearchPage(
                                         expanded = expanded,
                                         onToggleExpand = { expanded = !expanded },
                                         onDelete = { viewModel.send(SearchUiIntent.DeleteSearchHistory(it.id)) },
-                                        onClear = { viewModel.send(SearchUiIntent.ClearSearchHistory) }
+                                        onClear = { viewModel.send(SearchUiIntent.ClearSearchHistory) },
+                                        glassmio = glassmio,
                                     )
                                 }
                             }
@@ -318,6 +347,7 @@ fun SearchPage(
                 }
             }
         }
+}
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -401,8 +431,12 @@ private fun ColumnScope.SearchTabRow(
             .width(76.dp * pages.size),
     ) {
         pages.fastForEachIndexed { index, item ->
-            val tabTextStyle =
-                MaterialTheme.typography.button.copy(fontSize = 13.sp, letterSpacing = 0.sp)
+            val tabTextStyle = MaterialTheme.typography.button.copy(
+                fontSize = 15.sp,
+                letterSpacing = 0.sp,
+                fontWeight = if (pagerState.currentPage == index) FontWeight.SemiBold
+                else FontWeight.Normal,
+            )
 
             if (item.supportSort) {
                 TabClickMenu(
@@ -457,6 +491,7 @@ private fun SearchHistoryList(
     onToggleExpand: () -> Unit = {},
     onDelete: (SearchHistory) -> Unit = {},
     onClear: () -> Unit = {},
+    glassmio: Boolean = false,
 ) {
     val hasItem = remember(searchHistories) {
         searchHistories.isNotEmpty()
@@ -505,7 +540,10 @@ private fun SearchHistoryList(
                             onClick = { onSearchHistoryClick(searchHistory) },
                             onLongClick = { onDelete(searchHistory) }
                         )
-                        .background(ExtendedTheme.colors.chip)
+                        .background(
+                            if (glassmio) GlasmioTheme.colors.elevatedBackground
+                            else ExtendedTheme.colors.chip
+                        )
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
@@ -565,12 +603,17 @@ private fun SearchTopBar(
     onKeywordChange: (String) -> Unit,
     onKeywordSubmit: (String) -> Unit = {},
     onBack: () -> Unit = {},
+    glassmio: Boolean = false,
 ) {
     SearchBox(
         keyword = keyword,
         onKeywordChange = onKeywordChange,
         modifier = Modifier.fillMaxSize(),
         onKeywordSubmit = onKeywordSubmit,
+        glassmio = false,
+        showSubmitIcon = true,
+        color = if (glassmio) GlasmioTheme.colors.elevatedBackground
+        else ExtendedTheme.colors.topBarSurface,
         placeholder = {
             Text(
                 text = stringResource(id = R.string.hint_search),
@@ -590,12 +633,15 @@ private fun SearchTopBar(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(id = R.string.button_back)
+                    imageVector = if (glassmio) Icons.Rounded.Search
+                    else Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = if (glassmio) null
+                    else stringResource(id = R.string.button_back),
+                    modifier = Modifier.size(if (glassmio) 18.dp else 24.dp),
                 )
             }
         },
-        shape = RoundedCornerShape(6.dp)
+        shape = RoundedCornerShape(if (glassmio) 22.dp else 6.dp)
     )
 }
 
