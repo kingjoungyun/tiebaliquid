@@ -34,6 +34,7 @@ fun BlockSettingsPage(
         dataStore = context.dataStore,
         modifier = Modifier.fillMaxSize(),
         onBack = { navigator.navigateUp() },
+        title = stringResource(id = R.string.title_block_settings),
         header = {
             PrefsLargeTitle(
                 text = stringResource(id = R.string.title_block_settings),

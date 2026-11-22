@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.common.prefs
 
+import android.provider.Settings
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -18,21 +21,34 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import com.huanchengfly.tieba.post.BuildConfig
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
-import androidx.compose.foundation.background
-import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassBackdropHost
-import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassOverlayPage
-import com.huanchengfly.tieba.post.ui.common.theme.glass.useOverlayTopBarHost
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassAppBackground
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassOverlayPage
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassBackdropHost
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
+import com.huanchengfly.tieba.post.ui.common.theme.glass.useOverlayTopBarHost
 import com.huanchengfly.tieba.post.ui.widgets.compose.Container
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
+import io.github.neoruaa.glasmio.icons.SfIcon
+import io.github.neoruaa.glasmio.icons.SfSymbol
+import io.github.neoruaa.glasmio.scaffold.GlasmioHeaderAction
+import io.github.neoruaa.glasmio.scaffold.GlasmioHeaderGroup
+import io.github.neoruaa.glasmio.scaffold.GlasmioHeaderScrollState
+import io.github.neoruaa.glasmio.scaffold.GlasmioHeaderSpec
+import io.github.neoruaa.glasmio.scaffold.GlasmioListPage
+import io.github.neoruaa.glasmio.scaffold.GlasmioNavigationOperation
+import io.github.neoruaa.glasmio.scaffold.GlasmioNavigationScaffold
+import io.github.neoruaa.glasmio.scaffold.GlasmioPageTitle
+import io.github.neoruaa.glasmio.scaffold.navigation.GlasmioNavHeaderMotion
+import io.github.neoruaa.glasmio.scaffold.rememberGlasmioHeaderCollapse
 
 lateinit var LocalPrefsDataStore: ProvidableCompositionLocal<DataStore<Preferences>>
 
@@ -70,6 +86,9 @@ fun PrefsScreen(
     listState: LazyListState = rememberLazyListState(),
     onBack: (() -> Unit)? = null,
     header: (@Composable () -> Unit)? = null,
+    /** Stage 3 试点：非空时启用 Glasmio 页面骨架（折叠大标题 + 顶栏按钮槽），大标题由骨架负责，
+     *  此时 [header] 不再渲染。为 null 时完全走旧版式（回滚用）。 */
+    title: String? = null,
     uiStyle: PrefsUiStyle = PrefsUi.DefaultStyle,
     content: PrefsScope.() -> Unit
 ) {
@@ -89,6 +108,7 @@ fun PrefsScreen(
                     prefsScope = prefsScope,
                     listState = listState,
                     header = header,
+                    title = title,
                     onBack = onBack,
                     modifier = modifier,
                 )
@@ -139,12 +159,51 @@ private fun GlasmioPrefsPage(
     prefsScope: PrefsScopeImpl,
     listState: LazyListState,
     header: (@Composable () -> Unit)?,
+    title: String?,
     onBack: (() -> Unit)?,
     modifier: Modifier,
 ) {
     val colors = GlasmioTheme.colors
 
-    // 列表本体（两种 host 方案共用，避免复制一份）
+    // 列表本体（三种方案共用，避免复制一份）：分组标题 + 卡片 + 组尾 footnote
+    val listItems: LazyListScope.() -> Unit = {
+        if (header != null) {
+            // 大标题仍然由页面自己发布（Glasmio 的 GlasmioPageTitle 在「非 Nav3 entry」场景下
+            // 拿不到 leading 端点的测量值，会静默返回、不画标题 —— 见简报「遗留」）。
+            // 所以这里保留原来的大标题，骨架负责顶栏（返回钮槽 + 折叠后的紧凑标题）。
+            item(key = "prefs-header") {
+                // 大标题与卡片左边缘对齐（16dp）；分组标题自己再缩 16dp 对齐卡片内容
+                header()
+            }
+        }
+        items(
+            count = prefsScope.sections.size,
+            key = { index -> "prefs-card-$index" },
+        ) { index ->
+            val section = prefsScope.sections[index]
+            if (section.itemIndexes.isEmpty()) return@items
+            val cardHeader: (@Composable () -> Unit)? =
+                section.headerIndex?.let { headerIndex ->
+                    { prefsScope.getPrefsItem(headerIndex)() }
+                }
+            val footnotes = remember(index) { PrefsFootnoteState() }
+            CompositionLocalProvider(LocalPrefsFootnotes provides footnotes) {
+                PrefsCard(
+                    header = cardHeader,
+                    headerTopSpacing = 0.dp,
+                    footer = section.footer,
+                ) {
+                    section.itemIndexes.forEachIndexed { rowIndex, itemIndex ->
+                        CompositionLocalProvider(LocalPrefsRowIndex provides rowIndex) {
+                            prefsScope.getPrefsItem(itemIndex)()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 旧版式（纯色/活 backdrop 两条路径）共用的列表容器
     val pageList: @Composable () -> Unit = {
         Container {
             LazyColumn(
@@ -157,45 +216,20 @@ private fun GlasmioPrefsPage(
                 ),
                 verticalArrangement = Arrangement.spacedBy(PrefsGlasmioDefaults.GroupGap),
             ) {
-                if (header != null) {
-                    item(key = "prefs-header") {
-                        // 大标题与卡片左边缘对齐（16dp）；分组标题自己再缩 16dp 对齐卡片内容
-                        header()
-                    }
-                }
-                items(
-                    count = prefsScope.sections.size,
-                    key = { index -> "prefs-card-$index" },
-                ) { index ->
-                    val section = prefsScope.sections[index]
-                    if (section.itemIndexes.isEmpty()) return@items
-                    // 一张卡片：可选分组标题 + 卡片本体（分隔线由行自己画）
-                    val cardHeader: (@Composable () -> Unit)? =
-                        section.headerIndex?.let { headerIndex ->
-                            { prefsScope.getPrefsItem(headerIndex)() }
-                        }
-                    // 组尾 footnote 的收集器：行在组合时把「装不下一行」的解释登记进来。
-                    // 键用分组下标（不是 PrefsSection 对象）：PrefsScopeImpl 每次 PrefsScreen
-                    // 重组都会重建，用对象做键会让收集器跟着重置、footnote 闪一下再回来。
-                    val footnotes = remember(index) { PrefsFootnoteState() }
-                    CompositionLocalProvider(LocalPrefsFootnotes provides footnotes) {
-                        PrefsCard(
-                            header = cardHeader,
-                            headerTopSpacing = 0.dp,
-                            footer = section.footer,
-                        ) {
-                            section.itemIndexes.forEachIndexed { rowIndex, itemIndex ->
-                                CompositionLocalProvider(
-                                    LocalPrefsRowIndex provides rowIndex
-                                ) {
-                                    prefsScope.getPrefsItem(itemIndex)()
-                                }
-                            }
-                        }
-                    }
-                }
+                listItems()
             }
         }
+    }
+
+    if (title != null && prefsScaffoldSkeletonEnabled()) {
+        GlasmioPrefsScaffold(
+            title = title,
+            listState = listState,
+            onBack = onBack,
+            modifier = modifier,
+            listItems = listItems,
+        )
+        return
     }
 
     if (useOverlayTopBarHost(GlassOverlayPage.PREFS)) {
@@ -234,6 +268,100 @@ private fun GlasmioPrefsPage(
                 }
             }
         }
+    }
+}
+
+/**
+ * Stage 3 试点：用 `glasmio-scaffold` 的页面骨架承载设置页。
+ *
+ * 只换**外壳**，列表内容（[listItems]：分组卡 + 行 + 组尾 footnote）原样复用：
+ * - 大标题由骨架的 `GlasmioHeaderSpec.title` 负责（折叠成顶栏小标题），不再画 34sp 手写标题；
+ * - 返回钮放进骨架的 `leading` 按钮槽（`GlasmioHeaderAction`），玻璃由骨架自己的
+ *   `layerBackdrop(reuseContent = true)` 录制，采的是真实页面内容；
+ * - 折叠进度用 `rememberGlasmioHeaderCollapse(listState)` 桥接我们自己的 `LazyListState`；
+ * - 列表仍是我们自己的 `LazyColumn`（`GlashmioListPage` 只是给 `LazyColumn` 套一层 overscroll，
+ *   形态与 `PrefsCard` 不冲突，所以没被迫改数据结构）。
+ *
+ * 骨架内部自己会录一层 backdrop，因此这里**不再**套 `LiquidGlassBackdropHost`（避免双录）。
+ * 代价：页面内的 `GlasmioSwitch` 拿不到 `LocalGlassBackdrop`，会各自退化成
+ * 「自采样纯色 + rim」的小 host（观感与改造前一致，不是回归）。
+ */
+@Composable
+private fun GlasmioPrefsScaffold(
+    title: String,
+    listState: LazyListState,
+    onBack: (() -> Unit)?,
+    modifier: Modifier,
+    listItems: LazyListScope.() -> Unit,
+) {
+    val collapseProgress = rememberGlasmioHeaderCollapse(listState)
+    val headerScrollState = remember(collapseProgress) {
+        GlasmioHeaderScrollState(collapseProgress = { collapseProgress })
+    }
+    // 非 Nav3 页面：给骨架一个恒定 entryKey，导航帧永远 Idle（不做跨页 header 过渡）
+    val entryKeyForTitle = remember { Any() }
+    val motion = remember(entryKeyForTitle) {
+        GlasmioNavHeaderMotion(entryKeyForTitle) { _, _, _ -> GlasmioNavigationOperation.Push }
+    }
+    GlasmioNavigationScaffold(
+        motion = motion,
+        modifier = modifier.fillMaxSize(),
+        header = {
+            GlasmioHeaderSpec(
+                title = title,
+                leading = if (onBack != null) {
+                    listOf(
+                        GlasmioHeaderGroup(
+                            key = "navigation",
+                            actions = listOf(
+                                GlasmioHeaderAction(
+                                    key = "navigation.back",
+                                    visualKey = "chevron.backward",
+                                    contentDescription = PrefsBackButtonLabel,
+                                    onClick = onBack,
+                                ) {
+                                    SfIcon(SfSymbol.ChevronBack, null, mirrored = true)
+                                },
+                            ),
+                        )
+                    )
+                } else {
+                    emptyList()
+                },
+                scrollState = headerScrollState,
+            )
+        },
+        content = { padding ->
+            Box(modifier = Modifier.fillMaxSize()) {
+                GlasmioListPage(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = padding,
+                    state = listState,
+                ) {
+                    listItems()
+                }
+                // 骨架的「大标题」是页面自己发布出来的（放在 body 之后、盖在内容上），
+                // 不是 header 槽画出来的 —— 少了这一句页面就没有大标题（只有顶栏返回钮）。
+                GlasmioPageTitle(entryKey = entryKeyForTitle)
+            }
+        },
+    )
+}
+
+private const val PrefsBackButtonLabel = "返回"
+
+/**
+ * 骨架开关的调试覆盖：`adb shell settings put global tieba_prefs_skeleton 0` 后重进页面即为旧版式
+ * （同一 APK 免重装；release 恒为 true）。LEGACY 版式仍由 [PrefsUi.DefaultStyle] 控制，互不影响。
+ */
+@Composable
+private fun prefsScaffoldSkeletonEnabled(): Boolean {
+    if (!BuildConfig.DEBUG) return true
+    val context = LocalContext.current
+    return remember(context) {
+        runCatching {
+            Settings.Global.getInt(context.contentResolver, "tieba_prefs_skeleton", 1) == 1
+        }.getOrDefault(true)
     }
 }
 

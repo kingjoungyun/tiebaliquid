@@ -56,6 +56,7 @@ fun CustomSettingsPage(
         dataStore = context.dataStore,
         modifier = Modifier.fillMaxSize(),
         onBack = { navigator.navigateUp() },
+        title = stringResource(id = R.string.title_settings_custom),
         header = {
             PrefsLargeTitle(
                 text = stringResource(id = R.string.title_settings_custom),

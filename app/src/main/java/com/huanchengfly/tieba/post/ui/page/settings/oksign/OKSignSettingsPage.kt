@@ -63,6 +63,7 @@ fun OKSignSettingsPage(
             dataStore = dataStore,
             modifier = Modifier.fillMaxSize(),
             onBack = { navigator.navigateUp() },
+            title = stringResource(id = R.string.title_oksign),
             header = {
                 PrefsLargeTitle(text = stringResource(id = R.string.title_oksign))
             },

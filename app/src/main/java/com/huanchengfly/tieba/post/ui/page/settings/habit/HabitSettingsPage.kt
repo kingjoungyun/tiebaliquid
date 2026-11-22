@@ -49,6 +49,7 @@ fun HabitSettingsPage(
         dataStore = LocalContext.current.dataStore,
         modifier = Modifier.fillMaxSize(),
         onBack = { navigator.navigateUp() },
+        title = stringResource(id = R.string.title_settings_read_habit),
         header = {
             PrefsLargeTitle(text = stringResource(id = R.string.title_settings_read_habit))
         },
