@@ -69,7 +69,6 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
-import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
@@ -173,7 +172,7 @@ private fun TopicBody(
 }
 
 @OptIn(ExperimentalMaterialApi::class)
-@Destination(deepLinks = [DeepLink(uriPattern = "tblite://hot")])
+@Destination
 @Composable
 fun HotTopicListPage(
     viewModel: HotTopicListViewModel = pageViewModel<HotTopicListUiIntent, HotTopicListViewModel>(

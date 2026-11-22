@@ -85,7 +85,6 @@ import com.huanchengfly.tieba.post.utils.AccountUtil
 import com.huanchengfly.tieba.post.utils.StringUtil
 import com.huanchengfly.tieba.post.utils.TiebaUtil
 import com.huanchengfly.tieba.post.utils.appPreferences
-import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
@@ -101,7 +100,7 @@ import com.huanchengfly.tieba.post.ui.page.thread.ThreadTopBarHeight
  * 社交（粉丝 / 关注）、我的内容（发帖 / 回帖 / 收藏 / 浏览记录）、
  * 贴吧（关注的吧 / 一键签到）、应用（设置 / 账号管理）。
  */
-@Destination(deepLinks = [DeepLink(uriPattern = "tblite://toolbox")])
+@Destination
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ToolboxPage(
