@@ -47,6 +47,7 @@ import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.core.IosTypography
 import io.github.neoruaa.glasmio.icons.SfIcon
 import io.github.neoruaa.glasmio.preference.GlasmioPreferenceEntry
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalAppTokens
 
 /**
  * 设置项的一行。
@@ -73,7 +74,7 @@ fun PrefsListItem(
     /** 行尾右侧的「状态/数值」（小号次级色）：当前选项、缓存大小、未登录… 不再占行内副标题 */
     trailingValue: String? = null,
     trailing: @Composable (() -> Unit)? = null,
-    textColor: Color = glassColors().textPrimary,
+    textColor: Color = LocalAppTokens.current.textPrimary,
     minimalHeight: Boolean = false,
     showChevron: Boolean = false,
     onClick: (() -> Unit)? = null,

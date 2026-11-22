@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.BuildConfig
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import io.github.neoruaa.glasmio.core.GlassDimensions
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.core.defaultGlassColors
 import io.github.neoruaa.glasmio.core.glasmioColorScheme
@@ -445,27 +446,61 @@ fun LiquidGlassTheme(
     }
     val onAccent = if (resolvedAccent.luminance() > 0.6f) Color.Black else Color.White
 
-    val colorScheme = glasmioColorScheme(isDark, resolvedAccent).copy(
-        primary = resolvedAccent,
+    // Stage 5 · C：主题**全部由 AppTokens 显式构造**，不再读 Glasmio 的默认值。
+    val tokens = appTokens(isDark, resolvedAccent)
+    val colorScheme = glasmioColorScheme(isDark, tokens.accent).copy(
+        primary = tokens.accent,
         onPrimary = onAccent,
-        secondary = resolvedAccent,
+        secondary = tokens.accent,
         onSecondary = onAccent,
-        surfaceTint = resolvedAccent,
+        surfaceTint = tokens.accent,
+        background = tokens.background,
+        onBackground = tokens.textPrimary,
+        surface = tokens.background,
+        onSurface = tokens.textPrimary,
+        surfaceVariant = tokens.card,
+        onSurfaceVariant = tokens.textSecondary,
+        surfaceContainer = tokens.card,
+        outline = tokens.separator,
+        outlineVariant = tokens.stroke,
+        error = tokens.destructive,
     )
-    val glassColors = defaultGlassColors(isDark, resolvedAccent).copy(
-        accent = resolvedAccent,
-        // A2：深色统一纯黑；卡片保持 Glasmio 的 #1C1C1E。
-        groupedBackground = if (isDark) Color.Black else Color(0xFFF2F2F7),
-        elevatedBackground = if (isDark) Color(0xFF1C1C1E) else Color.White,
+    // GlassColors 的每一个字段都来自 token；深色背景就是纯黑 #000000（token 定义），
+    // 不再是 Glasmio 的 groupedBackground 灰。
+    // 每个字段都显式来自 token（copy 覆盖默认值）；深色背景 = 纯黑 #000000。
+    val glassColors = defaultGlassColors(isDark, tokens.accent).copy(
+        accent = tokens.accent,
+        content = tokens.textPrimary,
+        secondaryContent = tokens.textSecondary,
+        container = tokens.card,
+        prominentContainer = tokens.cardProminent,
+        subtleStroke = tokens.stroke,
+        groupedBackground = tokens.background,
+        elevatedBackground = tokens.card,
+        separator = tokens.separator,
+        tertiaryContent = tokens.textTertiary,
+        destructive = tokens.destructive,
+    )
+    val glassDimensions = GlassDimensions(
+        compactCornerRadius = tokens.radiusCompact,
+        regularCornerRadius = tokens.radiusCard,
+        sheetCornerRadius = tokens.radiusSheet,
+        controlHeight = tokens.controlHeight,
+        iconButtonSize = tokens.iconButtonSize,
+        bottomBarHeight = tokens.bottomBarHeight,
     )
 
     // 图标解析器在这里注入一次：设置页、顶栏、列表箭头都会走 TiebaGlasmioIconResolver
     // （dock 图形 + Phosphor），不再落到 Glasmio 内置的 Material 兜底表。
-    CompositionLocalProvider(LocalGlasmioIconResolver provides TiebaGlasmioIconResolver) {
+    CompositionLocalProvider(
+        LocalGlasmioIconResolver provides TiebaGlasmioIconResolver,
+        LocalAppTokens provides tokens,
+    ) {
         GlasmioTheme(
             isDark = isDark,
             colorScheme = colorScheme,
             colors = glassColors,
+            dimensions = glassDimensions,
             // Glasmio 的语义排版表（iOS Dynamic Type 的 12 档）默认用系统字族；
             // 这里整表换成鸿蒙，字号/行高/字重仍由 Glasmio 决定。
             typography = HarmonyGlasmioTypography,
