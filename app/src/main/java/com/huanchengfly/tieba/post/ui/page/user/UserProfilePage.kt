@@ -46,6 +46,7 @@ import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.NoAccounts
 import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.runtime.Composable
@@ -106,6 +107,7 @@ import com.huanchengfly.tieba.post.ui.common.prefs.PrefsIcon
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsUiStyle
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import io.github.neoruaa.glasmio.glass.render.backdrops.emptyBackdrop
@@ -116,6 +118,7 @@ import com.huanchengfly.tieba.post.ui.page.settings.LeadingIcon
 import com.huanchengfly.tieba.post.ui.page.user.edit.EditProfileActivity
 import com.huanchengfly.tieba.post.ui.page.user.likeforum.UserLikeForumPage
 import com.huanchengfly.tieba.post.ui.page.user.post.UserPostPage
+import com.huanchengfly.tieba.post.ui.widgets.compose.AnchorMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.AvatarIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
@@ -152,6 +155,7 @@ import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.FansListPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.FollowListPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.SearchUserPageDestination
+import com.huanchengfly.tieba.post.ui.page.destinations.PostAnalysisPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserPostListPageDestination
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -448,6 +452,7 @@ private fun UserProfileToolbar(
 ) {
     val context = LocalContext.current
     val account = LocalAccount.current
+    val navigator = LocalNavigator.current
 
     Toolbar(
         title = {
@@ -466,6 +471,20 @@ private fun UserProfileToolbar(
             user.takeUnless { isSelf }?.let {
                 ClickMenu(
                     menuContent = {
+                        DropdownMenuItem(
+                            onClick = {
+                                navigator.navigate(
+                                    PostAnalysisPageDestination(
+                                        uid = it.get { id },
+                                        authorName = it.get { name },
+                                        authorNameShow = it.get { nameShow },
+                                        authorPortrait = it.get { portrait },
+                                    )
+                                )
+                            }
+                        ) {
+                            Text(text = stringResource(id = R.string.title_search_user_analysis))
+                        }
                         DropdownMenuItem(
                             onClick = {
                                 val userId = it.get { id }
@@ -562,13 +581,48 @@ private fun UserProfileContentNormal(
                         .statusBarsPadding()
                         .height(52.dp)
                         .padding(horizontal = 8.dp),
-                    contentAlignment = Alignment.CenterStart,
                 ) {
                     GlassIconButton(
                         onClick = onBack,
                         icon = Icons.AutoMirrored.Rounded.ArrowBack,
                         contentDescription = stringResource(id = R.string.button_back),
+                        modifier = Modifier.align(Alignment.CenterStart),
                     )
+                    if (!isSelf) {
+                        var menuExpanded by remember { mutableStateOf(false) }
+                        // AnchorMenu 的 fallback 自带一层 Box 且忽略外部 modifier，
+                        // 所以位置由外层 Box 负责，不能把 align 直接传给它。
+                        Box(modifier = Modifier.align(Alignment.CenterEnd)) {
+                            AnchorMenu(
+                                expanded = menuExpanded,
+                                onExpandedChange = { menuExpanded = it },
+                                anchor = { onClick ->
+                                    GlassIconButton(
+                                        onClick = onClick,
+                                        icon = PhosphorIcons["dots-three-vertical"]
+                                            ?: Icons.Rounded.MoreVert,
+                                        contentDescription = stringResource(id = R.string.btn_more),
+                                    )
+                                },
+                            ) {
+                                DropdownMenuItem(
+                                    onClick = {
+                                        menuExpanded = false
+                                        navigator.navigate(
+                                            PostAnalysisPageDestination(
+                                                uid = user.get { id },
+                                                authorName = user.get { name },
+                                                authorNameShow = user.get { nameShow },
+                                                authorPortrait = user.get { portrait },
+                                            )
+                                        )
+                                    }
+                                ) {
+                                    Text(text = stringResource(id = R.string.title_search_user_analysis))
+                                }
+                            }
+                        }
+                    }
                 }
             } else {
                 UserProfileToolbar(

@@ -62,6 +62,7 @@ import com.huanchengfly.tieba.post.ui.page.destinations.HistoryPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.LoginPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.SettingsPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadStorePageDestination
+import com.huanchengfly.tieba.post.ui.page.destinations.ToolboxPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.WebViewPageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
@@ -302,6 +303,15 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
                             }
                             UserRow(index = if (currentAccount != null) 2 else 0) {
                                 TextPref(
+                                    title = stringResource(id = R.string.title_toolbox),
+                                    leadingIcon = { PrefsIcon("wrench.and.screwdriver") },
+                                    onClick = {
+                                        navigator.navigate(ToolboxPageDestination)
+                                    },
+                                )
+                            }
+                            UserRow(index = if (currentAccount != null) 3 else 1) {
+                                TextPref(
                                     title = stringResource(id = R.string.my_info_settings),
                                     leadingIcon = { PrefsIcon("gearshape") },
                                     onClick = {
@@ -309,7 +319,7 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
                                     },
                                 )
                             }
-                            UserRow(index = if (currentAccount != null) 3 else 1) {
+                            UserRow(index = if (currentAccount != null) 4 else 2) {
                                 TextPref(
                                     title = stringResource(id = R.string.my_info_about),
                                     leadingIcon = { PrefsIcon("info.circle") },
