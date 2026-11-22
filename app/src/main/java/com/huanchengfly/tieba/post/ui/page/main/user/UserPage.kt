@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.main.user
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.graphics.Typeface
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.background
@@ -243,7 +245,7 @@ private fun LoginTipCard(
         }
         Spacer(modifier = Modifier.width(16.dp))
         Icon(
-            imageVector = Icons.Rounded.AccountCircle,
+            imageVector = PhosphorIcons["user-circle"] ?: Icons.Rounded.AccountCircle,
             contentDescription = null,
             tint = AppTokens.onChip,
             modifier = Modifier

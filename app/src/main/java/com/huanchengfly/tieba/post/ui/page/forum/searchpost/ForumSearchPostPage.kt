@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.forum.searchpost
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -169,7 +171,7 @@ private fun SearchHistoryList(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        imageVector = if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                        imageVector = if (expanded) PhosphorIcons["caret-up"] ?: Icons.Rounded.ExpandLess else PhosphorIcons["caret-down"] ?: Icons.Rounded.ExpandMore,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp)
                     )
@@ -524,7 +526,7 @@ fun ForumSearchPostPage(
                                                         fontWeight = FontWeight.Bold
                                                     )
                                                     Icon(
-                                                        imageVector = Icons.Rounded.ArrowDropDown,
+                                                        imageVector = PhosphorIcons["caret-down"] ?: Icons.Rounded.ArrowDropDown,
                                                         contentDescription = null,
                                                         modifier = Modifier
                                                             .size(16.dp)

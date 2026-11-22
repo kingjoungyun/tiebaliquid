@@ -475,7 +475,7 @@ fun SearchBox(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Clear,
+                            imageVector = PhosphorIcons["x-circle"] ?: Icons.Rounded.Clear,
                             contentDescription = stringResource(id = R.string.button_clear)
                         )
                     }

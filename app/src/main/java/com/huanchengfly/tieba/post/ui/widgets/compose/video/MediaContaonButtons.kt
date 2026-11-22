@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.widgets.compose.video
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -106,11 +108,11 @@ fun PlayPauseButton(modifier: Modifier = Modifier) {
         modifier = modifier
     ) {
         if (isPlaying) {
-            ShadowedIcon(icon = Icons.Filled.Pause)
+            ShadowedIcon(icon = PhosphorIcons["pause"] ?: Icons.Filled.Pause)
         } else {
             when (playbackState) {
                 PlaybackState.ENDED -> {
-                    ShadowedIcon(icon = Icons.Filled.Restore)
+                    ShadowedIcon(icon = PhosphorIcons["arrow-counter-clockwise"] ?: Icons.Filled.Restore)
                 }
 
                 PlaybackState.BUFFERING -> {
@@ -118,7 +120,7 @@ fun PlayPauseButton(modifier: Modifier = Modifier) {
                 }
 
                 else -> {
-                    ShadowedIcon(icon = Icons.Filled.PlayArrow)
+                    ShadowedIcon(icon = PhosphorIcons["play"] ?: Icons.Filled.PlayArrow)
                 }
             }
         }

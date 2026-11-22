@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.user.edit
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.app.Activity
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
@@ -309,7 +311,7 @@ fun EditProfileCard(
                     }
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.PhotoCamera,
+                        imageVector = PhosphorIcons["camera"] ?: Icons.Rounded.PhotoCamera,
                         contentDescription = stringResource(id = R.string.upload_portrait),
                         modifier = Modifier
                             .size(24.dp)

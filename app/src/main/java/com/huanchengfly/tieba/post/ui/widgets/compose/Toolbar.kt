@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.widgets.compose
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -145,7 +147,7 @@ fun AccountNavIcon(
                             )
                             if (currentAccount.id == it.id) {
                                 Icon(
-                                    imageVector = Icons.Rounded.CheckCircle,
+                                    imageVector = PhosphorIcons["check-circle"] ?: Icons.Rounded.CheckCircle,
                                     contentDescription = stringResource(id = R.string.desc_current_account),
                                     tint = Color.White,
                                     modifier = Modifier
@@ -168,7 +170,7 @@ fun AccountNavIcon(
                     }
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Add,
+                        imageVector = PhosphorIcons["plus"] ?: Icons.Rounded.Add,
                         contentDescription = stringResource(id = R.string.title_new_account),
                         tint = AppTokens.onChip,
                         modifier = Modifier

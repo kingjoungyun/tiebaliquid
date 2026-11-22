@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.search
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalIndication
@@ -387,7 +389,7 @@ private fun SearchSuggestionList(
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Search,
+                        imageVector = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
                         contentDescription = stringResource(id = R.string.desc_search_sug, it),
                         tint = AppTokens.text
                     )
@@ -577,7 +579,7 @@ private fun SearchHistoryList(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        imageVector = if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                        imageVector = if (expanded) PhosphorIcons["caret-up"] ?: Icons.Rounded.ExpandLess else PhosphorIcons["caret-down"] ?: Icons.Rounded.ExpandMore,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp)
                     )
@@ -644,7 +646,7 @@ private fun SearchTopBar(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = if (glassmio) Icons.Rounded.Search
+                    imageVector = if (glassmio) PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search
                     else Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = if (glassmio) null
                     else stringResource(id = R.string.button_back),
@@ -691,7 +693,7 @@ private fun SearchUserEntry(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Icon(
-            imageVector = Icons.Outlined.PersonSearch,
+            imageVector = PhosphorIcons["user-list"] ?: Icons.Outlined.PersonSearch,
             contentDescription = null,
             tint = AppTokens.textSecondary,
             modifier = Modifier.size(20.dp),

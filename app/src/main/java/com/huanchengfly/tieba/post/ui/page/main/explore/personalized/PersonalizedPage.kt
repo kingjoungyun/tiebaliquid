@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.main.explore.personalized
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.fadeIn
@@ -579,7 +581,7 @@ private fun RefreshTip(
             .padding(8.dp),
     ) {
         Icon(
-            imageVector = Icons.Rounded.Refresh,
+            imageVector = PhosphorIcons["arrow-clockwise"] ?: Icons.Rounded.Refresh,
             contentDescription = null
         )
         Spacer(modifier = Modifier.width(16.dp))

@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.main.explore.hot
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.graphics.Typeface
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -211,7 +213,7 @@ fun HotPage(
                                             fontWeight = FontWeight.Bold
                                         )
                                         Icon(
-                                            imageVector = Icons.Rounded.KeyboardArrowRight,
+                                            imageVector = PhosphorIcons["caret-right"] ?: Icons.Rounded.KeyboardArrowRight,
                                             contentDescription = null,
                                             modifier = Modifier.size(16.dp)
                                         )

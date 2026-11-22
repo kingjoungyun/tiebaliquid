@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.widgets.compose.video
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.os.Parcelable
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -224,7 +226,7 @@ fun Modifier.quickSeekAnimation(
                 .fillMaxHeight()
         ) {
             ShadowedIcon(
-                Icons.Filled.FastRewind,
+                PhosphorIcons["rewind"] ?: Icons.Filled.FastRewind,
                 modifier = Modifier
                     .alpha(alphaRewind.value)
                     .align(Alignment.Center)
@@ -237,7 +239,7 @@ fun Modifier.quickSeekAnimation(
                 .fillMaxHeight()
         ) {
             ShadowedIcon(
-                Icons.Filled.FastForward,
+                PhosphorIcons["fast-forward"] ?: Icons.Filled.FastForward,
                 modifier = Modifier
                     .alpha(alphaForward.value)
                     .align(Alignment.Center)

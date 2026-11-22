@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.user.followlist
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -311,7 +313,7 @@ private fun FollowListHeader(
                             color = AppTokens.text
                         )
                         Icon(
-                            imageVector = Icons.Rounded.ArrowDropDown,
+                            imageVector = PhosphorIcons["caret-down"] ?: Icons.Rounded.ArrowDropDown,
                             contentDescription = null,
                             tint = AppTokens.textSecondary,
                             modifier = Modifier.size(18.dp)

@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.widgets.compose.video
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.LocalIndication
@@ -178,7 +180,7 @@ fun VideoPlayer(
 
                     IconButton(onClick = { videoPlayerController.play() }) {
                         Icon(
-                            imageVector = Icons.Rounded.PlayArrow,
+                            imageVector = PhosphorIcons["play"] ?: Icons.Rounded.PlayArrow,
                             contentDescription = stringResource(id = R.string.btn_play),
                             modifier = Modifier.size(48.dp)
                         )
@@ -270,9 +272,9 @@ private fun FullScreenButton() {
     val videoPlayerController = LocalVideoPlayerController.current
     val isFullScreen by videoPlayerController.collect { isFullScreen }
     val icon = if (isFullScreen) {
-        Icons.Rounded.FullscreenExit
+        PhosphorIcons["arrows-in"] ?: Icons.Rounded.FullscreenExit
     } else {
-        Icons.Rounded.Fullscreen
+        PhosphorIcons["arrows-out"] ?: Icons.Rounded.Fullscreen
     }
     Box(
         modifier = Modifier

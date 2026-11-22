@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.widgets.compose.picker
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +38,7 @@ fun <ItemValue> ListSinglePicker(
     itemIcons: ImmutableMap<ItemValue, @Composable () -> Unit> = persistentMapOf(),
     selectedIndicator: @Composable () -> Unit = {
         Icon(
-            imageVector = Icons.Rounded.Check,
+            imageVector = PhosphorIcons["check"] ?: Icons.Rounded.Check,
             contentDescription = stringResource(id = R.string.desc_checked)
         )
     },

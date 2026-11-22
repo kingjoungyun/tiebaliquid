@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.widgets.compose
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
@@ -543,7 +545,7 @@ fun TabClickMenu(
                 text()
             }
             Icon(
-                imageVector = Icons.Rounded.ArrowDropDown,
+                imageVector = PhosphorIcons["caret-down"] ?: Icons.Rounded.ArrowDropDown,
                 contentDescription = null,
                 modifier = Modifier
                     .size(16.dp)

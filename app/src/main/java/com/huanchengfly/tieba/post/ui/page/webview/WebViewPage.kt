@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.webview
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -234,7 +236,7 @@ fun WebViewPage(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.MoreVert,
+                                        imageVector = PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreVert,
                                         contentDescription = stringResource(id = R.string.btn_more)
                                     )
                                 }

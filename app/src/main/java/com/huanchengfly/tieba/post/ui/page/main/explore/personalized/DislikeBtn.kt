@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.main.explore.personalized
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -64,7 +66,7 @@ fun Dislike(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Rounded.KeyboardArrowDown,
+                imageVector = PhosphorIcons["caret-down"] ?: Icons.Rounded.KeyboardArrowDown,
                 contentDescription = null,
                 tint = AppTokens.textSecondary
             )
@@ -86,7 +88,7 @@ fun DislikeMoreButton(
     DislikeMenu(personalized = personalized, onDislike = onDislike) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Icon(
-                imageVector = Icons.Rounded.MoreHoriz,
+                imageVector = PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreHoriz,
                 contentDescription = stringResource(id = R.string.title_more_options),
                 tint = AppTokens.textSecondary,
                 modifier = Modifier.size(20.dp),

@@ -206,7 +206,7 @@ fun ToolboxPage(
         if (!context.appPreferences.safeMode) {
             add(
                 ToolboxEntry(
-                    icon = Icons.Rounded.CheckCircle,
+                    icon = PhosphorIcons["check-circle"] ?: Icons.Rounded.CheckCircle,
                     phosphor = "check-circle",
                     title = stringResource(id = R.string.title_toolbox_oksign),
                     summary = stringResource(id = R.string.summary_toolbox_oksign),
