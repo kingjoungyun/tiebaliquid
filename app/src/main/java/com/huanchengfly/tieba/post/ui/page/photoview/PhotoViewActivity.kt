@@ -6,23 +6,26 @@ import android.os.Build
 import android.view.MotionEvent
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.runtime.Composable
@@ -33,8 +36,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -47,13 +50,17 @@ import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.arch.BaseComposeActivityWithParcelable
 import com.huanchengfly.tieba.post.models.PhotoViewData
 import com.huanchengfly.tieba.post.toastShort
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
-import com.huanchengfly.tieba.post.ui.widgets.compose.ProvideContentColor
 import com.huanchengfly.tieba.post.utils.ImageUtil
 import com.huanchengfly.tieba.post.utils.download
 import kotlin.math.roundToInt
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
+import io.github.neoruaa.glasmio.core.GlasmioTheme
+import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
+import io.github.neoruaa.glasmio.glass.GlassSurface
 
 @Composable
 private fun ViewPhoto(
@@ -101,6 +108,85 @@ private fun ViewPhoto(
                 )
             }
         }
+    }
+}
+
+/**
+ * 底部悬浮玻璃操作条。
+ *
+ * 这是独立 Activity，**不做整页 backdrop 录制**：这里只给操作条本身自带一个 56dp 的
+ * 纯色 host（`GlasmioBackdropHost(sampledColor = AppTokens.card)`），玻璃采的是这层纯色；
+ * 操作条画在 host 的 overlay 层，不在录制层里，因此不会自己采样自己。
+ * 其余参数（材质 / 明暗 / 折射）全部用 Glasmio 默认值。
+ */
+@Composable
+private fun PhotoViewActionBar(
+    modifier: Modifier = Modifier,
+    indexText: String?,
+    onShare: () -> Unit,
+    onSave: () -> Unit,
+) {
+    GlasmioBackdropHost(
+        sampledColor = AppTokens.card,
+        modifier = modifier.height(56.dp),
+    ) {
+        LiquidGlassTheme(accent = AppTokens.primary) {
+            val colors = GlasmioTheme.colors
+            GlassSurface(
+                modifier = Modifier.fillMaxSize(),
+                shape = RoundedCornerShape(28.dp),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        text = indexText.orEmpty(),
+                        fontSize = 14.sp,
+                        color = colors.secondaryContent,
+                        modifier = Modifier.weight(1f),
+                    )
+                    PhotoViewAction(
+                        icon = PhosphorIcons["export"] ?: Icons.Rounded.Share,
+                        contentDescription = stringResource(id = R.string.title_share_pic),
+                        tint = colors.content,
+                        onClick = onShare,
+                    )
+                    PhotoViewAction(
+                        icon = PhosphorIcons["download-simple"] ?: Icons.Rounded.Download,
+                        contentDescription = stringResource(id = R.string.desc_download_pic),
+                        tint = colors.content,
+                        onClick = onSave,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PhotoViewAction(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = tint,
+            modifier = Modifier.size(22.dp),
+        )
     }
 }
 
@@ -171,83 +257,66 @@ class PhotoViewActivity : BaseComposeActivityWithParcelable<PhotoViewData>() {
                             },
                         )
                     }
-                    Box(
-                        contentAlignment = Alignment.Center,
+
+                    // 悬浮返回圆钮：独立 Activity 没有页级 backdrop，GlassIconButton 自带纯色小 host。
+                    // 全屏看图恒为黑底，所以给自带的 host 一个纯黑 fill：host 的方形采样层与背景融在一起，
+                    // 圆钮本身仍是 Glasmio 玻璃；图标固定白色，避免浅色主题下变成「白方块 + 深色箭头」。
+                    GlassIconButton(
+                        onClick = { finish() },
+                        icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = stringResource(id = R.string.button_back),
+                        tint = Color.White,
+                        navigationSurfaceColor = Color.Black,
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .align(Alignment.TopStart)
+                            .statusBarsPadding()
+                            .padding(start = 12.dp, top = 6.dp),
+                    )
+
+                    val index = pagerState.currentPage
+                    PhotoViewActionBar(
+                        modifier = Modifier
                             .align(Alignment.BottomCenter)
-                    ) {
-                        ProvideContentColor(color = Color.White) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(
-                                        Brush.verticalGradient(
-                                            listOf(
-                                                Color.Black.copy(alpha = 0.0f),
-                                                Color.Black.copy(alpha = 0.5f)
-                                            )
-                                        )
-                                    )
-                                    .padding(horizontal = 16.dp)
-                                    .navigationBarsPadding(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                val index = pagerState.currentPage
-                                if (totalAmount > 1) {
-                                    val picIndex = items[index].overallIndex
-                                    Text(
-                                        text = "$picIndex / $totalAmount",
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                } else {
-                                    Spacer(modifier = Modifier.weight(1f))
-                                }
-                                IconButton(onClick = {
-                                    toastShort(R.string.toast_preparing_share_pic)
-                                    ImageUtil.download(
-                                        this@PhotoViewActivity,
-                                        items[index].originUrl,
-                                        true
-                                    ) { uri: Uri ->
-                                        val chooser = Intent(Intent.ACTION_SEND).apply {
-                                            type = Intent.normalizeMimeType("image/jpeg")
-                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                                                putExtra(Intent.EXTRA_STREAM, uri)
-                                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                            } else {
-                                                putExtra(Intent.EXTRA_STREAM, uri)
-                                            }
-                                        }.let {
-                                            Intent.createChooser(
-                                                it,
-                                                getString(R.string.title_share_pic)
-                                            )
-                                        }
-                                        runCatching {
-                                            startActivity(chooser)
-                                        }
+                            .navigationBarsPadding()
+                            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+                        indexText = if (totalAmount > 1) {
+                            "${items[index].overallIndex} / $totalAmount"
+                        } else {
+                            null
+                        },
+                        onShare = {
+                            toastShort(R.string.toast_preparing_share_pic)
+                            ImageUtil.download(
+                                this@PhotoViewActivity,
+                                items[index].originUrl,
+                                true
+                            ) { uri: Uri ->
+                                val chooser = Intent(Intent.ACTION_SEND).apply {
+                                    type = Intent.normalizeMimeType("image/jpeg")
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                        putExtra(Intent.EXTRA_STREAM, uri)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    } else {
+                                        putExtra(Intent.EXTRA_STREAM, uri)
                                     }
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Share,
-                                        contentDescription = stringResource(id = R.string.title_share_pic)
+                                }.let {
+                                    Intent.createChooser(
+                                        it,
+                                        getString(R.string.title_share_pic)
                                     )
                                 }
-                                IconButton(onClick = {
-                                    ImageUtil.download(
-                                        this@PhotoViewActivity,
-                                        items[index].originUrl
-                                    )
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Download,
-                                        contentDescription = stringResource(id = R.string.desc_download_pic)
-                                    )
+                                runCatching {
+                                    startActivity(chooser)
                                 }
                             }
-                        }
-                    }
+                        },
+                        onSave = {
+                            ImageUtil.download(
+                                this@PhotoViewActivity,
+                                items[index].originUrl
+                            )
+                        },
+                    )
                 }
             }
         }
