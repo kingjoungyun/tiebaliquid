@@ -37,6 +37,8 @@ import androidx.compose.material.Tab
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.PersonSearch
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Search
@@ -80,6 +82,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.SearchPageDestination
+import com.huanchengfly.tieba.post.ui.page.destinations.SearchUserPageDestination
 import com.huanchengfly.tieba.post.ui.page.search.forum.SearchForumPage
 import com.huanchengfly.tieba.post.ui.page.search.thread.SearchThreadPage
 import com.huanchengfly.tieba.post.ui.page.search.thread.SearchThreadSortType
@@ -328,6 +331,12 @@ fun SearchPage(
                                     .verticalScroll(rememberScrollState())
                             ) {
                                 Container {
+                                    Column {
+                                    SearchUserEntry(
+                                        onClick = {
+                                            navigator.navigate(SearchUserPageDestination())
+                                        }
+                                    )
                                     SearchHistoryList(
                                         searchHistories = searchHistories,
                                         onSearchHistoryClick = {
@@ -340,6 +349,7 @@ fun SearchPage(
                                         onClear = { viewModel.send(SearchUiIntent.ClearSearchHistory) },
                                         glassmio = glassmio,
                                     )
+                                    }
                                 }
                             }
                         }
@@ -661,6 +671,49 @@ fun PreviewSearchBox() {
                 onKeywordChange = { keyword = it }
             )
         }
+    }
+}
+
+@Composable
+private fun SearchUserEntry(
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(GlasmioTheme.colors.elevatedBackground)
+            .debounceClickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.PersonSearch,
+            contentDescription = null,
+            tint = ExtendedTheme.colors.textSecondary,
+            modifier = Modifier.size(20.dp),
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(id = R.string.title_search_user),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = ExtendedTheme.colors.text,
+            )
+            Text(
+                text = "输入 UID 查用户",
+                fontSize = 13.sp,
+                color = ExtendedTheme.colors.textSecondary,
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+            contentDescription = null,
+            tint = ExtendedTheme.colors.textSecondary,
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
 
