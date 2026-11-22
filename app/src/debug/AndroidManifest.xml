@@ -6,6 +6,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
+        <!-- Stage 1 · Nav3 底栏沙盒（只做隔离验证，不进生产） -->
+        <activity
+            android:name=".debug.Nav3DockSandboxActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
         <!-- P2/C：Glasmio 控件总览（可交互） -->
         <activity
             android:name=".debug.GlassGalleryActivity"
