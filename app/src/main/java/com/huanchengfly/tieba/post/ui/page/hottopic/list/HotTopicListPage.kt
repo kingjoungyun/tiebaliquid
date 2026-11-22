@@ -7,16 +7,27 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.LocalTextStyle
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.Text
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
@@ -49,6 +60,9 @@ import com.huanchengfly.tieba.post.ui.common.theme.compose.Yellow
 import com.huanchengfly.tieba.post.ui.common.theme.compose.pullRefreshIndicator
 import com.huanchengfly.tieba.post.ui.page.destinations.TopicDetailPageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
+import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageSkin
+import com.huanchengfly.tieba.post.ui.page.thread.ThreadTopBarHeight
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
 import com.huanchengfly.tieba.post.ui.widgets.compose.NetworkImage
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
@@ -174,6 +188,109 @@ fun HotTopicListPage(
         prop1 = HotTopicListUiState::topicList,
         initial = emptyList()
     )
+    val glassmio = HotTopicListUi.DefaultStyle == HotTopicListUiStyle.GLASMIO
+    if (glassmio) {
+        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        val topInset = statusBarTop + ThreadTopBarHeight
+        val pullRefreshState = rememberPullRefreshState(
+            refreshing = isRefreshing,
+            onRefresh = { viewModel.send(HotTopicListUiIntent.Load) }
+        )
+        ThreadPageSkin(
+            enabled = true,
+            topBar = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .height(ThreadTopBarHeight)
+                        .padding(horizontal = 8.dp)
+                ) {
+                    GlassIconButton(
+                        onClick = { navigator.navigateUp() },
+                        icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = stringResource(id = R.string.button_back),
+                        modifier = Modifier.align(Alignment.CenterStart),
+                    )
+                }
+            },
+            bottomBar = {},
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pullRefresh(pullRefreshState)
+            ) {
+                MyLazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(0.dp),
+                    contentPadding = PaddingValues(top = topInset, bottom = 16.dp),
+                ) {
+                    item(key = "HotTitle") {
+                        Text(
+                            text = stringResource(id = R.string.title_hot_message_list),
+                            style = LocalTextStyle.current.copy(
+                                fontSize = 34.sp,
+                                lineHeight = 40.sp,
+                                fontWeight = FontWeight.Bold,
+                            ),
+                            color = AppTokens.text,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                    }
+                    itemsIndexed(
+                        items = topicList,
+                        key = { _, item -> item.topic_id },
+                    ) { index, item ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .debounceClickable(onClick = {
+                                    navigator.navigate(
+                                        TopicDetailPageDestination(item.topic_id, item.topic_name)
+                                    )
+                                })
+                                .padding(horizontal = 16.dp, vertical = 7.dp),
+                            verticalAlignment = Alignment.Top,
+                        ) {
+                            Text(
+                                text = "${index + 1}",
+                                modifier = Modifier.width(30.dp),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (index < 3) AppTokens.accent else AppTokens.textSecondary,
+                            )
+                            Text(
+                                text = item.topic_name,
+                                modifier = Modifier.weight(1f),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = AppTokens.text,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = item.discuss_num.getShortNumString(),
+                                fontSize = 13.sp,
+                                color = AppTokens.textSecondary,
+                            )
+                        }
+                    }
+                }
+                PullRefreshIndicator(
+                    refreshing = isRefreshing,
+                    state = pullRefreshState,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = topInset),
+                    backgroundColor = AppTokens.pullRefreshIndicator,
+                    contentColor = AppTokens.primary,
+                )
+            }
+        }
+        return
+    }
+
     Scaffold(
         backgroundColor = Color.Transparent,
         topBar = {
