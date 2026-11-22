@@ -35,3 +35,18 @@ Notes:
 - glasmio-scaffold additionally depends on androidx.navigation3,
   androidx.navigationevent and top.yukonga.miuix.kmp; those are *not* vendored
   here and still resolve from the configured online mirrors.
+------------------------------------------------------------------------------
+Phosphor Icons (MIT)
+------------------------------------------------------------------------------
+
+  Upstream:   https://phosphoricons.com  /  https://github.com/phosphor-icons/core
+  Version:    @phosphor-icons/core@2.1.1
+  License:    MIT — full text in
+              app/src/main/java/com/huanchengfly/tieba/post/ui/common/icons/LICENSE-phosphor
+  Vendored:   only the vector path data of the icons this app uses (54 icons),
+              generated into PhosphorIcons.kt by scripts/sync-phosphor-icons.ps1.
+              No font files or SVG assets are shipped in the APK.
+
+  Used for:   settings row icons, list chevrons, top-bar actions (via
+              TiebaGlasmioIconResolver). The four dock glyphs stay proprietary
+              Tieba vectors (TiebaDockIcons.kt).

@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import com.huanchengfly.tieba.post.ui.page.main.TiebaGlasmioIconResolver
+import io.github.neoruaa.glasmio.icons.LocalGlasmioIconResolver
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
@@ -457,13 +459,17 @@ fun LiquidGlassTheme(
         elevatedBackground = if (isDark) Color(0xFF1C1C1E) else Color.White,
     )
 
-    GlasmioTheme(
-        isDark = isDark,
-        colorScheme = colorScheme,
-        colors = glassColors,
-        // Glasmio 的语义排版表（iOS Dynamic Type 的 12 档）默认用系统字族；
-        // 这里整表换成鸿蒙，字号/行高/字重仍由 Glasmio 决定。
-        typography = HarmonyGlasmioTypography,
-        content = content,
-    )
+    // 图标解析器在这里注入一次：设置页、顶栏、列表箭头都会走 TiebaGlasmioIconResolver
+    // （dock 图形 + Phosphor），不再落到 Glasmio 内置的 Material 兜底表。
+    CompositionLocalProvider(LocalGlasmioIconResolver provides TiebaGlasmioIconResolver) {
+        GlasmioTheme(
+            isDark = isDark,
+            colorScheme = colorScheme,
+            colors = glassColors,
+            // Glasmio 的语义排版表（iOS Dynamic Type 的 12 档）默认用系统字族；
+            // 这里整表换成鸿蒙，字号/行高/字重仍由 Glasmio 决定。
+            typography = HarmonyGlasmioTypography,
+            content = content,
+        )
+    }
 }

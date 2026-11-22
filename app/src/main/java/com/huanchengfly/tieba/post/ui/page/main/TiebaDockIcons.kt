@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.unit.dp
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 import io.github.neoruaa.glasmio.icons.GlasmioIconResolver
 
 /**
@@ -83,11 +84,13 @@ internal object TiebaDockGlyphs {
  */
 internal val TiebaGlasmioIconResolver = GlasmioIconResolver { systemName ->
     when (systemName) {
+        // dock 的四格保留贴吧自己的图形（品牌一致性），其余一律走 Phosphor。
         "house", "house.fill" -> TiebaDockGlyphs.Home
         "square.3.layers.3d" -> TiebaDockGlyphs.Explore
         "dot.radiowaves.left.and.right" -> TiebaDockGlyphs.Notifications
         "person", "person.fill" -> TiebaDockGlyphs.User
-        else -> null
+        // 设置行 / 顶栏 / 列表箭头等：Phosphor（MIT），映射表见 PhosphorIcons.kt。
+        else -> PhosphorIcons.resolve(systemName)
     }
 }
 
