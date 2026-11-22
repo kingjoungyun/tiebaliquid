@@ -120,6 +120,7 @@ import io.github.neoruaa.glasmio.core.GlasmioTheme
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 
 @Destination
 @Composable
@@ -407,7 +408,7 @@ internal fun SubPostsContent(
                     navigationIcon = {
                         IconButton(onClick = onNavigateUp) {
                             Icon(
-                                imageVector = if (isSheet) Icons.Rounded.Close else Icons.AutoMirrored.Rounded.ArrowBack,
+                                imageVector = if (isSheet) (PhosphorIcons["x"] ?: Icons.Rounded.Close) else Icons.AutoMirrored.Rounded.ArrowBack,
                                 contentDescription = stringResource(id = R.string.btn_close)
                             )
                         }
@@ -424,7 +425,7 @@ internal fun SubPostsContent(
                                 )
                             }) {
                                 Icon(
-                                    imageVector = Icons.Rounded.OpenInBrowser,
+                                    imageVector = (PhosphorIcons["arrow-square-out"] ?: Icons.Rounded.OpenInBrowser),
                                     contentDescription = stringResource(id = R.string.btn_open_origin_thread)
                                 )
                             }
@@ -905,7 +906,7 @@ private fun SubPostItem(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
                                 Icon(
-                                    imageVector = if (hasAgreed) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                                    imageVector = if (hasAgreed) (PhosphorIcons["heart-fill"] ?: Icons.Rounded.Favorite) else (PhosphorIcons["heart"] ?: (PhosphorIcons["heart"] ?: Icons.Rounded.FavoriteBorder)),
                                     contentDescription = stringResource(id = R.string.title_agree),
                                     tint = tint,
                                     modifier = Modifier.size(18.dp),

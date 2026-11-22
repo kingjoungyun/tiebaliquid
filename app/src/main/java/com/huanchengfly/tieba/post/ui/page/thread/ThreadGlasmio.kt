@@ -68,6 +68,7 @@ import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.core.IosTypography
 import io.github.neoruaa.glasmio.glass.GlassSurface
 import io.github.neoruaa.glasmio.ui.GlasmioIconButton
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 
 /**
  * 帖子详情页的 Glasmio 外壳（`ThreadPageUiStyle.GLASMIO`）。
@@ -217,7 +218,7 @@ fun ThreadGlassTopBar(
                     },
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.MoreVert,
+                        imageVector = (PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreVert),
                         contentDescription = null,
                         tint = colors.content,
                         modifier = Modifier.size(20.dp),
@@ -324,21 +325,21 @@ fun ThreadGlassBottomBar(
                         onClick = onReplyCountClick,
                     )
                     ThreadInfoGroup(
-                        icon = if (hasAgreed) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                        icon = if (hasAgreed) (PhosphorIcons["heart-fill"] ?: Icons.Rounded.Favorite) else (PhosphorIcons["heart"] ?: (PhosphorIcons["heart"] ?: Icons.Rounded.FavoriteBorder)),
                         count = agreeNum,
                         color = if (hasAgreed) accent else normal,
                         contentDescription = stringResource(id = R.string.title_agree),
                         onClick = onAgree,
                     )
                     ThreadInfoGroup(
-                        icon = Icons.Rounded.Person,
+                        icon = (PhosphorIcons["user"] ?: Icons.Rounded.Person),
                         count = null,
                         color = if (isSeeLz) accent else normal,
                         contentDescription = stringResource(id = R.string.title_see_lz),
                         onClick = onSeeLzClick,
                     )
                     ThreadInfoGroup(
-                        icon = Icons.Rounded.SwapVert,
+                        icon = (PhosphorIcons["arrows-down-up"] ?: Icons.Rounded.SwapVert),
                         count = null,
                         color = sortColor,
                         contentDescription = stringResource(

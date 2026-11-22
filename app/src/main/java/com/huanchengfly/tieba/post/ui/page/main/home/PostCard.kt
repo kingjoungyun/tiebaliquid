@@ -68,6 +68,7 @@ import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.glass.render.backdrops.emptyBackdrop
 import io.github.neoruaa.glasmio.ui.GlasmioCard
 import kotlinx.collections.immutable.ImmutableList
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 
 /**
  * 首页信息流的「推特式」帖子卡（`PostCardUiStyle.TWITTER`）。
@@ -334,7 +335,7 @@ fun PostCard(
                             onClick = { /* 旧版分享按钮也是空实现（ThreadShareBtn(onClick = {})），保持一致 */ },
                         ) { iconModifier ->
                             Icon(
-                                imageVector = Icons.Rounded.SwapCalls,
+                                imageVector = (PhosphorIcons["repeat"] ?: Icons.Rounded.SwapCalls),
                                 contentDescription = stringResource(id = R.string.desc_share),
                                 modifier = iconModifier,
                             )
@@ -363,7 +364,7 @@ fun PostCard(
                             onClick = { onAgree(item.get()) },
                         ) { iconModifier ->
                             Icon(
-                                imageVector = if (hasAgree) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                                imageVector = if (hasAgree) (PhosphorIcons["heart-fill"] ?: Icons.Rounded.Favorite) else (PhosphorIcons["heart"] ?: (PhosphorIcons["heart"] ?: Icons.Rounded.FavoriteBorder)),
                                 contentDescription = stringResource(id = R.string.desc_like),
                                 modifier = iconModifier,
                             )
