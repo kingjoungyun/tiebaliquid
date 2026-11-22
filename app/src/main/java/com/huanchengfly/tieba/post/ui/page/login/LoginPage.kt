@@ -4,24 +4,23 @@ import android.annotation.SuppressLint
 import android.webkit.CookieManager
 import android.webkit.WebView
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.Icon
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.LinearProgressIndicator
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,30 +28,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
+import androidx.compose.ui.unit.sp
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageHost
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.api.retrofit.exception.getErrorMessage
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.page.webview.MyWebChromeClient
 import com.huanchengfly.tieba.post.ui.page.webview.MyWebViewClient
-import com.huanchengfly.tieba.post.ui.page.webview.isInternalHost
-import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
-import com.huanchengfly.tieba.post.ui.widgets.compose.ClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadingState
 import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
-import com.huanchengfly.tieba.post.ui.widgets.compose.Toolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.WebView
-import com.huanchengfly.tieba.post.ui.widgets.compose.rememberMenuState
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberSaveableWebViewState
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberWebViewNavigator
 import com.huanchengfly.tieba.post.utils.AccountUtil
@@ -63,10 +59,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
@@ -90,42 +83,7 @@ fun LoginPage(
             var loaded by rememberSaveable {
                 mutableStateOf(false)
             }
-            var pageTitle by rememberSaveable {
-                mutableStateOf("")
-            }
-            val displayPageTitle by remember {
-                derivedStateOf {
-                    pageTitle.ifEmpty {
-                        context.getString(R.string.title_default)
-                    }
-                }
-            }
-            val currentHost by remember {
-                derivedStateOf {
-                    webViewState.lastLoadedUrl?.toUri()?.host.orEmpty().lowercase()
-                }
-            }
-            val isExternalHost by remember {
-                derivedStateOf {
-                    currentHost.isNotEmpty() && !isInternalHost(currentHost)
-                }
-            }
-    
-            DisposableEffect(Unit) {
-                val job = coroutineScope.launch {
-                    snapshotFlow { webViewState.pageTitle }
-                        .filterNotNull()
-                        .filter { it.isNotEmpty() }
-                        .cancellable()
-                        .collect {
-                            pageTitle = it
-                        }
-                }
-                onDispose {
-                    job.cancel()
-                }
-            }
-    
+
             LazyLoad(loaded = loaded) {
                 webViewNavigator.loadUrl(LOGIN_URL)
                 loaded = true
@@ -152,89 +110,79 @@ fun LoginPage(
             val animatedProgress by animateFloatAsState(targetValue = progress, label = "progress")
     
             MyScaffold(
-                topBar = {
-                    Toolbar(
-                        title = {
-                            Column {
-                                Text(
-                                    text = displayPageTitle,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                if (isExternalHost) {
-                                    Text(
-                                        text = currentHost,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        color = AppTokens.onTopBarSecondary,
-                                        style = MaterialTheme.typography.caption
-                                    )
-                                }
-                            }
-                        },
-                        navigationIcon = { BackNavigationIcon(onBackPressed = { navigator.navigateUp() }) },
-                        actions = {
-                            val menuState = rememberMenuState()
-                            ClickMenu(
-                                menuContent = {
-                                    DropdownMenuItem(
-                                        onClick = {
-                                            webViewNavigator.reload()
-                                            dismiss()
-                                        }
-                                    ) {
-                                        Text(text = stringResource(id = R.string.title_refresh))
-                                    }
-                                },
-                                menuState = menuState,
-                                triggerShape = CircleShape
-                            ) {
-                                Box(
-                                    modifier = Modifier.size(48.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.MoreVert,
-                                        contentDescription = stringResource(id = R.string.btn_more)
-                                    )
-                                }
-                            }
-                        },
-                    )
-                }
-            ) { paddingValues ->
-                Box {
-                    val snackbarHostState = LocalSnackbarHostState.current
-                    WebView(
-                        state = webViewState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
-                        navigator = webViewNavigator,
-                        onCreated = {
-                            it.settings.apply {
-                                javaScriptEnabled = true
-                                domStorageEnabled = true
-                                setSupportZoom(true)
-                                builtInZoomControls = true
-                                displayZoomControls = false
-                            }
-                        },
-                        client = remember(navigator) {
-                            LoginWebViewClient(
-                                navigator,
-                                coroutineScope,
-                                snackbarHostState
+                backgroundColor = AppTokens.background,
+                topBar = {},
+            ) { _ ->
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // 大标题 + 悬浮返回（登录页原来是 M2 Toolbar，这里统一成二级页的大标题范式）
+                    Column(modifier = Modifier.statusBarsPadding()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp)
+                                .padding(horizontal = 8.dp)
+                        ) {
+                            GlassIconButton(
+                                onClick = { navigator.navigateUp() },
+                                icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = stringResource(id = R.string.button_back),
+                                modifier = Modifier.align(Alignment.CenterStart),
                             )
-                        },
-                        chromeClient = remember { MyWebChromeClient(context, coroutineScope) }
-                    )
-    
-                    if (isLoading) {
-                        LinearProgressIndicator(
-                            progress = animatedProgress,
-                            modifier = Modifier.fillMaxWidth()
+                            GlassIconButton(
+                                onClick = { webViewNavigator.reload() },
+                                icon = PhosphorIcons["arrow-clockwise"] ?: Icons.Rounded.Refresh,
+                                contentDescription = stringResource(id = R.string.title_refresh),
+                                modifier = Modifier.align(Alignment.CenterEnd),
+                            )
+                        }
+                        Text(
+                            text = "登录",
+                            fontSize = 34.sp,
+                            lineHeight = 40.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AppTokens.text,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                         )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp)
+                            .clip(RoundedCornerShape(26.dp))
+                            .background(Color.White)
+                    ) {
+                        val snackbarHostState = LocalSnackbarHostState.current
+                        WebView(
+                            state = webViewState,
+                            modifier = Modifier.fillMaxSize(),
+                            navigator = webViewNavigator,
+                            onCreated = {
+                                it.settings.apply {
+                                    javaScriptEnabled = true
+                                    domStorageEnabled = true
+                                    setSupportZoom(true)
+                                    builtInZoomControls = true
+                                    displayZoomControls = false
+                                }
+                            },
+                            client = remember(navigator) {
+                                LoginWebViewClient(
+                                    navigator,
+                                    coroutineScope,
+                                    snackbarHostState
+                                )
+                            },
+                            chromeClient = remember { MyWebChromeClient(context, coroutineScope) }
+                        )
+
+                        if (isLoading) {
+                            LinearProgressIndicator(
+                                progress = animatedProgress,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }
