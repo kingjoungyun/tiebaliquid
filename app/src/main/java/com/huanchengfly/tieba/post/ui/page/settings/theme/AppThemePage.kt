@@ -56,6 +56,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsBackButtonOverlay
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsGlasmioDefaults
 import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyFontFamily
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 主题色预设（iOS 系统色）。App 的主题色只有这 6 个可选值。
@@ -111,7 +112,7 @@ fun AppThemePage(
     val overrideAccent = remember(accentRaw) {
         accentRaw?.let { runCatching { Color(it.toColorInt()) }.getOrNull() }
     }
-    val effectiveAccent = overrideAccent ?: ExtendedTheme.colors.primary
+    val effectiveAccent = overrideAccent ?: AppTokens.primary
     val selectedPreset = PresetAccents.firstOrNull {
         it.color.toArgb() == effectiveAccent.toArgb()
     }
@@ -120,9 +121,9 @@ fun AppThemePage(
     // 用 chip（浅灰）当页面底。深色下 chip 仍是深灰，会破坏 A2 的纯黑，所以深色固定黑。
     // 半透明主题用 background（transparent），让背景图透出来，避免深灰 chip 配深色文字。
     val pageBackground = when {
-        ThemeUtil.isTranslucentTheme(currentTheme) -> ExtendedTheme.colors.background
-        isDark -> ExtendedTheme.colors.background
-        else -> ExtendedTheme.colors.chip
+        ThemeUtil.isTranslucentTheme(currentTheme) -> AppTokens.background
+        isDark -> AppTokens.background
+        else -> AppTokens.chip
     }
     // 二级页范式：无 M2 顶栏（否则白底顶栏会和分组底色撞成一条白带），
     // 背景铺到状态栏下面，返回是左上角浮起的玻璃圆钮，大标题静态起排。
@@ -142,7 +143,7 @@ fun AppThemePage(
                 lineHeight = 41.sp,
                 fontWeight = FontWeight(700),
                 fontFamily = HarmonyFontFamily,
-                color = ExtendedTheme.colors.text,
+                color = AppTokens.text,
             )
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -156,7 +157,7 @@ fun AppThemePage(
                     text = stringResource(id = R.string.title_theme_color),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
-                    color = ExtendedTheme.colors.textSecondary,
+                    color = AppTokens.textSecondary,
                     modifier = Modifier.padding(start = 4.dp),
                 )
                 Text(
@@ -169,14 +170,14 @@ fun AppThemePage(
                         effectiveAccent.toArgb() and 0xFFFFFF,
                     ),
                     fontSize = 12.sp,
-                    color = ExtendedTheme.colors.textSecondary,
+                    color = AppTokens.textSecondary,
                     modifier = Modifier.padding(end = 4.dp),
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
 
             Surface(
-                color = ExtendedTheme.colors.card,
+                color = AppTokens.card,
                 shape = RoundedCornerShape(16.dp),
                 elevation = 0.dp,
             ) {
@@ -204,13 +205,13 @@ fun AppThemePage(
                 text = stringResource(id = R.string.title_theme_dark_section),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
-                color = ExtendedTheme.colors.textSecondary,
+                color = AppTokens.textSecondary,
                 modifier = Modifier.padding(start = 4.dp),
             )
             Spacer(modifier = Modifier.height(8.dp))
 
             Surface(
-                color = ExtendedTheme.colors.card,
+                color = AppTokens.card,
                 shape = RoundedCornerShape(16.dp),
                 elevation = 0.dp,
             ) {
@@ -224,12 +225,12 @@ fun AppThemePage(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = stringResource(id = R.string.title_theme_dark),
-                            color = ExtendedTheme.colors.text,
+                            color = AppTokens.text,
                             fontSize = 17.sp,
                         )
                         Text(
                             text = stringResource(id = R.string.summary_theme_dark),
-                            color = ExtendedTheme.colors.textSecondary,
+                            color = AppTokens.textSecondary,
                             fontSize = 13.sp,
                         )
                     }

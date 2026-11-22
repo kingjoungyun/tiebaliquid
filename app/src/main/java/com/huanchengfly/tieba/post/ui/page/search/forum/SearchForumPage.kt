@@ -52,6 +52,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreen
 import kotlinx.collections.immutable.persistentListOf
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -139,7 +140,7 @@ fun SearchForumPage(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(ExtendedTheme.colors.background)
+                                .background(AppTokens.background)
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
                             Chip(
@@ -162,7 +163,7 @@ fun SearchForumPage(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(ExtendedTheme.colors.background)
+                                .background(AppTokens.background)
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
                             Chip(
@@ -186,8 +187,8 @@ fun SearchForumPage(
                 refreshing = isRefreshing,
                 state = pullRefreshState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                contentColor = ExtendedTheme.colors.primary,
+                backgroundColor = AppTokens.pullRefreshIndicator,
+                contentColor = AppTokens.primary,
             )
         }
     }
@@ -197,7 +198,7 @@ fun SearchForumPage(
 @Composable
 private fun SearchForumItem(
     item: SearchForumBean.ForumInfoBean,
-    iconColor: Color = ExtendedTheme.colors.primary,
+    iconColor: Color = AppTokens.primary,
     onClick: () -> Unit,
 ) {
     val postNumSting = stringResource(id = R.string.forum_concern_num, item.postNum)

@@ -66,6 +66,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreen
 import com.huanchengfly.tieba.post.utils.DateTimeUtils
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -291,8 +292,8 @@ fun UserPostPage(
                 refreshing = isRefreshing,
                 state = pullRefreshState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                contentColor = ExtendedTheme.colors.primary,
+                backgroundColor = AppTokens.pullRefreshIndicator,
+                contentColor = AppTokens.primary,
             )
         }
     }
@@ -387,7 +388,7 @@ fun UserPostItem(
                             Text(
                                 text = it.contentText,
                                 style = MaterialTheme.typography.body1,
-                                color = ExtendedTheme.colors.text,
+                                color = AppTokens.text,
                             )
 
                             Text(
@@ -396,7 +397,7 @@ fun UserPostItem(
                                     it.createTime
                                 ),
                                 style = MaterialTheme.typography.caption,
-                                color = ExtendedTheme.colors.textSecondary,
+                                color = AppTokens.textSecondary,
                             )
                         }
                     }
@@ -408,7 +409,7 @@ fun UserPostItem(
                         .padding(horizontal = 16.dp)
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(6.dp))
-                        .background(ExtendedTheme.colors.floorCard)
+                        .background(AppTokens.floorCard)
                         .clickable {
                             onClickOriginThread(item.get { thread_id })
                         }

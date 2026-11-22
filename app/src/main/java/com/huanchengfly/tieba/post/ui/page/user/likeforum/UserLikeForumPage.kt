@@ -43,6 +43,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreen
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -141,8 +142,8 @@ fun UserLikeForumPage(
                 refreshing = isRefreshing,
                 state = pullRefreshState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                contentColor = ExtendedTheme.colors.primary,
+                backgroundColor = AppTokens.pullRefreshIndicator,
+                contentColor = AppTokens.primary,
             )
         }
     }
@@ -201,7 +202,7 @@ private fun UserLikeForumItem(
                 Text(
                     text = it,
                     style = MaterialTheme.typography.body2,
-                    color = ExtendedTheme.colors.textSecondary
+                    color = AppTokens.textSecondary
                 )
             }
         }

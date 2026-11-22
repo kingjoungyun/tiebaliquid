@@ -139,6 +139,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 val LocalNotificationCountFlow =
     staticCompositionLocalOf<Flow<Int>> { throw IllegalStateException("not allowed here!") }
@@ -418,7 +419,7 @@ class MainActivityV2 : BaseComposeActivity() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp),
-                    border = BorderStroke(1.dp, ExtendedTheme.colors.divider),
+                    border = BorderStroke(1.dp, AppTokens.divider),
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Row(
@@ -522,7 +523,7 @@ class MainActivityV2 : BaseComposeActivity() {
                         ModalBottomSheetLayout(
                             bottomSheetNavigator = navigator,
                             sheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
-                            sheetBackgroundColor = ExtendedTheme.colors.windowBackground,
+                            sheetBackgroundColor = AppTokens.windowBackground,
                             scrimColor = Color.Black.copy(alpha = 0.32f),
                         ) {
                             DestinationsNavHost(
@@ -559,7 +560,7 @@ class MainActivityV2 : BaseComposeActivity() {
                     )
                 )
         ) {
-            if (ThemeUtil.isTranslucentTheme(ExtendedTheme.colors.theme)) {
+            if (ThemeUtil.isTranslucentTheme(AppTokens.theme)) {
                 val backgroundPath by rememberPreferenceAsMutableState(
                     key = stringPreferencesKey("translucent_theme_background_path"),
                     defaultValue = ""
@@ -574,7 +575,7 @@ class MainActivityV2 : BaseComposeActivity() {
             }
             Surface(
                 color = Color.Transparent,
-                contentColor = contentColorFor(ExtendedTheme.colors.background),
+                contentColor = contentColorFor(AppTokens.background),
             ) {
                 content()
             }

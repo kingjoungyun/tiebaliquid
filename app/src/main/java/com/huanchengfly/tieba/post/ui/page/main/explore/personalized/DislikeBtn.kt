@@ -46,6 +46,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.items
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberMenuState
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 「不感兴趣」入口（旧卡片用）：竖直箭头触发。
@@ -65,7 +66,7 @@ fun Dislike(
             Icon(
                 imageVector = Icons.Rounded.KeyboardArrowDown,
                 contentDescription = null,
-                tint = ExtendedTheme.colors.textSecondary
+                tint = AppTokens.textSecondary
             )
         }
     }
@@ -87,7 +88,7 @@ fun DislikeMoreButton(
             Icon(
                 imageVector = Icons.Rounded.MoreHoriz,
                 contentDescription = stringResource(id = R.string.title_more_options),
-                tint = ExtendedTheme.colors.textSecondary,
+                tint = AppTokens.textSecondary,
                 modifier = Modifier.size(20.dp),
             )
         }
@@ -136,13 +137,13 @@ private fun DislikeMenu(
                         text = stringResource(id = R.string.button_submit_dislike),
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
-                            .background(color = ExtendedTheme.colors.primary)
+                            .background(color = AppTokens.primary)
                             .clickable {
                                 dismiss()
                                 onDislike(clickTime, selectedReasons.toImmutableList())
                             }
                             .padding(vertical = 4.dp, horizontal = 8.dp),
-                        color = ExtendedTheme.colors.onAccent,
+                        color = AppTokens.onAccent,
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.subtitle2,
@@ -166,10 +167,10 @@ private fun DislikeMenu(
                         span = { if (it.get { dislikeId } == 7) 2 else 1 }
                     ) {
                         val backgroundColor by animateColorAsState(
-                            targetValue = if (selectedReasons.contains(it)) ExtendedTheme.colors.primary else ExtendedTheme.colors.chip
+                            targetValue = if (selectedReasons.contains(it)) AppTokens.primary else AppTokens.chip
                         )
                         val contentColor by animateColorAsState(
-                            targetValue = if (selectedReasons.contains(it)) ExtendedTheme.colors.onAccent else ExtendedTheme.colors.onChip
+                            targetValue = if (selectedReasons.contains(it)) AppTokens.onAccent else AppTokens.onChip
                         )
                         Text(
                             text = it.get { dislikeReason },

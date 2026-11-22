@@ -34,6 +34,7 @@ import com.huanchengfly.tieba.post.arch.BaseComposeActivity.Companion.LocalWindo
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.windowsizeclass.WindowWidthSizeClass
 import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreenScope
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 fun TipScreen(
@@ -65,7 +66,7 @@ fun TipScreen(
             }
             ProvideTextStyle(
                 value = MaterialTheme.typography.h6.copy(
-                    color = ExtendedTheme.colors.text,
+                    color = AppTokens.text,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
@@ -74,7 +75,7 @@ fun TipScreen(
             }
             ProvideTextStyle(
                 value = MaterialTheme.typography.body1.copy(
-                    color = ExtendedTheme.colors.textSecondary,
+                    color = AppTokens.textSecondary,
                     textAlign = TextAlign.Center
                 )
             ) {

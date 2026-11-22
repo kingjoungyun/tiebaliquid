@@ -22,6 +22,7 @@ import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.widgets.compose.Button
 import com.huanchengfly.tieba.post.ui.widgets.compose.TipScreen
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 val DefaultLoadingScreen: @Composable StateScreenScope.() -> Unit = {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie_loading_paperplane))
@@ -70,7 +71,7 @@ val DefaultErrorScreen: @Composable StateScreenScope.() -> Unit = {
     Text(
         text = stringResource(id = R.string.error_tip),
         style = MaterialTheme.typography.body1,
-        color = ExtendedTheme.colors.textSecondary
+        color = AppTokens.textSecondary
     )
 }
 

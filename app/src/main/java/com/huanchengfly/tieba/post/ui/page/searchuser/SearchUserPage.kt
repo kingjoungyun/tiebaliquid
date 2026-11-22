@@ -91,6 +91,7 @@ import com.huanchengfly.tieba.post.utils.StringUtil
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 用户 ID：5~12 位纯数字。
@@ -144,12 +145,12 @@ fun SearchUserPage(
     viewModel: SearchUserViewModel = pageViewModel(),
 ) {
     val glassmio = SearchUserPageUi.DefaultStyle == SearchUserPageUiStyle.GLASMIO
-    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+    LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
     ProvideNavigator(navigator = navigator) {
         MyScaffold(
             backgroundColor = if (glassmio) GlasmioTheme.colors.groupedBackground
-            else ExtendedTheme.colors.background,
+            else AppTokens.background,
             topBar = {
                 Column(
                     modifier = Modifier
@@ -177,7 +178,7 @@ fun SearchUserPage(
                             lineHeight = 40.sp,
                             fontWeight = FontWeight.Bold,
                         ),
-                        color = ExtendedTheme.colors.text,
+                        color = AppTokens.text,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                     )
                 }
@@ -309,7 +310,7 @@ private fun SearchUserContent(
             .fillMaxSize()
             .background(
                 if (glassmio) GlasmioTheme.colors.groupedBackground
-                else ExtendedTheme.colors.background
+                else AppTokens.background
             )
             .padding(contentPadding)
             .padding(horizontal = 16.dp),
@@ -376,7 +377,7 @@ private fun UidInputCard(
             .fillMaxWidth()
             .padding(top = 12.dp, bottom = 4.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(color = ExtendedTheme.colors.card)
+            .background(color = AppTokens.card)
             .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -391,7 +392,7 @@ private fun UidInputCard(
                 placeholder = {
                     Text(
                         text = stringResource(id = R.string.hint_search_user_uid),
-                        color = ExtendedTheme.colors.textSecondary,
+                        color = AppTokens.textSecondary,
                         fontSize = 14.sp,
                     )
                 },
@@ -399,7 +400,7 @@ private fun UidInputCard(
                     Icon(
                         imageVector = Icons.Outlined.PersonSearch,
                         contentDescription = null,
-                        tint = ExtendedTheme.colors.textSecondary,
+                        tint = AppTokens.textSecondary,
                         modifier = Modifier.size(18.dp),
                     )
                 },
@@ -424,7 +425,7 @@ private fun UidInputCard(
                 Icon(
                     imageVector = Icons.Outlined.PersonSearch,
                     contentDescription = null,
-                    tint = ExtendedTheme.colors.textSecondary,
+                    tint = AppTokens.textSecondary,
                 )
             },
             trailingIcon = {
@@ -433,7 +434,7 @@ private fun UidInputCard(
                         Icon(
                             imageVector = Icons.Rounded.Close,
                             contentDescription = stringResource(id = R.string.action_search_user_clear),
-                            tint = ExtendedTheme.colors.textSecondary,
+                            tint = AppTokens.textSecondary,
                         )
                     }
                 }
@@ -468,20 +469,20 @@ private fun UidInputCard(
                 Icon(
                     imageVector = Icons.Outlined.ErrorOutline,
                     contentDescription = null,
-                    tint = ExtendedTheme.colors.accent,
+                    tint = AppTokens.accent,
                     modifier = Modifier.size(16.dp),
                 )
                 Text(
                     text = hintText,
                     fontSize = 12.sp,
-                    color = ExtendedTheme.colors.accent,
+                    color = AppTokens.accent,
                 )
             }
         } else {
             Text(
                 text = stringResource(id = R.string.summary_search_user_uid_hint),
                 fontSize = 12.sp,
-                color = ExtendedTheme.colors.textSecondary,
+                color = AppTokens.textSecondary,
             )
         }
     }
@@ -499,7 +500,7 @@ private fun SearchUserPrimaryButton(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .background(
-                color = if (enabled) ExtendedTheme.colors.primary else ExtendedTheme.colors.chip
+                color = if (enabled) AppTokens.primary else AppTokens.chip
             )
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -509,14 +510,14 @@ private fun SearchUserPrimaryButton(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = ExtendedTheme.colors.onPrimary,
+            tint = AppTokens.onPrimary,
             modifier = Modifier.size(18.dp),
         )
         Spacer(modifier = Modifier.size(6.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.button,
-            color = ExtendedTheme.colors.onPrimary,
+            color = AppTokens.onPrimary,
             maxLines = 1,
         )
     }
@@ -541,13 +542,13 @@ private fun SearchUserResultArea(
                 CircularProgressIndicator(
                     modifier = Modifier.size(28.dp),
                     strokeWidth = 2.5.dp,
-                    color = ExtendedTheme.colors.primary,
+                    color = AppTokens.primary,
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = stringResource(id = R.string.desc_search_user) + "…",
                     fontSize = 13.sp,
-                    color = ExtendedTheme.colors.textSecondary,
+                    color = AppTokens.textSecondary,
                 )
             }
         }
@@ -557,14 +558,14 @@ private fun SearchUserResultArea(
                 Icon(
                     imageVector = Icons.Outlined.ErrorOutline,
                     contentDescription = null,
-                    tint = ExtendedTheme.colors.accent,
+                    tint = AppTokens.accent,
                     modifier = Modifier.size(32.dp),
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = errorMessage,
                     fontSize = 13.sp,
-                    color = ExtendedTheme.colors.textSecondary,
+                    color = AppTokens.textSecondary,
                     textAlign = TextAlign.Center,
                 )
             }
@@ -579,14 +580,14 @@ private fun SearchUserResultArea(
                 Icon(
                     imageVector = Icons.Outlined.PersonSearch,
                     contentDescription = null,
-                    tint = ExtendedTheme.colors.textDisabled,
+                    tint = AppTokens.textDisabled,
                     modifier = Modifier.size(32.dp),
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = notFoundHint,
                     fontSize = 13.sp,
-                    color = ExtendedTheme.colors.textSecondary,
+                    color = AppTokens.textSecondary,
                     textAlign = TextAlign.Center,
                 )
             }
@@ -606,7 +607,7 @@ private fun StatusCard(
             .fillMaxWidth()
             .padding(top = 8.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(color = ExtendedTheme.colors.card)
+            .background(color = AppTokens.card)
             .padding(horizontal = 16.dp, vertical = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -631,7 +632,7 @@ private fun SearchUserProfileCard(
             .clip(RoundedCornerShape(if (glassmio) 26.dp else 16.dp))
             .background(
                 color = if (glassmio) GlasmioTheme.colors.elevatedBackground
-                else ExtendedTheme.colors.card
+                else AppTokens.card
             )
             .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -662,7 +663,7 @@ private fun SearchUserProfileCard(
                         fontWeight = FontWeight.SemiBold,
                     ) else MaterialTheme.typography.h6,
                     fontWeight = FontWeight.Bold,
-                    color = ExtendedTheme.colors.text,
+                    color = AppTokens.text,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -679,7 +680,7 @@ private fun SearchUserProfileCard(
                     Text(
                         text = subText,
                         fontSize = 12.sp,
-                        color = ExtendedTheme.colors.textSecondary,
+                        color = AppTokens.textSecondary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -691,7 +692,7 @@ private fun SearchUserProfileCard(
             Text(
                 text = user.intro,
                 fontSize = 13.sp,
-                color = ExtendedTheme.colors.textSecondary,
+                color = AppTokens.textSecondary,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -738,12 +739,12 @@ private fun SearchUserStat(
             text = value,
             style = MaterialTheme.typography.subtitle1,
             fontWeight = FontWeight.Bold,
-            color = ExtendedTheme.colors.text,
+            color = AppTokens.text,
         )
         Text(
             text = label,
             fontSize = 12.sp,
-            color = ExtendedTheme.colors.textSecondary,
+            color = AppTokens.textSecondary,
         )
     }
 }
@@ -769,7 +770,7 @@ private fun SearchUserGroupTitle(
         modifier = modifier.padding(start = 4.dp, top = 12.dp, bottom = 2.dp),
         fontSize = 13.sp,
         fontWeight = FontWeight.Medium,
-        color = ExtendedTheme.colors.textSecondary,
+        color = AppTokens.textSecondary,
     )
 }
 
@@ -782,7 +783,7 @@ private fun SearchUserEntryRow(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(color = ExtendedTheme.colors.card)
+            .background(color = AppTokens.card)
             .clickable(onClick = entry.onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -791,7 +792,7 @@ private fun SearchUserEntryRow(
         Icon(
             imageVector = entry.icon,
             contentDescription = entry.title,
-            tint = ExtendedTheme.colors.primary,
+            tint = AppTokens.primary,
             modifier = Modifier.size(Sizes.Tiny),
         )
         Column(
@@ -802,13 +803,13 @@ private fun SearchUserEntryRow(
                 text = entry.title,
                 style = MaterialTheme.typography.subtitle1,
                 fontWeight = FontWeight.Medium,
-                color = ExtendedTheme.colors.text,
+                color = AppTokens.text,
                 maxLines = 1,
             )
             Text(
                 text = entry.summary,
                 fontSize = 12.sp,
-                color = ExtendedTheme.colors.textSecondary,
+                color = AppTokens.textSecondary,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -816,7 +817,7 @@ private fun SearchUserEntryRow(
         Icon(
             imageVector = Icons.Outlined.ChevronRight,
             contentDescription = null,
-            tint = ExtendedTheme.colors.textDisabled,
+            tint = AppTokens.textDisabled,
             modifier = Modifier.size(18.dp),
         )
     }

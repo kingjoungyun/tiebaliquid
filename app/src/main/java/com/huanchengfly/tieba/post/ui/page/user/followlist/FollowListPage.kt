@@ -67,6 +67,7 @@ import com.huanchengfly.tieba.post.utils.StringUtil
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.collections.immutable.persistentListOf
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 private enum class FollowListFilter { All, Mutual }
 
@@ -254,8 +255,8 @@ fun FollowListPage(
                                     refreshing = isRefreshing,
                                     state = pullRefreshState,
                                     modifier = Modifier.align(Alignment.TopCenter),
-                                    backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                                    contentColor = ExtendedTheme.colors.primary,
+                                    backgroundColor = AppTokens.pullRefreshIndicator,
+                                    contentColor = AppTokens.primary,
                                 )
                             }
                         }
@@ -285,14 +286,14 @@ private fun FollowListHeader(
             Text(
                 text = stringResource(id = R.string.text_follow_list_count, totalFollowNum),
                 style = MaterialTheme.typography.body2,
-                color = ExtendedTheme.colors.textSecondary
+                color = AppTokens.textSecondary
             )
             if (showFilter) {
                 Box {
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(50))
-                            .background(color = ExtendedTheme.colors.chip)
+                            .background(color = AppTokens.chip)
                             .clickable { expanded = true }
                             .padding(horizontal = 10.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -307,12 +308,12 @@ private fun FollowListHeader(
                                 }
                             ),
                             fontSize = 13.sp,
-                            color = ExtendedTheme.colors.text
+                            color = AppTokens.text
                         )
                         Icon(
                             imageVector = Icons.Rounded.ArrowDropDown,
                             contentDescription = null,
-                            tint = ExtendedTheme.colors.textSecondary,
+                            tint = AppTokens.textSecondary,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -344,7 +345,7 @@ private fun FollowListHeader(
             Text(
                 text = it,
                 fontSize = 12.sp,
-                color = ExtendedTheme.colors.textSecondary,
+                color = AppTokens.textSecondary,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
         }
@@ -424,7 +425,7 @@ private fun FollowListItem(
                 Text(
                     text = subText,
                     style = MaterialTheme.typography.body2,
-                    color = ExtendedTheme.colors.textSecondary,
+                    color = AppTokens.textSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -452,9 +453,9 @@ private fun FollowListFollowButton(
     modifier: Modifier = Modifier,
 ) {
     val background =
-        if (followed) ExtendedTheme.colors.primary.copy(alpha = 0.15f) else ExtendedTheme.colors.primary
+        if (followed) AppTokens.primary.copy(alpha = 0.15f) else AppTokens.primary
     val contentColor =
-        if (followed) ExtendedTheme.colors.primary else ExtendedTheme.colors.onPrimary
+        if (followed) AppTokens.primary else AppTokens.onPrimary
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(50))

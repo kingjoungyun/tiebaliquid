@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
 import kotlin.math.pow
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 「液态玻璃」设计令牌（P1）。
@@ -249,16 +250,16 @@ fun Color.shiftTone(delta: Float): Color {
  * 为什么不是 `isSystemInDarkTheme()`：实测这个 App 的明暗由它自己的主题设置决定
  * （默认固定浅色，`cmd uimode night yes` 时页面文字仍是浅色主题的黑字），
  * 玻璃层若跟着系统变深会出现「黑字压深底」看不清。用 App 主题的明暗才和页面文字一致，
- * 也等价于改造前 `Surface(color = ExtendedTheme.colors.background)` 的行为。
+ * 也等价于改造前 `Surface(color = AppTokens.background)` 的行为。
  *
- * **accent 唯一来源**：`primary` 不再用令牌里写死的 `#0A84FF`，改为 `ExtendedTheme.colors.primary`。
+ * **accent 唯一来源**：`primary` 不再用令牌里写死的 `#0A84FF`，改为 `AppTokens.primary`。
  * dock 选中态、`selectedPill`、设置页开关等所有读 `glassColors().primary` 的地方因此一起跟随主题色。
  * 其余材质色（玻璃 tint / 描边 / 文字）仍来自 glass 令牌，不读 M2 色板。
  */
 @Composable
 fun glassColors(): GlassColors {
-    val base = if (ExtendedTheme.colors.isNightMode) GlassTokens.darkColors else GlassTokens.lightColors
-    val accent = ExtendedTheme.colors.primary
+    val base = if (AppTokens.isNightMode) GlassTokens.darkColors else GlassTokens.lightColors
+    val accent = AppTokens.primary
     return if (accent == Color.Unspecified) base else base.copy(primary = accent)
 }
 

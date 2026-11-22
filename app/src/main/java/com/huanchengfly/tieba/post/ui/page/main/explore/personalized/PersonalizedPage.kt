@@ -85,6 +85,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -252,8 +253,8 @@ fun PersonalizedPage(
                     refreshing = isRefreshing,
                     state = pullRefreshState,
                     modifier = Modifier.align(Alignment.TopCenter),
-                    backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                    contentColor = ExtendedTheme.colors.primary,
+                    backgroundColor = AppTokens.pullRefreshIndicator,
+                    contentColor = AppTokens.primary,
                 )
 
                 AnimatedVisibility(
@@ -286,7 +287,7 @@ private fun FeedPageSkin(content: @Composable () -> Unit) {
         content()
         return
     }
-    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+    LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
             Box(
                 modifier = Modifier
@@ -306,7 +307,7 @@ private fun BoxScope.RefreshTip(refreshCount: Int) {
             .padding(top = 72.dp)
             .clip(RoundedCornerShape(100))
             .background(
-                color = ExtendedTheme.colors.primary,
+                color = AppTokens.primary,
                 shape = RoundedCornerShape(100)
             )
             .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -314,7 +315,7 @@ private fun BoxScope.RefreshTip(refreshCount: Int) {
     ) {
         Text(
             text = stringResource(id = R.string.toast_feed_refresh, refreshCount),
-            color = ExtendedTheme.colors.onAccent
+            color = AppTokens.onAccent
         )
     }
 }

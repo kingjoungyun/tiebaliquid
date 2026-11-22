@@ -45,6 +45,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
 @Destination
@@ -170,9 +171,9 @@ fun OKSignSettingsPage(
                         .padding(16.dp)
                         .padding(start = 8.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(color = ExtendedTheme.colors.chip)
+                        .background(color = AppTokens.chip)
                         .padding(12.dp),
-                    color = ExtendedTheme.colors.onChip,
+                    color = AppTokens.onChip,
                     fontSize = 12.sp
                 )
             }

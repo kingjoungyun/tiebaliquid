@@ -82,6 +82,7 @@ import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -406,8 +407,8 @@ private fun TopicLoadMoreIndicator(
     Surface(
         elevation = 8.dp,
         shape = RoundedCornerShape(100),
-        color = ExtendedTheme.colors.loadMoreIndicator,
-        contentColor = ExtendedTheme.colors.text
+        color = AppTokens.loadMoreIndicator,
+        contentColor = AppTokens.text
     ) {
         Row(
             modifier = Modifier
@@ -422,7 +423,7 @@ private fun TopicLoadMoreIndicator(
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
                             strokeWidth = 3.dp,
-                            color = ExtendedTheme.colors.primary
+                            color = AppTokens.primary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(

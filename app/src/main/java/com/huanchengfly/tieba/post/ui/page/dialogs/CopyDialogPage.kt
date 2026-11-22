@@ -34,6 +34,7 @@ import com.huanchengfly.tieba.post.utils.TiebaUtil
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.spec.DestinationStyle
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 object CopyTextDialogStyle : DestinationStyle.Dialog {
     override val properties: DialogProperties
@@ -57,7 +58,7 @@ fun CopyTextDialogPage(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxSize()
-            .background(color = ExtendedTheme.colors.windowBackground)
+            .background(color = AppTokens.windowBackground)
     ) {
         CopyTextPageContent(
             text = text,
@@ -80,7 +81,7 @@ private fun CopyTextPageContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(color = ExtendedTheme.colors.windowBackground)
+            .background(color = AppTokens.windowBackground)
             .systemBarsPadding()
             .padding(bottom = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -149,8 +150,8 @@ private fun CopyTextPageContent(
                     onCancel()
                 },
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = ExtendedTheme.colors.text.copy(alpha = 0.1f),
-                    contentColor = ExtendedTheme.colors.text
+                    backgroundColor = AppTokens.text.copy(alpha = 0.1f),
+                    contentColor = AppTokens.text
                 )
             ) {
                 Text(text = stringResource(id = R.string.btn_close))

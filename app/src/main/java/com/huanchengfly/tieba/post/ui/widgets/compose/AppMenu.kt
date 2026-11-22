@@ -26,6 +26,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
 import io.github.neoruaa.glasmio.glass.LocalBlurBackdrop
 import io.github.neoruaa.glasmio.glass.render.Backdrop
 import io.github.neoruaa.glasmio.ui.GlasmioMenu
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /** Glasmio 菜单的默认宽度（M2 `DropdownMenu` 的内容宽度一般也在 200–280dp 之间）。 */
 private val AppMenuWidth: Dp = 240.dp
@@ -74,7 +75,7 @@ fun AppMenu(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = onDismissRequest,
-            modifier = modifier.background(ExtendedTheme.colors.menuBackground),
+            modifier = modifier.background(AppTokens.menuBackground),
             content = content,
         )
         return
@@ -162,7 +163,7 @@ fun AnchorMenu(
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { onExpandedChange(false) },
-                modifier = modifier.background(ExtendedTheme.colors.menuBackground),
+                modifier = modifier.background(AppTokens.menuBackground),
                 content = content,
             )
         }

@@ -51,6 +51,7 @@ import com.huanchengfly.tieba.post.utils.StringUtil
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.collections.immutable.persistentListOf
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Destination
 @OptIn(ExperimentalMaterialApi::class)
@@ -128,7 +129,7 @@ fun FansListPage(
             Text(
                 text = stringResource(id = R.string.text_fans_list_count, totalCount),
                 style = MaterialTheme.typography.body2,
-                color = ExtendedTheme.colors.textSecondary,
+                color = AppTokens.textSecondary,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
             )
             Box(
@@ -179,8 +180,8 @@ fun FansListPage(
                             refreshing = isRefreshing,
                             state = pullRefreshState,
                             modifier = Modifier.align(Alignment.TopCenter),
-                            backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                            contentColor = ExtendedTheme.colors.primary,
+                            backgroundColor = AppTokens.pullRefreshIndicator,
+                            contentColor = AppTokens.primary,
                         )
                     }
                 }

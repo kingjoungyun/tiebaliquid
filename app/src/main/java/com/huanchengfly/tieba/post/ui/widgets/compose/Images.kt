@@ -58,6 +58,7 @@ import com.huanchengfly.tieba.post.ui.page.photoview.PhotoViewActivity.Companion
 import com.huanchengfly.tieba.post.utils.ImageUtil
 import com.huanchengfly.tieba.post.utils.NetworkUtil
 import com.huanchengfly.tieba.post.utils.appPreferences
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 fun shouldLoadImage(context: Context, skipNetworkCheck: Boolean): Boolean {
     val imageLoadSettings =
@@ -236,7 +237,7 @@ fun NetworkImage(
     val enableClick = remember(photoViewData, shouldLoad) { photoViewData != null || !shouldLoad }
 
     val colorMask =
-        if (ExtendedTheme.colors.isNightMode && context.appPreferences.imageDarkenWhenNightMode) {
+        if (AppTokens.isNightMode && context.appPreferences.imageDarkenWhenNightMode) {
             MaskTransformation(Color.parseColor("#99000000"))
         } else null
 

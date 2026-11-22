@@ -14,6 +14,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
 import com.huanchengfly.tieba.post.ui.widgets.compose.Switch
 import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
 import io.github.neoruaa.glasmio.ui.GlasmioSwitch
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 设置页的开关（Glasmio 优先）。
@@ -40,7 +41,7 @@ fun PrefsSwitch(
     val colors = glassColors()
     // accent 的唯一来源是 App 主题色。glassColors() 已经把 primary 换成它，这里再显式兜底一次，
     // 避免预览/未初始化主题时拿到 Color.Unspecified 导致开关轨道透明。
-    val accent = ExtendedTheme.colors.primary.let { if (it == Color.Unspecified) colors.primary else it }
+    val accent = AppTokens.primary.let { if (it == Color.Unspecified) colors.primary else it }
     if (isLiquidGlassSupported()) {
         val switch: @Composable () -> Unit = {
             GlasmioSwitch(

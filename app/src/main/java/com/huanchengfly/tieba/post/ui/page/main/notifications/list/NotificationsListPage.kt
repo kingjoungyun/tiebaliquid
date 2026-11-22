@@ -61,6 +61,7 @@ import io.github.neoruaa.glasmio.core.systemGray5
 import io.github.neoruaa.glasmio.glass.render.backdrops.emptyBackdrop
 import io.github.neoruaa.glasmio.ui.GlasmioCard
 import kotlinx.collections.immutable.persistentListOf
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -236,11 +237,11 @@ fun NotificationsListPage(
                                             })
                                             .background(
                                                 if (glassmio) GlasmioTheme.colors.systemGray5
-                                                else ExtendedTheme.colors.chip,
+                                                else AppTokens.chip,
                                                 RoundedCornerShape(12.dp)
                                             )
                                             .padding(8.dp),
-                                        color = ExtendedTheme.colors.onChip,
+                                        color = AppTokens.onChip,
                                         fontSize = 12.sp,
                                     )
                                 }
@@ -256,8 +257,8 @@ fun NotificationsListPage(
             refreshing = isRefreshing,
             state = pullRefreshState,
             modifier = Modifier.align(Alignment.TopCenter),
-            backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-            contentColor = ExtendedTheme.colors.primary,
+            backgroundColor = AppTokens.pullRefreshIndicator,
+            contentColor = AppTokens.primary,
         )
     }
 }
@@ -286,7 +287,7 @@ private fun NotificationCardWrapper(
                         .align(Alignment.TopEnd)
                         .padding(top = 14.dp, end = 14.dp)
                         .size(8.dp)
-                        .background(ExtendedTheme.colors.primary, CircleShape)
+                        .background(AppTokens.primary, CircleShape)
                 )
             }
         }

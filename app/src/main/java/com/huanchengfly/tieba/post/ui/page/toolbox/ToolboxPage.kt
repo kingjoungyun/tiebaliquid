@@ -73,6 +73,7 @@ import com.huanchengfly.tieba.post.utils.TiebaUtil
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 「我的贴吧」聚合页。
@@ -277,7 +278,7 @@ private fun ToolboxGroupTitle(
         modifier = modifier.padding(start = 4.dp, top = 12.dp, bottom = 2.dp),
         fontSize = 13.sp,
         fontWeight = FontWeight.Medium,
-        color = ExtendedTheme.colors.textSecondary,
+        color = AppTokens.textSecondary,
     )
 }
 
@@ -317,7 +318,7 @@ private fun ToolboxProfileCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(color = ExtendedTheme.colors.card)
+            .background(color = AppTokens.card)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -345,14 +346,14 @@ private fun ToolboxProfileCard(
                     text = name,
                     style = MaterialTheme.typography.h6,
                     fontWeight = FontWeight.Bold,
-                    color = ExtendedTheme.colors.text,
+                    color = AppTokens.text,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = summary,
                     fontSize = 12.sp,
-                    color = ExtendedTheme.colors.textSecondary,
+                    color = AppTokens.textSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -360,7 +361,7 @@ private fun ToolboxProfileCard(
             Icon(
                 imageVector = Icons.Outlined.ChevronRight,
                 contentDescription = null,
-                tint = ExtendedTheme.colors.textDisabled,
+                tint = AppTokens.textDisabled,
                 modifier = Modifier.size(Sizes.Small),
             )
         }
@@ -404,12 +405,12 @@ private fun ToolboxStat(
             text = value,
             style = MaterialTheme.typography.subtitle1,
             fontWeight = FontWeight.Bold,
-            color = ExtendedTheme.colors.text,
+            color = AppTokens.text,
         )
         Text(
             text = label,
             fontSize = 12.sp,
-            color = ExtendedTheme.colors.textSecondary,
+            color = AppTokens.textSecondary,
         )
     }
 }
@@ -423,7 +424,7 @@ private fun ToolboxEntryRow(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(color = ExtendedTheme.colors.card)
+            .background(color = AppTokens.card)
             .clickable(onClick = entry.onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -432,7 +433,7 @@ private fun ToolboxEntryRow(
         Icon(
             imageVector = entry.icon,
             contentDescription = entry.title,
-            tint = ExtendedTheme.colors.primary,
+            tint = AppTokens.primary,
             modifier = Modifier.size(Sizes.Tiny)
         )
         Column(
@@ -443,13 +444,13 @@ private fun ToolboxEntryRow(
                 text = entry.title,
                 style = MaterialTheme.typography.subtitle1,
                 fontWeight = FontWeight.Medium,
-                color = ExtendedTheme.colors.text,
+                color = AppTokens.text,
                 maxLines = 1
             )
             Text(
                 text = entry.summary,
                 fontSize = 12.sp,
-                color = ExtendedTheme.colors.textSecondary,
+                color = AppTokens.textSecondary,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -457,7 +458,7 @@ private fun ToolboxEntryRow(
         Icon(
             imageVector = Icons.Outlined.ChevronRight,
             contentDescription = null,
-            tint = ExtendedTheme.colors.textDisabled,
+            tint = AppTokens.textDisabled,
             modifier = Modifier.size(18.dp)
         )
     }

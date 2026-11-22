@@ -87,6 +87,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -145,7 +146,7 @@ private fun SearchHistoryList(
                             onClick = { onSearchHistoryClick(searchHistory) },
                             onLongClick = { onDelete(searchHistory) }
                         )
-                        .background(ExtendedTheme.colors.chip)
+                        .background(AppTokens.chip)
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
@@ -160,7 +161,7 @@ private fun SearchHistoryList(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.textButtonColors(
                     backgroundColor = Color.Transparent,
-                    contentColor = ExtendedTheme.colors.text
+                    contentColor = AppTokens.text
                 )
             ) {
                 Row(
@@ -191,7 +192,7 @@ private fun SearchHistoryList(
             ) {
                 Text(
                     text = stringResource(id = R.string.tip_empty),
-                    color = ExtendedTheme.colors.textDisabled,
+                    color = AppTokens.textDisabled,
                     fontSize = 16.sp
                 )
             }
@@ -310,7 +311,7 @@ fun ForumSearchPostPage(
                     Box(
                         modifier = Modifier
                             .height(64.dp)
-                            .background(ExtendedTheme.colors.topBar)
+                            .background(AppTokens.topBar)
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         SearchBox(
@@ -336,7 +337,7 @@ fun ForumSearchPostPage(
                                         id = R.string.hint_search_in_ba,
                                         forumName
                                     ),
-                                    color = ExtendedTheme.colors.onTopBarSurface.copy(alpha = ContentAlpha.medium)
+                                    color = AppTokens.onTopBarSurface.copy(alpha = ContentAlpha.medium)
                                 )
                             },
                             prependIcon = {
@@ -470,7 +471,7 @@ fun ForumSearchPostPage(
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier
-                                                .background(ExtendedTheme.colors.background)
+                                                .background(AppTokens.background)
                                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                                                 .clickable(
                                                     interactionSource = remember { MutableInteractionSource() },
@@ -586,8 +587,8 @@ fun ForumSearchPostPage(
                                 refreshing = isRefreshing,
                                 state = pullRefreshState,
                                 modifier = Modifier.align(Alignment.TopCenter),
-                                backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                                contentColor = ExtendedTheme.colors.primary,
+                                backgroundColor = AppTokens.pullRefreshIndicator,
+                                contentColor = AppTokens.primary,
                             )
                         }
                     }

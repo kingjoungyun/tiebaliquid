@@ -44,6 +44,7 @@ import io.github.neoruaa.glasmio.glass.trackBackdropPosition
 import io.github.neoruaa.glasmio.glass.GlassEmphasis
 import io.github.neoruaa.glasmio.glass.GlassSurface as GlasmioGlassSurface
 import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 「真·液态玻璃」接入层（Glasmio）。
@@ -51,7 +52,7 @@ import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
  * 这一层只做三件事：
  * 1. 把 [GlasmioBackdropHost] 包一层，并在**玻璃层**里提供一个「host 存在」的标记；
  * 2. 提供 [LiquidGlassSurface]：有 host 就用真玻璃，没有就自动退回 P2 的伪玻璃；
- * 3. 把 App 自己的明暗（[ExtendedTheme.colors.isNightMode]）灌给 Glasmio。
+ * 3. 把 App 自己的明暗（[AppTokens.isNightMode]）灌给 Glasmio。
  *
  * 为什么不 `try/catch` 试探：[io.github.neoruaa.glasmio.glass.LocalGlassBackdrop] 是
  * `staticCompositionLocalOf { error(...) }`，没有 host 时读它就是抛异常，异常发生在
@@ -332,7 +333,7 @@ fun LiquidGlassSurface(
 ) {
     val hosted = LocalLiquidGlassHosted.current
     if (hosted && isLiquidGlassSupported()) {
-        LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+        LiquidGlassTheme(accent = AppTokens.primary) {
             GlasmioGlassSurface(
                 modifier = modifier,
                 shape = shape,
@@ -420,7 +421,7 @@ internal fun BoxScope.GlassInnerGlow(shape: Shape) {
  * Glasmio 的主题跟随：用 App 自己的 `isNightMode`（不是系统的 `isSystemInDarkTheme()`，
  * 这个 App 默认不跟随系统），Glasmio 据此解析 light/dark 材质配方与语义前景色。
  *
- * **accent 注入（唯一来源）**：调用方传 App 的 `ExtendedTheme.colors.primary`，这里把它同时写进
+ * **accent 注入（唯一来源）**：调用方传 App 的 `AppTokens.primary`，这里把它同时写进
  * - Glasmio 的 M3 `ColorScheme`（primary / secondary / onPrimary），Glasmio 控件读
  *   `MaterialTheme.colorScheme.primary` 或 `GlasmioTheme.colors.accent` 都会拿到它；
  * - Glasmio 的 `GlassColors.accent`（图标、列表勾选、开关默认 tint 的来源）。
@@ -435,10 +436,10 @@ internal fun BoxScope.GlassInnerGlow(shape: Shape) {
  */
 @Composable
 fun LiquidGlassTheme(
-    accent: Color = ExtendedTheme.colors.primary,
+    accent: Color = AppTokens.primary,
     content: @Composable () -> Unit,
 ) {
-    val isDark = ExtendedTheme.colors.isNightMode
+    val isDark = AppTokens.isNightMode
     val resolvedAccent = if (accent == Color.Unspecified) {
         if (isDark) Color(0xFF0091FF) else Color(0xFF0088FF)
     } else {
@@ -447,7 +448,7 @@ fun LiquidGlassTheme(
     val onAccent = if (resolvedAccent.luminance() > 0.6f) Color.Black else Color.White
 
     // Stage 5 · C：主题**全部由 AppTokens 显式构造**，不再读 Glasmio 的默认值。
-    val tokens = appTokens(isDark, resolvedAccent)
+    val tokens = glassTokenSet(isDark, resolvedAccent)
     val colorScheme = glasmioColorScheme(isDark, tokens.accent).copy(
         primary = tokens.accent,
         onPrimary = onAccent,
@@ -494,7 +495,7 @@ fun LiquidGlassTheme(
     // （dock 图形 + Phosphor），不再落到 Glasmio 内置的 Material 兜底表。
     CompositionLocalProvider(
         LocalGlasmioIconResolver provides TiebaGlasmioIconResolver,
-        LocalAppTokens provides tokens,
+        LocalGlassTokens provides tokens,
     ) {
         GlasmioTheme(
             isDark = isDark,

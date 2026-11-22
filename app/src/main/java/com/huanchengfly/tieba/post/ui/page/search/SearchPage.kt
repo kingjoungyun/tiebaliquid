@@ -112,6 +112,7 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Immutable
 data class SearchPageItem(
@@ -246,11 +247,11 @@ fun SearchPage(
             }
             val pagerState = rememberPagerState { pages.size }
             val glassmio = SearchPageUi.DefaultStyle == SearchPageUiStyle.GLASMIO
-            LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+            LiquidGlassTheme(accent = AppTokens.primary) {
                 HarmonyTextProvider {
             MyScaffold(
                 backgroundColor = if (glassmio) GlasmioTheme.colors.groupedBackground
-                else ExtendedTheme.colors.background,
+                else AppTokens.background,
                 topBar = {
                     Column(
                         modifier = Modifier
@@ -278,7 +279,7 @@ fun SearchPage(
                                 lineHeight = 40.sp,
                                 fontWeight = FontWeight.Bold,
                             ),
-                            color = ExtendedTheme.colors.text,
+                            color = AppTokens.text,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                         )
                         Box(
@@ -388,14 +389,14 @@ private fun SearchSuggestionList(
                     Icon(
                         imageVector = Icons.Rounded.Search,
                         contentDescription = stringResource(id = R.string.desc_search_sug, it),
-                        tint = ExtendedTheme.colors.text
+                        tint = AppTokens.text
                     )
 
                     Text(
                         text = it,
                         style = MaterialTheme.typography.subtitle2,
                         modifier = Modifier.weight(1f),
-                        color = ExtendedTheme.colors.text
+                        color = AppTokens.text
                     )
                 }
             }
@@ -408,7 +409,7 @@ private fun SearchSuggestionList(
 private fun SearchSuggestionListPreview() {
     TiebaLiteTheme {
         Box(
-            modifier = Modifier.background(ExtendedTheme.colors.topBar)
+            modifier = Modifier.background(AppTokens.topBar)
         ) {
             SearchSuggestionList(
                 suggestions = persistentListOf("1", "2", "3"),
@@ -435,7 +436,7 @@ private fun ColumnScope.SearchTabRow(
         },
         divider = {},
         backgroundColor = Color.Transparent,
-        contentColor = ExtendedTheme.colors.onTopBar,
+        contentColor = AppTokens.onTopBar,
         modifier = Modifier
             .align(Alignment.CenterHorizontally)
             .width(76.dp * pages.size),
@@ -552,7 +553,7 @@ private fun SearchHistoryList(
                         )
                         .background(
                             if (glassmio) GlasmioTheme.colors.elevatedBackground
-                            else ExtendedTheme.colors.chip
+                            else AppTokens.chip
                         )
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
@@ -568,7 +569,7 @@ private fun SearchHistoryList(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.textButtonColors(
                     backgroundColor = Color.Transparent,
-                    contentColor = ExtendedTheme.colors.text
+                    contentColor = AppTokens.text
                 )
             ) {
                 Row(
@@ -599,7 +600,7 @@ private fun SearchHistoryList(
             ) {
                 Text(
                     text = stringResource(id = R.string.tip_empty),
-                    color = ExtendedTheme.colors.textDisabled,
+                    color = AppTokens.textDisabled,
                     fontSize = 16.sp
                 )
             }
@@ -623,11 +624,11 @@ private fun SearchTopBar(
         glassmio = false,
         showSubmitIcon = true,
         color = if (glassmio) GlasmioTheme.colors.elevatedBackground
-        else ExtendedTheme.colors.topBarSurface,
+        else AppTokens.topBarSurface,
         placeholder = {
             Text(
                 text = stringResource(id = R.string.hint_search),
-                color = ExtendedTheme.colors.onTopBarSurface.copy(alpha = ContentAlpha.medium)
+                color = AppTokens.onTopBarSurface.copy(alpha = ContentAlpha.medium)
             )
         },
         prependIcon = {
@@ -663,7 +664,7 @@ fun PreviewSearchBox() {
         Box(
             modifier = Modifier
                 .height(64.dp)
-                .background(ExtendedTheme.colors.topBar)
+                .background(AppTokens.topBar)
                 .padding(vertical = 8.dp, horizontal = 16.dp)
         ) {
             SearchTopBar(
@@ -692,7 +693,7 @@ private fun SearchUserEntry(
         Icon(
             imageVector = Icons.Outlined.PersonSearch,
             contentDescription = null,
-            tint = ExtendedTheme.colors.textSecondary,
+            tint = AppTokens.textSecondary,
             modifier = Modifier.size(20.dp),
         )
         Column(modifier = Modifier.weight(1f)) {
@@ -700,18 +701,18 @@ private fun SearchUserEntry(
                 text = stringResource(id = R.string.title_search_user),
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = ExtendedTheme.colors.text,
+                color = AppTokens.text,
             )
             Text(
                 text = "输入 UID 查用户",
                 fontSize = 13.sp,
-                color = ExtendedTheme.colors.textSecondary,
+                color = AppTokens.textSecondary,
             )
         }
         Icon(
             imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
             contentDescription = null,
-            tint = ExtendedTheme.colors.textSecondary,
+            tint = AppTokens.textSecondary,
             modifier = Modifier.size(20.dp),
         )
     }
@@ -722,7 +723,7 @@ private fun SearchUserEntry(
 fun PreviewSearchHistoryList() {
     TiebaLiteTheme {
         var expanded by remember { mutableStateOf(false) }
-        Box(modifier = Modifier.background(ExtendedTheme.colors.background)) {
+        Box(modifier = Modifier.background(AppTokens.background)) {
             SearchHistoryList(
                 searchHistories = (0..20).map {
                     SearchHistory(content = if (it % 2 == 0) "记录$it" else "搜索记录$it")

@@ -49,6 +49,7 @@ import com.huanchengfly.tieba.post.ui.common.prefs.PrefsBackButtonOverlay
 import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsGlasmioDefaults
 import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyFontFamily
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Destination
 @Composable
@@ -74,7 +75,7 @@ fun AboutPage(
                 lineHeight = 41.sp,
                 fontWeight = FontWeight(700),
                 fontFamily = HarmonyFontFamily,
-                color = ExtendedTheme.colors.text,
+                color = AppTokens.text,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -104,7 +105,7 @@ fun AboutPage(
                     text = stringResource(id = R.string.title_thanks),
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
-                    color = ExtendedTheme.colors.text,
+                    color = AppTokens.text,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(2.dp))
@@ -112,7 +113,7 @@ fun AboutPage(
                     text = stringResource(id = R.string.tip_thanks),
                     style = MaterialTheme.typography.caption,
                     textAlign = TextAlign.Center,
-                    color = ExtendedTheme.colors.textSecondary,
+                    color = AppTokens.textSecondary,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -129,14 +130,14 @@ fun AboutPage(
                     text = stringResource(id = R.string.thanks_harmony_sans),
                     style = MaterialTheme.typography.caption,
                     textAlign = TextAlign.Center,
-                    color = ExtendedTheme.colors.textSecondary,
+                    color = AppTokens.textSecondary,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(id = R.string.tip_about, BuildConfig.VERSION_NAME),
                     style = MaterialTheme.typography.caption,
-                    color = ExtendedTheme.colors.textSecondary,
+                    color = AppTokens.textSecondary,
                     modifier = Modifier.clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -176,10 +177,10 @@ private fun ThanksLink(
     TextButton(
         shape = RoundedCornerShape(100),
         colors = ButtonDefaults.textButtonColors(
-            backgroundColor = ExtendedTheme.colors.text.copy(
+            backgroundColor = AppTokens.text.copy(
                 alpha = 0.1f
             ),
-            contentColor = ExtendedTheme.colors.text
+            contentColor = AppTokens.text
         ),
         onClick = onClick,
         modifier = Modifier.fillMaxWidth()

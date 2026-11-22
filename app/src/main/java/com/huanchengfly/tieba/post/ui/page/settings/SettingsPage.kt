@@ -44,12 +44,13 @@ import com.huanchengfly.tieba.post.utils.AccountUtil.LocalAccount
 import com.huanchengfly.tieba.post.utils.StringUtil
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 internal fun LeadingIcon(
     content: @Composable () -> Unit
 ) {
-    CompositionLocalProvider(LocalContentColor provides ExtendedTheme.colors.primary) {
+    CompositionLocalProvider(LocalContentColor provides AppTokens.primary) {
         content()
         Spacer(modifier = Modifier.width(56.dp))
     }

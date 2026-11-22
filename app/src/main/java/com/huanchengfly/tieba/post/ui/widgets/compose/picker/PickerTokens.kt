@@ -7,6 +7,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.Color
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 private class DefaultPickerColors(
     private val itemColor: Color,
@@ -36,9 +37,9 @@ interface PickerColors {
 object PickerDefaults {
     @Composable
     fun pickerColors(
-        itemColor: Color = ExtendedTheme.colors.text,
+        itemColor: Color = AppTokens.text,
         disabledItemColor: Color = itemColor.copy(alpha = ContentAlpha.disabled),
-        selectedItemColor: Color = ExtendedTheme.colors.accent,
+        selectedItemColor: Color = AppTokens.accent,
         disabledSelectedItemColor: Color = disabledItemColor
     ): PickerColors =
         DefaultPickerColors(

@@ -72,6 +72,7 @@ import com.huanchengfly.tieba.post.utils.appPreferences
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 private val UpdateTipTextStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 10.sp)
 
@@ -223,8 +224,8 @@ fun ThreadStorePage(
                             refreshing = isRefreshing,
                             state = pullRefreshState,
                             modifier = Modifier.align(Alignment.TopCenter),
-                            backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                            contentColor = ExtendedTheme.colors.primary,
+                            backgroundColor = AppTokens.pullRefreshIndicator,
+                            contentColor = AppTokens.primary,
                         )
                     }
                 }
@@ -301,7 +302,7 @@ private fun StoreItem(
             Text(
                 text = title,
                 fontSize = 15.sp,
-                color = if (isDeleted) ExtendedTheme.colors.textDisabled else ExtendedTheme.colors.text,
+                color = if (isDeleted) AppTokens.textDisabled else AppTokens.text,
                 inlineContent = mapOf(
                     "Update" to InlineTextContent(
                         placeholder = Placeholder(
@@ -314,7 +315,7 @@ private fun StoreItem(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .background(
-                                        color = ExtendedTheme.colors.chip,
+                                        color = AppTokens.chip,
                                         shape = RoundedCornerShape(3.dp)
                                     )
                                     .padding(vertical = 4.dp, horizontal = 12.dp)
@@ -322,7 +323,7 @@ private fun StoreItem(
                                 Text(
                                     text = updateTip,
                                     style = UpdateTipTextStyle,
-                                    color = ExtendedTheme.colors.onChip,
+                                    color = AppTokens.onChip,
                                     modifier = Modifier.align(Alignment.Center)
                                 )
                             }
@@ -334,7 +335,7 @@ private fun StoreItem(
                 Text(
                     text = stringResource(id = R.string.tip_thread_store_deleted),
                     fontSize = 12.sp,
-                    color = ExtendedTheme.colors.textDisabled
+                    color = AppTokens.textDisabled
                 )
             }
         }

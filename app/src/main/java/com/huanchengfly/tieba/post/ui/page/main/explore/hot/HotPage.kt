@@ -67,6 +67,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.items
 import com.huanchengfly.tieba.post.ui.widgets.compose.itemsIndexed
 import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
 import com.ramcosta.composedestinations.annotation.Destination
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @OptIn(ExperimentalMaterialApi::class)
 @Destination
@@ -194,7 +195,7 @@ fun HotPage(
                                 }
                             }
                             item {
-                                ProvideContentColor(color = ExtendedTheme.colors.primary) {
+                                ProvideContentColor(color = AppTokens.primary) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -239,7 +240,7 @@ fun HotPage(
                                 column = 5,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(ExtendedTheme.colors.background)
+                                    .background(AppTokens.background)
                                     .padding(vertical = 8.dp)
                                     .padding(horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -281,7 +282,7 @@ fun HotPage(
                     ) {
                         Text(
                             text = stringResource(id = R.string.hot_thread_rank_rule),
-                            color = ExtendedTheme.colors.textSecondary,
+                            color = AppTokens.textSecondary,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Normal,
                         )
@@ -375,8 +376,8 @@ fun HotPage(
             refreshing = isLoading,
             state = pullRefreshState,
             modifier = Modifier.align(Alignment.TopCenter),
-            backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-            contentColor = ExtendedTheme.colors.primary,
+            backgroundColor = AppTokens.pullRefreshIndicator,
+            contentColor = AppTokens.primary,
         )
     }
 }
@@ -393,7 +394,7 @@ private fun ThreadListItemPlaceholder() {
                 text = "1",
                 fontWeight = FontWeight.Bold,
                 fontSize = 10.sp,
-                color = ExtendedTheme.colors.background,
+                color = AppTokens.background,
                 modifier = Modifier
                     .padding(top = 3.dp)
                     .clip(RoundedCornerShape(4.dp))
@@ -411,7 +412,7 @@ private fun ThreadListItemPlaceholder() {
                 Text(
                     text = stringResource(id = R.string.hot_num, "666"),
                     style = MaterialTheme.typography.caption,
-                    color = ExtendedTheme.colors.textSecondary,
+                    color = AppTokens.textSecondary,
                     modifier = Modifier.placeholder(visible = true, color = MaterialTheme.colors.surface)
                 )
             }
@@ -425,8 +426,8 @@ private fun ThreadListTab(
     selected: Boolean,
     onSelected: () -> Unit
 ) {
-    val textColor by animateColorAsState(targetValue = if (selected) ExtendedTheme.colors.onAccent else ExtendedTheme.colors.onChip)
-    val backgroundColor by animateColorAsState(targetValue = if (selected) ExtendedTheme.colors.primary else ExtendedTheme.colors.chip)
+    val textColor by animateColorAsState(targetValue = if (selected) AppTokens.onAccent else AppTokens.onChip)
+    val backgroundColor by animateColorAsState(targetValue = if (selected) AppTokens.primary else AppTokens.chip)
     Text(
         text = text,
         textAlign = TextAlign.Center,
@@ -451,14 +452,14 @@ private fun ChipHeader(
     modifier: Modifier = Modifier
 ) {
     Text(
-        color = if (invert) MaterialTheme.colors.onSecondary else ExtendedTheme.colors.onChip,
+        color = if (invert) MaterialTheme.colors.onSecondary else AppTokens.onChip,
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
         text = text,
         modifier = Modifier
             .clip(RoundedCornerShape(100))
             .then(modifier)
-            .background(color = if (invert) MaterialTheme.colors.secondary else ExtendedTheme.colors.chip)
+            .background(color = if (invert) MaterialTheme.colors.secondary else AppTokens.chip)
             .padding(horizontal = 16.dp, vertical = 4.dp)
     )
 }

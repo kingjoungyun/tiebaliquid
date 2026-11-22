@@ -60,6 +60,7 @@ import com.huanchengfly.tieba.post.utils.EmoticonManager
 import com.huanchengfly.tieba.post.utils.EmoticonUtil.emoticonString
 import com.huanchengfly.tieba.post.utils.calcLineHeightPx
 import java.util.regex.Pattern
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 fun EmoticonText(
@@ -231,7 +232,7 @@ fun IconText(
                             Icons.Rounded.Link,
                             contentDescription = stringResource(id = R.string.link),
                             modifier = Modifier.size(sizeDp),
-                            tint = ExtendedTheme.colors.accent,
+                            tint = AppTokens.accent,
                         )
                     }
                 ),
@@ -246,7 +247,7 @@ fun IconText(
                             Icons.Rounded.SlowMotionVideo,
                             contentDescription = stringResource(id = R.string.desc_video),
                             modifier = Modifier.size(sizeDp),
-                            tint = ExtendedTheme.colors.accent,
+                            tint = AppTokens.accent,
                         )
                     }
                 ),
@@ -261,7 +262,7 @@ fun IconText(
                             Icons.Rounded.AccountCircle,
                             contentDescription = stringResource(id = R.string.user),
                             modifier = Modifier.size(sizeDp),
-                            tint = ExtendedTheme.colors.accent,
+                            tint = AppTokens.accent,
                         )
                     }
                 ),
@@ -351,8 +352,8 @@ fun buildChipInlineContent(
     padding: PaddingValues = PaddingValues(vertical = 2.dp, horizontal = 4.dp),
     textStyle: TextStyle = LocalTextStyle.current,
     chipTextStyle: TextStyle = LocalTextStyle.current,
-    backgroundColor: Color = ExtendedTheme.colors.chip,
-    color: Color = ExtendedTheme.colors.onChip
+    backgroundColor: Color = AppTokens.chip,
+    color: Color = AppTokens.onChip
 ): InlineTextContent {
     val textMeasurer = rememberTextMeasurer()
     val textSize = remember(text, textStyle) { textMeasurer.measure(text, textStyle).size }
@@ -424,7 +425,7 @@ fun HighlightText(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextStyle = LocalTextStyle.current,
     highlightKeywords: List<String> = emptyList(),
-    highlightColor: Color = ExtendedTheme.colors.primary,
+    highlightColor: Color = AppTokens.primary,
     highlightStyle: TextStyle = style,
 ) {
     HighlightText(
@@ -476,7 +477,7 @@ fun HighlightText(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextStyle = LocalTextStyle.current,
     highlightKeywords: List<String> = emptyList(),
-    highlightColor: Color = ExtendedTheme.colors.primary,
+    highlightColor: Color = AppTokens.primary,
     highlightStyle: TextStyle = style,
 ) {
     val mergedHighlightStyle = remember(highlightStyle, highlightColor) {

@@ -21,6 +21,7 @@ import io.github.neoruaa.glasmio.glass.GlassEmphasis
 import io.github.neoruaa.glasmio.glass.GlassSurface as GlasmioGlassSurface
 import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
 import io.github.neoruaa.glasmio.ui.GlasmioIconButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 全 App 统一的「悬浮玻璃圆钮」。
@@ -134,7 +135,7 @@ fun GlassCircleSurface(
         size = size,
         fill = navigationSurfaceColor ?: glassNavigationTint(),
     ) { materialTint ->
-        LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+        LiquidGlassTheme(accent = AppTokens.primary) {
             GlasmioGlassSurface(
                 modifier = Modifier.size(size),
                 shape = CircleShape,
@@ -180,7 +181,7 @@ private fun GlassCircleHost(
 
     val ambientSafe = LocalGlassSamplingSafe.current
     if (ambientSafe) {
-        LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+        LiquidGlassTheme(accent = AppTokens.primary) {
             Box(modifier.size(size), contentAlignment = Alignment.Center) {
                 content(GlasmioLocalGlassColors.current.content)
             }
@@ -200,7 +201,7 @@ private fun GlassCircleHost(
                 LocalLiquidGlassHosted provides true,
                 LocalGlassSamplingSafe provides true,
             ) {
-                LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+                LiquidGlassTheme(accent = AppTokens.primary) {
                     Box(Modifier.size(size), contentAlignment = Alignment.Center) {
                         content(GlasmioLocalGlassColors.current.content)
                         GlassInnerGlow(CircleShape)

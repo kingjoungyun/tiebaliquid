@@ -153,6 +153,7 @@ import kotlinx.serialization.json.Json
 import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 
 private val LoadDistance = 70.dp
@@ -277,8 +278,8 @@ private fun ForumHeader(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(100))
                                 .height(8.dp),
-                            color = ExtendedTheme.colors.primary,
-                            backgroundColor = ExtendedTheme.colors.primary.copy(alpha = 0.25f)
+                            color = AppTokens.primary,
+                            backgroundColor = AppTokens.primary.copy(alpha = 0.25f)
                         )
                         Text(
                             text = stringResource(
@@ -287,7 +288,7 @@ private fun ForumHeader(
                                 forum.level_name
                             ),
                             style = MaterialTheme.typography.caption,
-                            color = ExtendedTheme.colors.textSecondary,
+                            color = AppTokens.textSecondary,
                             fontSize = 10.sp,
                         )
                     }
@@ -302,8 +303,8 @@ private fun ForumHeader(
                     elevation = null,
                     shape = RoundedCornerShape(100),
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = ExtendedTheme.colors.primary,
-                        contentColor = ExtendedTheme.colors.onAccent
+                        backgroundColor = AppTokens.primary,
+                        contentColor = AppTokens.onAccent
                     ),
                     contentPadding = PaddingValues(horizontal = 18.dp, vertical = 6.dp),
                     enabled = btnEnabled
@@ -324,7 +325,7 @@ private fun ForumHeader(
 //        Row(
 //            modifier = Modifier
 //                .clip(RoundedCornerShape(8.dp))
-//                .background(color = ExtendedTheme.colors.chip)
+//                .background(color = AppTokens.chip)
 //                .padding(vertical = 20.dp),
 //            verticalAlignment = Alignment.CenterVertically,
 //        ) {
@@ -332,12 +333,12 @@ private fun ForumHeader(
 //                statNum = forum.member_num,
 //                statText = stringResource(id = R.string.text_stat_follow)
 //            )
-//            HorizontalDivider(color = Color(if (ExtendedTheme.colors.isNightMode) 0xFF808080 else 0xFFDEDEDE))
+//            HorizontalDivider(color = Color(if (AppTokens.isNightMode) 0xFF808080 else 0xFFDEDEDE))
 //            StatCardItem(
 //                statNum = forum.thread_num,
 //                statText = stringResource(id = R.string.text_stat_threads)
 //            )
-//            HorizontalDivider(color = Color(if (ExtendedTheme.colors.isNightMode) 0xFF808080 else 0xFFDEDEDE))
+//            HorizontalDivider(color = Color(if (AppTokens.isNightMode) 0xFF808080 else 0xFFDEDEDE))
 //            StatCardItem(
 //                statNum = forum.post_num,
 //                statText = stringResource(id = R.string.title_stat_posts_num)
@@ -763,8 +764,8 @@ fun ForumPage(
                                         }
                                     }
                                 },
-                                backgroundColor = ExtendedTheme.colors.windowBackground,
-                                contentColor = ExtendedTheme.colors.primary,
+                                backgroundColor = AppTokens.windowBackground,
+                                contentColor = AppTokens.primary,
                                 modifier = Modifier.navigationBarsPadding()
                             ) {
                                 Icon(
@@ -977,10 +978,10 @@ fun ForumPage(
                                 }
                                 val tabSelectedColor =
                                     if (glassmio) GlasmioTheme.colors.content
-                                    else ExtendedTheme.colors.primary
+                                    else AppTokens.primary
                                 val tabUnselectedColor =
                                     if (glassmio) GlasmioTheme.colors.secondaryContent
-                                    else ExtendedTheme.colors.textSecondary
+                                    else AppTokens.textSecondary
 
                                 ScrollableTabRow(
                                     selectedTabIndex = currentPage,
@@ -1360,7 +1361,7 @@ private fun RowScope.StatCardItem(
         Text(
             text = statText,
             fontSize = 12.sp,
-            color = ExtendedTheme.colors.textSecondary
+            color = AppTokens.textSecondary
         )
     }
 }

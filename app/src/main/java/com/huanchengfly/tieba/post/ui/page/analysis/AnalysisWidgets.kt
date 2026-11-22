@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /** 一个分析卡片：标题 + 内容。 */
 @Composable
@@ -34,7 +35,7 @@ internal fun AnalysisSection(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .background(color = ExtendedTheme.colors.card, shape = RoundedCornerShape(16.dp))
+            .background(color = AppTokens.card, shape = RoundedCornerShape(16.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -42,7 +43,7 @@ internal fun AnalysisSection(
             text = title,
             style = MaterialTheme.typography.subtitle1,
             fontWeight = FontWeight.Bold,
-            color = ExtendedTheme.colors.text,
+            color = AppTokens.text,
         )
         content()
     }
@@ -59,7 +60,7 @@ internal fun BarChart(
         Text(
             text = "暂无数据",
             style = MaterialTheme.typography.body2,
-            color = ExtendedTheme.colors.text,
+            color = AppTokens.text,
         )
         return
     }
@@ -89,7 +90,7 @@ internal fun BarChart(
             Text(
                 text = axisLabel,
                 style = MaterialTheme.typography.caption,
-                color = ExtendedTheme.colors.text,
+                color = AppTokens.text,
             )
         }
     }
@@ -110,7 +111,7 @@ internal fun RankList(
         Text(
             text = "暂无数据",
             style = MaterialTheme.typography.body2,
-            color = ExtendedTheme.colors.text,
+            color = AppTokens.text,
         )
         return
     }
@@ -136,7 +137,7 @@ internal fun RankList(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.body2,
-                    color = ExtendedTheme.colors.text,
+                    color = AppTokens.text,
                 )
                 Box(
                     modifier = Modifier
@@ -160,7 +161,7 @@ internal fun RankList(
                 Text(
                     text = bucket.count.toString(),
                     style = MaterialTheme.typography.caption,
-                    color = ExtendedTheme.colors.text,
+                    color = AppTokens.text,
                 )
             }
         }
@@ -178,7 +179,7 @@ internal fun WordCloud(
         Text(
             text = "暂无数据",
             style = MaterialTheme.typography.body2,
-            color = ExtendedTheme.colors.text,
+            color = AppTokens.text,
         )
         return
     }
@@ -211,13 +212,13 @@ internal fun StatRow(label: String, value: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.body2,
-            color = ExtendedTheme.colors.text,
+            color = AppTokens.text,
         )
         Text(
             text = value,
             style = MaterialTheme.typography.body2,
             fontWeight = FontWeight.Bold,
-            color = ExtendedTheme.colors.text,
+            color = AppTokens.text,
         )
     }
 }

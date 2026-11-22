@@ -25,6 +25,7 @@ import com.eygraber.compose.placeholder.PlaceholderHighlight
 import com.eygraber.compose.placeholder.material.fade
 import com.eygraber.compose.placeholder.material.placeholder
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 fun UserHeaderPlaceholder(
@@ -91,7 +92,7 @@ fun UserHeader(
             ProvideTextStyle(
                 value = MaterialTheme.typography.subtitle1.merge(
                     TextStyle(
-                        color = ExtendedTheme.colors.text,
+                        color = AppTokens.text,
                         fontSize = 13.sp
                     )
                 )
@@ -102,7 +103,7 @@ fun UserHeader(
                 ProvideTextStyle(
                     value = MaterialTheme.typography.caption.merge(
                         TextStyle(
-                            color = ExtendedTheme.colors.textSecondary,
+                            color = AppTokens.textSecondary,
                             fontSize = 11.sp
                         )
                     )

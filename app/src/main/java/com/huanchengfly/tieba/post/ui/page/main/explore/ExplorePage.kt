@@ -55,6 +55,7 @@ import io.github.neoruaa.glasmio.glass.GlassSurface
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 
 @Immutable
@@ -83,7 +84,7 @@ private fun ExplorePageTab(
         },
         divider = {},
         backgroundColor = Color.Transparent,
-        contentColor = ExtendedTheme.colors.onTopBar,
+        contentColor = AppTokens.onTopBar,
         modifier = modifier.width(76.dp * pages.size),
     ) {
         pages.fastForEachIndexed { index, item ->
@@ -148,14 +149,14 @@ fun ExplorePage() {
                             Icon(
                                 imageVector = Icons.Rounded.Search,
                                 contentDescription = null,
-                                tint = ExtendedTheme.colors.textSecondary,
+                                tint = AppTokens.textSecondary,
                                 modifier = Modifier.size(18.dp),
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = stringResource(id = R.string.title_search),
                                 fontSize = 15.sp,
-                                color = ExtendedTheme.colors.textSecondary,
+                                color = AppTokens.textSecondary,
                             )
                         }
                     }

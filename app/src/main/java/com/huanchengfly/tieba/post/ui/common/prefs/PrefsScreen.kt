@@ -49,6 +49,7 @@ import io.github.neoruaa.glasmio.scaffold.GlasmioNavigationScaffold
 import io.github.neoruaa.glasmio.scaffold.GlasmioPageTitle
 import io.github.neoruaa.glasmio.scaffold.navigation.GlasmioNavHeaderMotion
 import io.github.neoruaa.glasmio.scaffold.rememberGlasmioHeaderCollapse
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 lateinit var LocalPrefsDataStore: ProvidableCompositionLocal<DataStore<Preferences>>
 
@@ -102,7 +103,7 @@ fun PrefsScreen(
     ) {
         // 只在这一支包 GlasmioTheme：开关要读它的明暗令牌（明暗跟随 App 自己的
         // ExtendedTheme.isNightMode，不是系统）。不包整个 App，避免 M3 主题污染其它页面。
-        LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+        LiquidGlassTheme(accent = AppTokens.primary) {
             when (uiStyle) {
                 PrefsUiStyle.GLASSMIO -> GlasmioPrefsPage(
                     prefsScope = prefsScope,

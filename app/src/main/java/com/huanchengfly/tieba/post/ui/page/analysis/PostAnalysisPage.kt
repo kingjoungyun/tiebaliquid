@@ -37,6 +37,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 「TA 的发言分析」页。
@@ -137,7 +138,7 @@ fun PostAnalysisPage(
                             text = stringResource(id = R.string.label_analysis_hit, matched.size),
                             modifier = Modifier.padding(horizontal = 16.dp),
                             style = MaterialTheme.typography.body2,
-                            color = ExtendedTheme.colors.text,
+                            color = AppTokens.text,
                         )
                     }
                     // 列表可能很长，只展示前 100 条命中，避免一次性铺开卡 UI。
@@ -248,7 +249,7 @@ private fun PostHitRow(post: PostRecord, onClick: () -> Unit) {
                 if (post.createTimeSec > 0L) append(" · ").append(formatDateTime(post.createTimeSec))
             },
             style = MaterialTheme.typography.caption,
-            color = ExtendedTheme.colors.text,
+            color = AppTokens.text,
         )
         val preview = listOf(post.title, post.content)
             .firstOrNull { it.isNotBlank() }
@@ -259,7 +260,7 @@ private fun PostHitRow(post: PostRecord, onClick: () -> Unit) {
             maxLines = 3,
             overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.body2,
-            color = ExtendedTheme.colors.text,
+            color = AppTokens.text,
         )
     }
 }

@@ -71,6 +71,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.VerticalDivider
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 private fun getFirstLoadIntent(
     context: Context,
@@ -482,8 +483,8 @@ fun ForumThreadListPage(
             refreshing = isRefreshing,
             state = pullRefreshState,
             modifier = Modifier.align(Alignment.TopCenter),
-            backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-            contentColor = ExtendedTheme.colors.primary,
+            backgroundColor = AppTokens.pullRefreshIndicator,
+            contentColor = AppTokens.primary,
         )
     }
 }

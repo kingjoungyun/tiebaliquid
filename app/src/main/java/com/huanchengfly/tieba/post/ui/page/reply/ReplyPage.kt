@@ -135,6 +135,7 @@ import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import java.util.UUID
 import kotlin.math.max
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 data class ReplyArgs(
     val forumId: Long,
@@ -160,7 +161,7 @@ fun ReplyDialog(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
-            color = ExtendedTheme.colors.windowBackground,
+            color = AppTokens.windowBackground,
             elevation = 0.dp,
         ) {
             ReplyPageContent(
@@ -492,7 +493,7 @@ internal fun ReplyPageContent(
             Text(
                 text = "$textLength",
                 style = MaterialTheme.typography.caption,
-                color = ExtendedTheme.colors.textSecondary
+                color = AppTokens.textSecondary
             )
         }
         VerticalDivider(modifier = Modifier.padding(horizontal = 16.dp))
@@ -515,7 +516,7 @@ internal fun ReplyPageContent(
                     Text(
                         text = stringResource(id = R.string.hint_thread_title),
                         style = MaterialTheme.typography.subtitle1.copy(fontSize = 15.sp),
-                        color = ExtendedTheme.colors.textSecondary,
+                        color = AppTokens.textSecondary,
                     )
                 },
             )
@@ -613,8 +614,8 @@ internal fun ReplyPageContent(
                         badge = {
                             if (selectedImageList.isNotEmpty()) {
                                 Badge(
-                                    backgroundColor = ExtendedTheme.colors.accent,
-                                    contentColor = ExtendedTheme.colors.background,
+                                    backgroundColor = AppTokens.accent,
+                                    contentColor = AppTokens.background,
                                 ) {
                                     Text(
                                         text = "${selectedImageList.size}",
@@ -647,7 +648,7 @@ internal fun ReplyPageContent(
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
                     strokeWidth = 2.dp,
-                    color = ExtendedTheme.colors.primary
+                    color = AppTokens.primary
                 )
             } else {
                 IconButton(
@@ -972,7 +973,7 @@ private fun ImagePanel(
                         modifier = Modifier
                             .fillMaxHeight()
                             .aspectRatio(1f)
-                            .background(ExtendedTheme.colors.chip)
+                            .background(AppTokens.chip)
                             .clickable {
                                 coroutineScope.emitGlobalEvent(
                                     GlobalEvent.StartSelectImages(

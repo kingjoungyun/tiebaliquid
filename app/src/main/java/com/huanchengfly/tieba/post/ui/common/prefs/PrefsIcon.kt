@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.icons.SfIcon
-import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalAppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalGlassTokens
 
 /**
  * 设置行的左侧图标：Glasmio 的 `SfIcon`（23dp、accent 着色），与 B 版样板页
@@ -28,6 +28,6 @@ fun PrefsIcon(symbol: String) {
         systemName = symbol,
         contentDescription = null,
         size = 23.dp,
-        tint = LocalAppTokens.current.accent,
+        tint = LocalGlassTokens.current.accent,
     )
 }

@@ -65,6 +65,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.glassNavigationTint
 import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.utils.ThemeUtil
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 主界面顶栏的运行状态。
@@ -205,7 +206,7 @@ fun MainTabScaffold(
             modifier = modifier.fillMaxSize(),
             backgroundColor = Color.Transparent,
             topBar = {
-                Column(Modifier.background(ExtendedTheme.colors.topBar)) {
+                Column(Modifier.background(AppTokens.topBar)) {
                     Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
                     Box(Modifier.height(GlassTokens.Spacing.barHeight)) { topBar() }
                 }

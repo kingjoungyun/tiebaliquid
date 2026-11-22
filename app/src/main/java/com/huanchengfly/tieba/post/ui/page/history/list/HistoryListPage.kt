@@ -69,6 +69,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.UserHeader
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberMenuState
 import com.huanchengfly.tieba.post.utils.DateTimeUtils
 import com.huanchengfly.tieba.post.utils.HistoryUtil
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -160,7 +161,7 @@ fun HistoryListPage(
                                         .fillMaxWidth()
                                         .background(
                                             if (glassmio) GlasmioTheme.colors.groupedBackground
-                                            else ExtendedTheme.colors.background
+                                            else AppTokens.background
                                         )
                                         .padding(horizontal = 16.dp, vertical = 8.dp)
                                 ) {
@@ -210,7 +211,7 @@ fun HistoryListPage(
                                         .fillMaxWidth()
                                         .background(
                                             if (glassmio) GlasmioTheme.colors.groupedBackground
-                                            else ExtendedTheme.colors.background
+                                            else AppTokens.background
                                         )
                                         .padding(horizontal = 16.dp, vertical = 8.dp)
                                 ) {
@@ -316,14 +317,14 @@ private fun HistoryItem(
                     text = primaryText,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = ExtendedTheme.colors.text,
+                    color = AppTokens.text,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = secondaryText,
                     fontSize = 13.sp,
-                    color = ExtendedTheme.colors.textSecondary,
+                    color = AppTokens.textSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -361,14 +362,14 @@ private fun HistoryItem(
                         info.timestamp
                     ),
                     fontSize = 15.sp,
-                    color = ExtendedTheme.colors.text,
+                    color = AppTokens.text,
                 )
             }
             if (info.type == HistoryUtil.TYPE_THREAD) {
                 Text(
                     text = info.title,
                     fontSize = 15.sp,
-                    color = ExtendedTheme.colors.text,
+                    color = AppTokens.text,
                 )
             }
         }

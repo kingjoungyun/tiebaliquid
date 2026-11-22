@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 fun Button(
@@ -40,8 +41,8 @@ fun Button(
     shape: Shape = RoundedCornerShape(100),
     border: BorderStroke? = null,
     colors: ButtonColors = ButtonDefaults.buttonColors(
-        backgroundColor = ExtendedTheme.colors.primary,
-        contentColor = ExtendedTheme.colors.onAccent
+        backgroundColor = AppTokens.primary,
+        contentColor = AppTokens.onAccent
     ),
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     content: @Composable RowScope.() -> Unit
@@ -86,7 +87,7 @@ fun TextButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     shape: Shape = RoundedCornerShape(100),
     border: BorderStroke? = null,
-    color: Color = ExtendedTheme.colors.text,
+    color: Color = AppTokens.text,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     content: @Composable RowScope.() -> Unit
 ) {

@@ -16,6 +16,7 @@ import com.github.panpf.sketch.fetch.newFileUri
 import com.huanchengfly.tieba.post.rememberPreferenceAsMutableState
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.utils.ThemeUtil
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 主页面被采样的背景（垂直渐变 + 可选的「半透明主题」背景图）。
@@ -39,7 +40,7 @@ fun GlassAppBackground(modifier: Modifier = Modifier) {
                 )
             )
     ) {
-        if (ThemeUtil.isTranslucentTheme(ExtendedTheme.colors.theme)) {
+        if (ThemeUtil.isTranslucentTheme(AppTokens.theme)) {
             val backgroundPath by rememberPreferenceAsMutableState(
                 key = stringPreferencesKey("translucent_theme_background_path"),
                 defaultValue = ""

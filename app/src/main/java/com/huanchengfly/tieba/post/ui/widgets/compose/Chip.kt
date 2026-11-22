@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.invertChipBackground
 import com.huanchengfly.tieba.post.ui.common.theme.compose.invertChipContent
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 fun Chip(
@@ -34,9 +35,9 @@ fun Chip(
     shape: Shape = RoundedCornerShape(100),
 ) {
     val color =
-        if (invertColor) ExtendedTheme.colors.invertChipContent else ExtendedTheme.colors.onChip
+        if (invertColor) AppTokens.invertChipContent else AppTokens.onChip
     val backgroundColor =
-        if (invertColor) ExtendedTheme.colors.invertChipBackground else ExtendedTheme.colors.chip
+        if (invertColor) AppTokens.invertChipBackground else AppTokens.chip
 
     val animatedColor by animateColorAsState(targetValue = color, label = "ChipColor")
     val animatedBackgroundColor by animateColorAsState(

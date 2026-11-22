@@ -102,6 +102,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import java.io.File
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @AndroidEntryPoint
 class EditProfileActivity : BaseActivity<Nothing>() {
@@ -278,7 +279,7 @@ fun EditProfileCard(
     onIntroChange: ((String) -> Unit)? = null,
     onUploadPortrait: (() -> Unit)? = null,
     onModifySex: (() -> Unit)? = null,
-    color: Color = ExtendedTheme.colors.background,
+    color: Color = AppTokens.background,
 ) {
     val context = LocalContext.current
     Card(elevation = 0.dp, backgroundColor = color) {
@@ -342,7 +343,7 @@ fun EditProfileCard(
 
                 Text(
                     text = stringResource(id = R.string.title_username),
-                    color = ExtendedTheme.colors.textDisabled,
+                    color = AppTokens.textDisabled,
                     modifier = Modifier.constrainAs(nameTitle) {
                         top.linkTo(parent.top)
                         bottom.linkTo(nameContent.bottom)
@@ -351,7 +352,7 @@ fun EditProfileCard(
                 )
                 Text(
                     text = name,
-                    color = ExtendedTheme.colors.textDisabled,
+                    color = AppTokens.textDisabled,
                     modifier = Modifier
                         .constrainAs(nameContent) {
                             top.linkTo(nameTitle.top)
@@ -365,7 +366,7 @@ fun EditProfileCard(
 
                 Text(
                     text = stringResource(id = R.string.title_nickname),
-                    color = ExtendedTheme.colors.textDisabled,
+                    color = AppTokens.textDisabled,
                     modifier = Modifier.constrainAs(nickNameTitle) {
                         top.linkTo(nameTitle.bottom, margin = 16.dp)
                         start.linkTo(parent.start)
@@ -393,7 +394,7 @@ fun EditProfileCard(
 
                 Text(
                     text = stringResource(id = R.string.profile_sex),
-                    color = ExtendedTheme.colors.textDisabled,
+                    color = AppTokens.textDisabled,
                     modifier = Modifier.constrainAs(sexTitle) {
                         top.linkTo(nickNameTitle.bottom, margin = 16.dp)
                         start.linkTo(parent.start)
@@ -422,13 +423,13 @@ fun EditProfileCard(
                                 else -> R.string.profile_sex_unset
                             }
                         ),
-                        color = ExtendedTheme.colors.text,
+                        color = AppTokens.text,
                         modifier = Modifier.weight(1f)
                     )
                     Icon(
                         imageVector = ImageVector.vectorResource(id = R.drawable.ic_round_chevron_right),
                         contentDescription = null,
-                        tint = ExtendedTheme.colors.textSecondary,
+                        tint = AppTokens.textSecondary,
                         modifier = Modifier
                             .size(16.dp)
                             .align(Alignment.CenterVertically)
@@ -437,7 +438,7 @@ fun EditProfileCard(
 
                 Text(
                     text = stringResource(id = R.string.title_intro),
-                    color = ExtendedTheme.colors.textDisabled,
+                    color = AppTokens.textDisabled,
                     modifier = Modifier.constrainAs(introTitle) {
                         top.linkTo(sexTitle.bottom, margin = 16.dp)
                         start.linkTo(parent.start)

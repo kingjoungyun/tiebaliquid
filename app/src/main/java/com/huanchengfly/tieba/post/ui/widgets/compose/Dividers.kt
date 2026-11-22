@@ -11,11 +11,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 fun HorizontalDivider(
     modifier: Modifier = Modifier,
-    color: Color = ExtendedTheme.colors.divider,
+    color: Color = AppTokens.divider,
     height: Dp = 16.dp,
     width: Dp = 1.dp,
 ) {
@@ -30,7 +31,7 @@ fun HorizontalDivider(
 @Composable
 fun VerticalDivider(
     modifier: Modifier = Modifier,
-    color: Color = ExtendedTheme.colors.divider,
+    color: Color = AppTokens.divider,
     thickness: Dp = 1.dp,
     startIndent: Dp = 0.dp
 ) {

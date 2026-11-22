@@ -67,6 +67,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlin.math.min
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 fun QuotePostCard(
@@ -101,7 +102,7 @@ fun QuotePostCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(6.dp))
-                .background(ExtendedTheme.colors.card)
+                .background(AppTokens.card)
                 .clickable {
                     onMainPostClick(mainPost)
                 },
@@ -261,7 +262,7 @@ fun SearchThreadItem(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(6.dp))
-                            .background(ExtendedTheme.colors.floorCard)
+                            .background(AppTokens.floorCard)
                             .clickable {
                                 onQuotePostClick(item.postInfo)
                             },
@@ -274,7 +275,7 @@ fun SearchThreadItem(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(6.dp))
-                            .background(ExtendedTheme.colors.floorCard)
+                            .background(AppTokens.floorCard)
                             .clickable {
                                 onMainPostClick(item.mainPost)
                             },
@@ -404,8 +405,8 @@ fun SearchBox(
     appendIcon: @Composable () -> Unit = {},
     focusRequester: FocusRequester = remember { FocusRequester() },
     shape: Shape = RectangleShape,
-    color: Color = ExtendedTheme.colors.topBarSurface,
-    contentColor: Color = ExtendedTheme.colors.onTopBarSurface,
+    color: Color = AppTokens.topBarSurface,
+    contentColor: Color = AppTokens.onTopBarSurface,
     elevation: Dp = 0.dp,
     glassmio: Boolean = false,
     showSubmitIcon: Boolean = true,

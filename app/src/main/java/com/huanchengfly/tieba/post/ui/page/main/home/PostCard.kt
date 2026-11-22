@@ -69,6 +69,7 @@ import io.github.neoruaa.glasmio.glass.render.backdrops.emptyBackdrop
 import io.github.neoruaa.glasmio.ui.GlasmioCard
 import kotlinx.collections.immutable.ImmutableList
 import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 首页信息流的「推特式」帖子卡（`PostCardUiStyle.TWITTER`）。
@@ -678,5 +679,5 @@ private object PostCardTokens {
 
     /** 点赞高亮色：iOS 红，浅色 / 深色各一档（不跟主题 accent 走，见简报「遗留」）。 */
     val likeColor: Color
-        @Composable get() = if (ExtendedTheme.colors.isNightMode) Color(0xFFFF453A) else Color(0xFFFF3B30)
+        @Composable get() = if (AppTokens.isNightMode) Color(0xFFFF453A) else Color(0xFFFF3B30)
 }

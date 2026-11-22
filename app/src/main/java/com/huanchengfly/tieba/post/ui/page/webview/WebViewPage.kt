@@ -88,6 +88,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 import java.util.UUID
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @SuppressLint("SetJavaScriptEnabled")
 @Destination
@@ -182,7 +183,7 @@ fun WebViewPage(
                                         text = currentHost,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
-                                        color = ExtendedTheme.colors.onTopBarSecondary,
+                                        color = AppTokens.onTopBarSecondary,
                                         style = MaterialTheme.typography.caption
                                     )
                                 }

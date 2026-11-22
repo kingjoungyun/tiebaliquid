@@ -162,6 +162,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @ExperimentalMaterialApi
 @Destination
@@ -177,7 +178,7 @@ fun UserProfilePage(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
-                    if (ExtendedTheme.colors.isNightMode) Color.Black else Color(0xFFF2F2F7)
+                    if (AppTokens.isNightMode) Color.Black else Color(0xFFF2F2F7)
                 )
         ) {
             val account = LocalAccount.current
@@ -230,7 +231,7 @@ fun UserProfilePage(
                 }
             )
     
-            LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+            LiquidGlassTheme(accent = AppTokens.primary) {
                 HarmonyTextProvider {
             ProvideNavigator(navigator = navigator) {
                 StateScreen(
@@ -633,7 +634,7 @@ private fun UserProfileContentNormal(
                 }
             }
 
-            ProvideContentColor(color = ExtendedTheme.colors.text) {
+            ProvideContentColor(color = AppTokens.text) {
                 Column(
                     modifier = Modifier
                         .padding(paddingValues)
@@ -812,7 +813,7 @@ private fun UserProfileContentExpanded(
             )
         }
     ) { paddingValues ->
-        ProvideContentColor(color = ExtendedTheme.colors.text) {
+        ProvideContentColor(color = AppTokens.text) {
             Box(
                 modifier = Modifier.fillMaxSize()
             ) {
@@ -984,7 +985,7 @@ private fun UserProfileTabRow(
         },
         divider = {},
         backgroundColor = Color.Transparent,
-        contentColor = ExtendedTheme.colors.primary,
+        contentColor = AppTokens.primary,
         edgePadding = 0.dp,
         modifier = modifier.wrapContentWidth(align = Alignment.Start),
     ) {
@@ -996,8 +997,8 @@ private fun UserProfileTabRow(
                         pagerState.animateScrollToPage(i)
                     }
                 },
-                selectedContentColor = ExtendedTheme.colors.primary,
-                unselectedContentColor = ExtendedTheme.colors.textSecondary,
+                selectedContentColor = AppTokens.primary,
+                unselectedContentColor = AppTokens.textSecondary,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -1166,11 +1167,11 @@ private fun UserProfileDetail(
                 ) {
                     Text(
                         text = stringResource(id = R.string.text_stat_follow),
-                        color = ExtendedTheme.colors.textSecondary
+                        color = AppTokens.textSecondary
                     )
                     Text(
                         text = user.get { concern_num }.getShortNumString(),
-                        color = ExtendedTheme.colors.text,
+                        color = AppTokens.text,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -1181,11 +1182,11 @@ private fun UserProfileDetail(
                 ) {
                     Text(
                         text = stringResource(id = R.string.text_stat_fans),
-                        color = ExtendedTheme.colors.textSecondary
+                        color = AppTokens.textSecondary
                     )
                     Text(
                         text = user.get { fans_num }.getShortNumString(),
-                        color = ExtendedTheme.colors.text,
+                        color = AppTokens.text,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -1196,11 +1197,11 @@ private fun UserProfileDetail(
                 ) {
                     Text(
                         text = stringResource(id = R.string.text_stat_agrees),
-                        color = ExtendedTheme.colors.textSecondary
+                        color = AppTokens.textSecondary
                     )
                     Text(
                         text = user.get { total_agree_num }.getShortNumString(),
-                        color = ExtendedTheme.colors.text,
+                        color = AppTokens.text,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -1224,12 +1225,12 @@ private fun UserProfileDetail(
                         imageVector = Icons.Rounded.Verified,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = ExtendedTheme.colors.primary,
+                        tint = AppTokens.primary,
                     )
                     Text(
                         text = it.get { desc },
                         style = MaterialTheme.typography.body2,
-                        color = ExtendedTheme.colors.primary,
+                        color = AppTokens.primary,
                     )
                 }
             } ?: user.getNullableImmutable { new_god_data }
@@ -1243,12 +1244,12 @@ private fun UserProfileDetail(
                         imageVector = Icons.Rounded.Verified,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = ExtendedTheme.colors.primary,
+                        tint = AppTokens.primary,
                     )
                     Text(
                         text = stringResource(id = R.string.text_god_verify, it.get { field_name }),
                         style = MaterialTheme.typography.body2,
-                        color = ExtendedTheme.colors.primary,
+                        color = AppTokens.primary,
                     )
                 }
             }
@@ -1319,7 +1320,7 @@ private fun UserProfileAccountSection(
 ) {
     val navigator = LocalNavigator.current
     val groupTitle = stringResource(id = R.string.settings_group_account)
-    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+    LiquidGlassTheme(accent = AppTokens.primary) {
         val colors = GlasmioTheme.colors
         CompositionLocalProvider(
             LocalPrefsUiStyle provides PrefsUiStyle.GLASSMIO,
@@ -1393,7 +1394,7 @@ private val UserProfileIconResolver = GlasmioIconResolver { systemName ->
 private fun HorizontalDivider(modifier: Modifier = Modifier) {
     Box(
         modifier = Modifier
-            .background(ExtendedTheme.colors.divider)
+            .background(AppTokens.divider)
             .width(1.dp)
             .then(modifier)
     )

@@ -56,6 +56,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.ui.GlasmioIconButton
 import kotlinx.coroutines.launch
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @OptIn(ExperimentalFoundationApi::class)
 @Destination(
@@ -80,7 +81,7 @@ fun NotificationsPage(
         initialPage = initialTab,
     ) { pages.size }
     val glassmio = NotificationsUi.DefaultStyle == NotificationsUiStyle.GLASMIO
-    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+    LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
             ProvideNavigator(navigator = navigator) {
                 MyScaffold(
@@ -132,7 +133,7 @@ fun NotificationsPage(
         initialPage = initialTab,
     ) { pages.size }
     val coroutineScope = rememberCoroutineScope()
-    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+    LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
     MainTabScaffold(
         modifier = Modifier.fillMaxSize(),
@@ -206,7 +207,7 @@ private fun NotificationsHeader(
                 lineHeight = 40.sp,
                 fontWeight = FontWeight.Bold,
             ),
-            color = ExtendedTheme.colors.text,
+            color = AppTokens.text,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
         )
         TabRow(
@@ -216,7 +217,7 @@ private fun NotificationsHeader(
             },
             divider = {},
             backgroundColor = Color.Transparent,
-            contentColor = ExtendedTheme.colors.primary,
+            contentColor = AppTokens.primary,
         ) {
             pages.forEachIndexed { index, pair ->
                 Tab(
@@ -235,8 +236,8 @@ private fun NotificationsHeader(
                     onClick = {
                         coroutineScope.launch { pagerState.animateScrollToPage(index) }
                     },
-                    selectedContentColor = ExtendedTheme.colors.onTopBar,
-                    unselectedContentColor = ExtendedTheme.colors.onTopBarSecondary,
+                    selectedContentColor = AppTokens.onTopBar,
+                    unselectedContentColor = AppTokens.onTopBarSecondary,
                 )
             }
         }

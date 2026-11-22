@@ -74,23 +74,24 @@ import com.huanchengfly.tieba.post.utils.CuidUtils
 import com.huanchengfly.tieba.post.utils.StringUtil
 import com.huanchengfly.tieba.post.utils.ThemeUtil
 import com.huanchengfly.tieba.post.utils.appPreferences
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 private fun StatCardPlaceholder(modifier: Modifier = Modifier) {
     Row(
-        modifier = modifier.placeholder(visible = true, color = ExtendedTheme.colors.chip),
+        modifier = modifier.placeholder(visible = true, color = AppTokens.chip),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         StatCardItem(
             statNum = 0,
             statText = stringResource(id = R.string.text_stat_follow)
         )
-        HorizontalDivider(color = Color(if (ExtendedTheme.colors.isNightMode) 0xFF808080 else 0xFFDEDEDE))
+        HorizontalDivider(color = Color(if (AppTokens.isNightMode) 0xFF808080 else 0xFFDEDEDE))
         StatCardItem(
             statNum = 0,
             statText = stringResource(id = R.string.text_stat_fans)
         )
-        HorizontalDivider(color = Color(if (ExtendedTheme.colors.isNightMode) 0xFF808080 else 0xFFDEDEDE))
+        HorizontalDivider(color = Color(if (AppTokens.isNightMode) 0xFF808080 else 0xFFDEDEDE))
         StatCardItem(
             statNum = 0,
             statText = stringResource(id = R.string.title_stat_posts_num)
@@ -122,7 +123,7 @@ private fun StatCard(
                 Modifier
             }
         )
-        HorizontalDivider(color = Color(if (ExtendedTheme.colors.isNightMode) 0xFF808080 else 0xFFDEDEDE))
+        HorizontalDivider(color = Color(if (AppTokens.isNightMode) 0xFF808080 else 0xFFDEDEDE))
         StatCardItem(
             statNum = fansNum,
             statText = stringResource(id = R.string.text_stat_fans),
@@ -132,7 +133,7 @@ private fun StatCard(
                 Modifier
             }
         )
-        HorizontalDivider(color = Color(if (ExtendedTheme.colors.isNightMode) 0xFF808080 else 0xFFDEDEDE))
+        HorizontalDivider(color = Color(if (AppTokens.isNightMode) 0xFF808080 else 0xFFDEDEDE))
         StatCardItem(
             statNum = postNum,
             statText = stringResource(id = R.string.title_stat_posts_num),
@@ -165,19 +166,19 @@ private fun InfoCard(
                 text = userName,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = ExtendedTheme.colors.text,
+                color = AppTokens.text,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .placeholder(visible = isPlaceholder, color = ExtendedTheme.colors.chip),
+                    .placeholder(visible = isPlaceholder, color = AppTokens.chip),
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = userIntro,
                 fontSize = 12.sp,
-                color = ExtendedTheme.colors.textSecondary,
+                color = AppTokens.textSecondary,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .placeholder(visible = isPlaceholder, color = ExtendedTheme.colors.chip),
+                    .placeholder(visible = isPlaceholder, color = AppTokens.chip),
             )
         }
         Spacer(modifier = Modifier.width(16.dp))
@@ -188,7 +189,7 @@ private fun InfoCard(
                 contentDescription = stringResource(id = R.string.desc_user_avatar),
                 modifier = Modifier
                     .align(Alignment.Bottom)
-                    .placeholder(visible = isPlaceholder, color = ExtendedTheme.colors.chip),
+                    .placeholder(visible = isPlaceholder, color = AppTokens.chip),
             )
         }
     }
@@ -213,7 +214,7 @@ private fun RowScope.StatCardItem(
         Text(
             text = statText,
             fontSize = 12.sp,
-            color = ExtendedTheme.colors.textSecondary
+            color = AppTokens.textSecondary
         )
     }
 }
@@ -235,7 +236,7 @@ private fun LoginTipCard(
                 text = stringResource(id = R.string.tip_login),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = ExtendedTheme.colors.text,
+                color = AppTokens.text,
                 modifier = Modifier
                     .fillMaxWidth(),
             )
@@ -244,11 +245,11 @@ private fun LoginTipCard(
         Icon(
             imageVector = Icons.Rounded.AccountCircle,
             contentDescription = null,
-            tint = ExtendedTheme.colors.onChip,
+            tint = AppTokens.onChip,
             modifier = Modifier
                 .clip(CircleShape)
                 .size(Sizes.Large)
-                .background(color = ExtendedTheme.colors.chip)
+                .background(color = AppTokens.chip)
                 .padding(16.dp),
         )
     }
@@ -346,7 +347,7 @@ private fun LegacyUserPage(viewModel: UserViewModel) {
                         modifier = Modifier
                             .padding(16.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(color = ExtendedTheme.colors.chip)
+                            .background(color = AppTokens.chip)
                             .padding(vertical = 18.dp),
                         onFollowClick = {
                             navigator.navigate(FollowListPageDestination())
@@ -371,7 +372,7 @@ private fun LegacyUserPage(viewModel: UserViewModel) {
                         modifier = Modifier
                             .padding(16.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(color = ExtendedTheme.colors.chip)
+                            .background(color = AppTokens.chip)
                             .padding(vertical = 18.dp)
                     )
                 } else {
@@ -409,7 +410,7 @@ private fun LegacyUserPage(viewModel: UserViewModel) {
                 ) {
                     Text(
                         text = stringResource(id = R.string.my_info_night),
-                        color = ExtendedTheme.colors.textSecondary,
+                        color = AppTokens.textSecondary,
                         fontSize = 12.sp,
                     )
                     Spacer(modifier = Modifier.width(16.dp))
@@ -456,8 +457,8 @@ private fun LegacyUserPage(viewModel: UserViewModel) {
                 refreshing = isLoading,
                 state = pullRefreshState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                contentColor = ExtendedTheme.colors.primary,
+                backgroundColor = AppTokens.pullRefreshIndicator,
+                contentColor = AppTokens.primary,
             )
         }
     }

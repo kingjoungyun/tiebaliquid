@@ -77,6 +77,7 @@ import io.github.neoruaa.glasmio.core.IosTypography
 import io.github.neoruaa.glasmio.core.systemGray5
 import io.github.neoruaa.glasmio.icons.SfIcon
 import io.github.neoruaa.glasmio.ui.GlasmioGroupedList
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 「我的」页的 Glasmio 版（`UserPageUiStyle.GLASSMIO`）。
@@ -116,7 +117,7 @@ import io.github.neoruaa.glasmio.ui.GlasmioGroupedList
  *
  * 视觉约束：
  * - 页面底色 = `GlasmioTheme.colors.groupedBackground`（深色纯黑、浅色 #F2F2F7），卡片 = #1C1C1E / 白；
- * - 图标一律 `PrefsIcon`（`SfIcon`，23dp、accent），随 `ExtendedTheme.colors.primary`
+ * - 图标一律 `PrefsIcon`（`SfIcon`，23dp、accent），随 `AppTokens.primary`
  *   注入的 accent 变（[LiquidGlassTheme] 负责注入）；
  * - 不加装饰性灰色副标题；状态/数值（统计数字、未登录…）只放行尾或头部那一行小字。
  */
@@ -178,7 +179,7 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
         onRefresh = { viewModel.send(UserUiIntent.Refresh) },
     )
 
-    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+    LiquidGlassTheme(accent = AppTokens.primary) {
         // 设置页的两层前置条件在这里手动补齐（这个页面不是 PrefsScreen 的子树）：
         // GLASSMIO 决定 PrefsCard / TextPref / PrefsLargeTitle 走 Glasmio 渲染层；
         // 图标仍走 Glasmio 自带的 `SfIcon` → Material 解析表（本页没有自定义符号）。

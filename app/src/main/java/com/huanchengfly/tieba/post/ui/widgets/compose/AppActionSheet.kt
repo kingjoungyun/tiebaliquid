@@ -26,6 +26,7 @@ import io.github.neoruaa.glasmio.ui.GlasmioActionSheetContent
 import io.github.neoruaa.glasmio.ui.GlasmioBottomSheet
 import io.github.neoruaa.glasmio.ui.GlasmioListRow
 import kotlinx.coroutines.delay
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /** Action sheet 里的一项。`destructive = true` 用红色（iOS 的破坏性操作）。 */
 @Immutable
@@ -102,7 +103,7 @@ fun AppActionSheet(
     }
 
     val sheet: @Composable () -> Unit = {
-        LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+        LiquidGlassTheme(accent = AppTokens.primary) {
             val colors = GlasmioTheme.colors
             GlasmioBottomSheet(
                 visible = visible,

@@ -53,6 +53,7 @@ import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 private val LoadDistance = 70.dp
 
@@ -191,8 +192,8 @@ fun DefaultIndicator(
     Surface(
         elevation = 8.dp,
         shape = RoundedCornerShape(100),
-        color = ExtendedTheme.colors.loadMoreIndicator,
-        contentColor = ExtendedTheme.colors.text
+        color = AppTokens.loadMoreIndicator,
+        contentColor = AppTokens.text
     ) {
         Row(
             modifier = Modifier
@@ -205,7 +206,7 @@ fun DefaultIndicator(
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
                     strokeWidth = 3.dp,
-                    color = ExtendedTheme.colors.primary
+                    color = AppTokens.primary
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = loadingText, modifier = Modifier.padding(horizontal = 8.dp))

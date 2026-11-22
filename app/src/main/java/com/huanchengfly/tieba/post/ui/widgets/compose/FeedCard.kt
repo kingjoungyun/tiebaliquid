@@ -102,6 +102,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlin.math.max
 import kotlin.math.min
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 private val ImmutableHolder<Media>.url: String
     get() = ImageUtil.getUrl(
@@ -140,7 +141,7 @@ private fun UserHeader(
                     nickname = user.get { nameShow },
                     color = LocalContentColor.current
                 ),
-                color = ExtendedTheme.colors.text
+                color = AppTokens.text
             )
         },
         onClick = onClick,
@@ -188,7 +189,7 @@ fun UserHeader(
                     nickname = nameShow,
                     color = LocalContentColor.current
                 ),
-                color = ExtendedTheme.colors.text
+                color = AppTokens.text
             )
         },
         onClick = onClick,
@@ -281,7 +282,7 @@ fun ThreadContent(
         if (showTitle) {
             withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
                 if (isGood) {
-                    withStyle(style = SpanStyle(color = ExtendedTheme.colors.accent)) {
+                    withStyle(style = SpanStyle(color = AppTokens.accent)) {
                         append(stringResource(id = R.string.tip_good))
                     }
                     append(" ")
@@ -376,7 +377,7 @@ fun ForumInfoChip(
         modifier = Modifier
             .height(IntrinsicSize.Min)
             .clip(RoundedCornerShape(4.dp))
-            .background(color = ExtendedTheme.colors.chip)
+            .background(color = AppTokens.chip)
             .debounceClickable(onClick = onClick)
             .padding(4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -395,7 +396,7 @@ fun ForumInfoChip(
         Text(
             text = stringResource(id = R.string.title_forum_name, name),
             style = MaterialTheme.typography.body2,
-            color = ExtendedTheme.colors.onChip,
+            color = AppTokens.onChip,
             fontSize = 12.sp,
         )
     }
@@ -411,7 +412,7 @@ private fun MediaPlaceholder(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(6.dp))
-            .background(ExtendedTheme.colors.chip)
+            .background(AppTokens.chip)
             .clickable(
                 enabled = onClick != null
             ) { onClick?.invoke() }
@@ -419,7 +420,7 @@ private fun MediaPlaceholder(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        ProvideContentColor(color = ExtendedTheme.colors.onChip) {
+        ProvideContentColor(color = AppTokens.onChip) {
             Box(
                 modifier = Modifier.size(16.dp),
             ) {
@@ -691,7 +692,7 @@ fun ThreadReplyBtn(
         },
         modifier = modifier,
         onClick = onClick,
-        color = ExtendedTheme.colors.textSecondary,
+        color = AppTokens.textSecondary,
     )
 }
 
@@ -703,7 +704,7 @@ fun ThreadAgreeBtn(
     modifier: Modifier = Modifier,
 ) {
     val contentColor =
-        if (hasAgree) ExtendedTheme.colors.primary else ExtendedTheme.colors.textSecondary
+        if (hasAgree) AppTokens.primary else AppTokens.textSecondary
     val animatedColor by animateColorAsState(contentColor, label = "agreeBtnContentColor")
 
     ActionBtn(
@@ -748,7 +749,7 @@ fun ThreadShareBtn(
         },
         modifier = modifier,
         onClick = onClick,
-        color = ExtendedTheme.colors.textSecondary,
+        color = AppTokens.textSecondary,
     )
 }
 
@@ -798,7 +799,7 @@ fun FeedCard(
                         originThreadInfo = it,
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
-                            .background(ExtendedTheme.colors.floorCard)
+                            .background(AppTokens.floorCard)
                             .debounceClickable(onClick = {
                                 onClickOriginThread(it.get())
                             })
@@ -951,7 +952,7 @@ fun FeedCard(
                         originThreadInfo = it,
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
-                            .background(ExtendedTheme.colors.floorCard)
+                            .background(AppTokens.floorCard)
                             .debounceClickable(onClick = {
                                 onClickOriginThread(it.get())
                             })
@@ -1125,6 +1126,6 @@ fun FeedCardPreview() {
         ),
         onClick = {},
         onAgree = {},
-        modifier = Modifier.background(ExtendedTheme.colors.card)
+        modifier = Modifier.background(AppTokens.card)
     )
 }

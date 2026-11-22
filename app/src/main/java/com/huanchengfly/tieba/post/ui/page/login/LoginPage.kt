@@ -69,6 +69,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 const val LOGIN_URL =
     "https://wappass.baidu.com/passport?login&u=https%3A%2F%2Ftieba.baidu.com%2Findex%2Ftbwise%2Fmine"
@@ -165,7 +166,7 @@ fun LoginPage(
                                         text = currentHost,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
-                                        color = ExtendedTheme.colors.onTopBarSecondary,
+                                        color = AppTokens.onTopBarSecondary,
                                         style = MaterialTheme.typography.caption
                                     )
                                 }

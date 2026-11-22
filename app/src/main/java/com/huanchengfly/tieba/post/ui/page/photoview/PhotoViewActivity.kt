@@ -53,6 +53,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.ProvideContentColor
 import com.huanchengfly.tieba.post.utils.ImageUtil
 import com.huanchengfly.tieba.post.utils.download
 import kotlin.math.roundToInt
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 private fun ViewPhoto(
@@ -89,13 +90,13 @@ private fun ViewPhoto(
             ) {
                 CircularProgressIndicator(
                     progress = progress,
-                    color = ExtendedTheme.colors.accent,
+                    color = AppTokens.accent,
                     strokeWidth = 2.dp,
                     modifier = Modifier.size(48.dp)
                 )
                 Text(
                     text = "${(progress * 100).roundToInt()}%",
-                    color = ExtendedTheme.colors.accent,
+                    color = AppTokens.accent,
                     fontSize = 12.sp
                 )
             }

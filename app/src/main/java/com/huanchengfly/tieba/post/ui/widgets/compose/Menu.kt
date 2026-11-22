@@ -39,6 +39,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.compose.menuBackground
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 class MenuScope(
     private val menuState: MenuState,
@@ -126,7 +127,7 @@ fun ClickMenu(
                     Rect(left = it.left, top = it.bottom, right = it.right, bottom = it.bottom)
                 },
             ) {
-                ProvideContentColor(color = ExtendedTheme.colors.text) {
+                ProvideContentColor(color = AppTokens.text) {
                     menuScope.menuContent()
                 }
             }
@@ -190,7 +191,7 @@ fun LongClickMenu(
                 expanded = menuState.expanded,
                 onDismissRequest = { menuState.expanded = false },
             ) {
-                ProvideContentColor(color = ExtendedTheme.colors.text) {
+                ProvideContentColor(color = AppTokens.text) {
                     menuContent()
                 }
             }

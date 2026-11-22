@@ -59,6 +59,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.dialogs.DirectionState
 import com.huanchengfly.tieba.post.ui.widgets.compose.picker.TimePicker
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 fun DialogScope.DialogPositiveButton(
@@ -99,10 +100,10 @@ fun DialogScope.DialogNegativeButton(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(100),
         colors = ButtonDefaults.textButtonColors(
-            backgroundColor = ExtendedTheme.colors.text.copy(
+            backgroundColor = AppTokens.text.copy(
                 alpha = 0.1f
             ),
-            contentColor = ExtendedTheme.colors.text
+            contentColor = AppTokens.text
         ),
     ) {
         Text(
@@ -140,7 +141,7 @@ fun TimePickerDialog(
     ) {
         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
             ProvideTextStyle(value = MaterialTheme.typography.body1) {
-                ProvideContentColor(color = ExtendedTheme.colors.text) {
+                ProvideContentColor(color = AppTokens.text) {
                     content()
                 }
             }
@@ -178,7 +179,7 @@ fun AlertDialog(
     ) {
         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
             ProvideTextStyle(value = MaterialTheme.typography.body1) {
-                ProvideContentColor(color = ExtendedTheme.colors.text) {
+                ProvideContentColor(color = AppTokens.text) {
                     content()
                 }
             }
@@ -204,7 +205,7 @@ fun AlertDialog(
     ) {
         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
             ProvideTextStyle(value = MaterialTheme.typography.body1) {
-                ProvideContentColor(color = ExtendedTheme.colors.text) {
+                ProvideContentColor(color = AppTokens.text) {
                     content()
                 }
             }
@@ -236,7 +237,7 @@ fun ConfirmDialog(
     ) {
         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
             ProvideTextStyle(value = MaterialTheme.typography.body1) {
-                ProvideContentColor(color = ExtendedTheme.colors.text) {
+                ProvideContentColor(color = AppTokens.text) {
                     content()
                 }
             }
@@ -287,7 +288,7 @@ fun PromptDialog(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             ProvideTextStyle(value = MaterialTheme.typography.body1) {
-                ProvideContentColor(color = ExtendedTheme.colors.text) {
+                ProvideContentColor(color = AppTokens.text) {
                     content()
                 }
             }
@@ -305,9 +306,9 @@ fun PromptDialog(
                     .focusRequester(focusRequester)
                     .fillMaxWidth(),
                 colors = TextFieldDefaults.outlinedTextFieldColors(
-                    cursorColor = ExtendedTheme.colors.primary,
-                    focusedBorderColor = ExtendedTheme.colors.primary,
-                    focusedLabelColor = ExtendedTheme.colors.primary
+                    cursorColor = AppTokens.primary,
+                    focusedBorderColor = AppTokens.primary,
+                    focusedLabelColor = AppTokens.primary
                 )
             )
             LaunchedEffect(focusRequester) {
@@ -366,7 +367,7 @@ fun BaseDialog(
                 imePadding = imePadding
             )
         ) {
-            ProvideContentColor(color = ExtendedTheme.colors.text) {
+            ProvideContentColor(color = AppTokens.text) {
                 dialogScope.content()
             }
         }
@@ -481,8 +482,8 @@ fun Dialog(
                     modifier = Modifier
                         .matchParentSize()
                         .background(
-                            color = ExtendedTheme.colors.windowBackground.copy(
-                                alpha = if (ExtendedTheme.colors.isNightMode) 0.86f else 0.85f
+                            color = AppTokens.windowBackground.copy(
+                                alpha = if (AppTokens.isNightMode) 0.86f else 0.85f
                             ),
                             shape = RoundedCornerShape(24.dp),
                         )
@@ -494,7 +495,7 @@ fun Dialog(
             cardContent(
                 cardOuterModifier
                     .background(
-                        color = ExtendedTheme.colors.windowBackground,
+                        color = AppTokens.windowBackground,
                         shape = RoundedCornerShape(24.dp)
                     )
                     .padding(vertical = 24.dp)

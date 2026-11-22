@@ -12,7 +12,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
 import io.github.neoruaa.glasmio.preference.GlasmioPreferenceGroupTitle
-import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalAppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalGlassTokens
 
 /**
  * 分组标题。
@@ -28,7 +28,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalAppTokens
 @Composable
 fun GroupHeader(
     title: String,
-    color: Color = LocalAppTokens.current.textSecondary
+    color: Color = LocalGlassTokens.current.textSecondary
 ) {
     if (LocalPrefsUiStyle.current == PrefsUiStyle.GLASSMIO) {
         GlasmioPreferenceGroupTitle(title)

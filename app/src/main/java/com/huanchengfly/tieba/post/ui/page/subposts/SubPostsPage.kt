@@ -121,6 +121,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Destination
 @Composable
@@ -438,7 +439,7 @@ internal fun SubPostsContent(
                 if (!glassmio) {
                 if (account != null && !LocalContext.current.appPreferences.safeMode) {
                     Column(
-                        modifier = Modifier.background(ExtendedTheme.colors.threadBottomBar)
+                        modifier = Modifier.background(AppTokens.threadBottomBar)
                     ) {
                         Row(
                             modifier = Modifier
@@ -457,7 +458,7 @@ internal fun SubPostsContent(
                                     .padding(vertical = 8.dp)
                                     .weight(1f)
                                     .clip(RoundedCornerShape(6.dp))
-                                    .background(ExtendedTheme.colors.bottomBarSurface)
+                                    .background(AppTokens.bottomBarSurface)
 //                                    .clickable {
 //                                        val fid = forum?.get { id } ?: forumId
 //                                        val forumName = forum?.get { name }
@@ -491,7 +492,7 @@ internal fun SubPostsContent(
                                 Text(
                                     text = stringResource(id = R.string.tip_reply_thread),
                                     style = MaterialTheme.typography.caption,
-                                    color = ExtendedTheme.colors.onBottomBarSurface,
+                                    color = AppTokens.onBottomBarSurface,
                                 )
                             }
                         }
@@ -604,7 +605,7 @@ internal fun SubPostsContent(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(ExtendedTheme.colors.background)
+                                .background(AppTokens.background)
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
                             Text(

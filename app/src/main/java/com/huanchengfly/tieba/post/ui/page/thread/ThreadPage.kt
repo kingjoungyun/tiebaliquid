@@ -208,6 +208,7 @@ import io.github.neoruaa.glasmio.ui.GlasmioCard
 import kotlinx.serialization.Serializable
 import kotlin.concurrent.thread
 import kotlin.math.max
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 private fun getDescText(
     time: Long?,
@@ -236,7 +237,7 @@ fun PostAgreeBtn(
     modifier: Modifier = Modifier
 ) {
     val animatedColor by animateColorAsState(
-        targetValue = if (hasAgreed) ExtendedTheme.colors.accent else ExtendedTheme.colors.textSecondary,
+        targetValue = if (hasAgreed) AppTokens.accent else AppTokens.textSecondary,
         label = "postAgreeBtnColor"
     )
     Button(
@@ -244,7 +245,7 @@ fun PostAgreeBtn(
         shape = RoundedCornerShape(4.dp),
         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
         colors = ButtonDefaults.buttonColors(
-            backgroundColor = ExtendedTheme.colors.background,
+            backgroundColor = AppTokens.background,
             contentColor = animatedColor
         ),
         modifier = modifier
@@ -279,7 +280,7 @@ internal fun BottomBarAgreeBtn(
     modifier: Modifier = Modifier,
     transparentBackground: Boolean = false,
 ) {
-    val color = if (hasAgreed) ExtendedTheme.colors.accent else ExtendedTheme.colors.textSecondary
+    val color = if (hasAgreed) AppTokens.accent else AppTokens.textSecondary
     val animatedColor by animateColorAsState(color, label = "agreeBtnColor")
 
     Button(
@@ -287,7 +288,7 @@ internal fun BottomBarAgreeBtn(
         shape = RoundedCornerShape(0),
         contentPadding = PaddingValues(horizontal = 4.dp),
         colors = ButtonDefaults.buttonColors(
-            backgroundColor = if (transparentBackground) Color.Transparent else ExtendedTheme.colors.bottomBar,
+            backgroundColor = if (transparentBackground) Color.Transparent else AppTokens.bottomBar,
             contentColor = animatedColor
         ),
         modifier = modifier
@@ -318,7 +319,7 @@ private fun BottomBarPlaceholder() {
     Row(
         modifier = Modifier
             .height(IntrinsicSize.Min)
-            .background(ExtendedTheme.colors.bottomBar)
+            .background(AppTokens.bottomBar)
             // 拦截点击事件
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -334,13 +335,13 @@ private fun BottomBarPlaceholder() {
                 .padding(vertical = 8.dp)
                 .weight(1f)
                 .clip(RoundedCornerShape(6.dp))
-                .background(ExtendedTheme.colors.bottomBarSurface)
+                .background(AppTokens.bottomBarSurface)
                 .padding(8.dp),
         ) {
             Text(
                 text = stringResource(id = R.string.tip_reply_thread),
                 style = MaterialTheme.typography.caption,
-                color = ExtendedTheme.colors.onBottomBarSurface,
+                color = AppTokens.onBottomBarSurface,
             )
         }
 
@@ -358,7 +359,7 @@ private fun BottomBarPlaceholder() {
             Icon(
                 imageVector = Icons.Rounded.MoreVert,
                 contentDescription = stringResource(id = R.string.btn_more),
-                tint = ExtendedTheme.colors.textSecondary,
+                tint = AppTokens.textSecondary,
             )
         }
     }
@@ -372,10 +373,10 @@ private fun ToggleButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     icon: @Composable (() -> Unit)? = null,
-    backgroundColor: Color = ExtendedTheme.colors.chip,
-    contentColor: Color = ExtendedTheme.colors.text,
-    selectedBackgroundColor: Color = ExtendedTheme.colors.invertChipBackground,
-    selectedContentColor: Color = ExtendedTheme.colors.invertChipContent,
+    backgroundColor: Color = AppTokens.chip,
+    contentColor: Color = AppTokens.text,
+    selectedBackgroundColor: Color = AppTokens.invertChipBackground,
+    selectedContentColor: Color = AppTokens.invertChipContent,
 ) {
     val animatedColor by animateColorAsState(
         if (checked) selectedContentColor else contentColor,
@@ -446,8 +447,8 @@ private fun ThreadLoadMoreIndicator(
     Surface(
         elevation = 8.dp,
         shape = RoundedCornerShape(100),
-        color = ExtendedTheme.colors.loadMoreIndicator,
-        contentColor = ExtendedTheme.colors.text
+        color = AppTokens.loadMoreIndicator,
+        contentColor = AppTokens.text
     ) {
         Row(
             modifier = Modifier
@@ -462,7 +463,7 @@ private fun ThreadLoadMoreIndicator(
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
                             strokeWidth = 3.dp,
-                            color = ExtendedTheme.colors.primary
+                            color = AppTokens.primary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
@@ -1412,7 +1413,7 @@ fun ThreadPage(
                             VerticalDivider(modifier = Modifier.weight(1f))
                             Text(
                                 text = stringResource(id = R.string.below_is_latest_post),
-                                color = ExtendedTheme.colors.textSecondary,
+                                color = AppTokens.textSecondary,
                                 style = MaterialTheme.typography.caption,
                             )
                             VerticalDivider(modifier = Modifier.weight(1f))
@@ -1449,7 +1450,7 @@ fun ThreadPage(
                             VerticalDivider(modifier = Modifier.weight(1f))
                             Text(
                                 text = stringResource(id = R.string.above_is_latest_post),
-                                color = ExtendedTheme.colors.textSecondary,
+                                color = AppTokens.textSecondary,
                                 style = MaterialTheme.typography.caption,
                             )
                             VerticalDivider(modifier = Modifier.weight(1f))
@@ -1675,7 +1676,7 @@ fun ThreadPage(
                 ModalBottomSheetLayout(
                     sheetState = bottomSheetState,
                     sheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
-                    sheetBackgroundColor = ExtendedTheme.colors.windowBackground,
+                    sheetBackgroundColor = AppTokens.windowBackground,
                     sheetContent = {
                         // LEGACY 仍然用这张 M2 bottom sheet；GLASMIO 走顶栏/底栏的 AppMenu，
                         // sheet 永远保持隐藏（保留状态机只是为了不动旧分支）。
@@ -1803,7 +1804,7 @@ fun ThreadPage(
                                                                 .padding(horizontal = 16.dp)
                                                                 .padding(bottom = 16.dp)
                                                                 .clip(RoundedCornerShape(6.dp))
-                                                                .background(ExtendedTheme.colors.floorCard)
+                                                                .background(AppTokens.floorCard)
                                                                 .debounceClickable(onClick = {
                                                                     navigator.navigate(
                                                                         ThreadPageDestination(
@@ -1854,7 +1855,7 @@ fun ThreadPage(
     //                                                    "${thread?.get { replyNum - 1 } ?: 0}"),
     //                                                fontSize = 13.sp,
     //                                                fontWeight = FontWeight.Bold,
-    //                                                color = ExtendedTheme.colors.text,
+    //                                                color = AppTokens.text,
     //                                                modifier = Modifier.padding(horizontal = 8.dp),
     //                                            )
                                                 Row(
@@ -1885,7 +1886,7 @@ fun ThreadPage(
                                                                 }),
                                                         fontSize = 13.sp,
                                                         fontWeight = if (!isSeeLz) FontWeight.SemiBold else FontWeight.Normal,
-                                                        color = if (!isSeeLz) ExtendedTheme.colors.text else ExtendedTheme.colors.textSecondary,
+                                                        color = if (!isSeeLz) AppTokens.text else AppTokens.textSecondary,
                                                     )
                                                     HorizontalDivider()
                                                     Text(
@@ -1911,7 +1912,7 @@ fun ThreadPage(
                                                                     }),
                                                         fontSize = 13.sp,
                                                         fontWeight = if (isSeeLz) FontWeight.SemiBold else FontWeight.Normal,
-                                                        color = if (isSeeLz) ExtendedTheme.colors.text else ExtendedTheme.colors.textSecondary,
+                                                        color = if (isSeeLz) AppTokens.text else AppTokens.textSecondary,
                                                     )
                                                 }
                                                 Spacer(modifier = Modifier.weight(1f))
@@ -1942,7 +1943,7 @@ fun ThreadPage(
                                                                     }),
                                                         fontSize = 13.sp,
                                                         fontWeight = if (curSortType == 0) FontWeight.SemiBold else FontWeight.Normal,
-                                                        color = if (curSortType == 0) ExtendedTheme.colors.text else ExtendedTheme.colors.textSecondary,
+                                                        color = if (curSortType == 0) AppTokens.text else AppTokens.textSecondary,
                                                     )
                                                     HorizontalDivider()
                                                     Text(
@@ -1968,7 +1969,7 @@ fun ThreadPage(
                                                                     }),
                                                         fontSize = 13.sp,
                                                         fontWeight = if (curSortType == 1) FontWeight.SemiBold else FontWeight.Normal,
-                                                        color = if (curSortType == 1) ExtendedTheme.colors.text else ExtendedTheme.colors.textSecondary,
+                                                        color = if (curSortType == 1) AppTokens.text else AppTokens.textSecondary,
                                                     )
                                                 }
                                             }
@@ -2012,7 +2013,7 @@ fun ThreadPage(
                                                 Spacer(modifier = Modifier.width(16.dp))
                                                 Text(
                                                     text = stringResource(id = R.string.btn_load_previous),
-                                                    color = ExtendedTheme.colors.text,
+                                                    color = AppTokens.text,
                                                     fontSize = 14.sp
                                                 )
                                             }
@@ -2078,8 +2079,8 @@ fun ThreadPage(
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
                                 .padding(top = if (glassmio) threadTopInset else 0.dp),
-                            backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                            contentColor = ExtendedTheme.colors.primary,
+                            backgroundColor = AppTokens.pullRefreshIndicator,
+                            contentColor = AppTokens.primary,
                         )
                     }
                 }
@@ -2106,7 +2107,7 @@ private fun TopBar(
                             .padding(horizontal = 48.dp)
                             .height(IntrinsicSize.Min)
                             .clip(RoundedCornerShape(100))
-                            .background(ExtendedTheme.colors.chip)
+                            .background(AppTokens.chip)
                             .debounceClickable(onClick = onForumClick)
                             .padding(4.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -2122,7 +2123,7 @@ private fun TopBar(
                         Text(
                             text = stringResource(id = R.string.title_forum, it.get { name }),
                             fontSize = 14.sp,
-                            color = ExtendedTheme.colors.text,
+                            color = AppTokens.text,
                             modifier = Modifier.padding(horizontal = 8.dp),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -2149,7 +2150,7 @@ private fun BottomBar(
     agreeNum: Long = 0,
 ) {
     Column(
-        modifier = Modifier.background(ExtendedTheme.colors.threadBottomBar)
+        modifier = Modifier.background(AppTokens.threadBottomBar)
     ) {
         Row(
             modifier = Modifier
@@ -2173,14 +2174,14 @@ private fun BottomBar(
                         .padding(vertical = 8.dp)
                         .weight(1f)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(ExtendedTheme.colors.bottomBarSurface)
+                        .background(AppTokens.bottomBarSurface)
                         .debounceClickable(onClick = onClickReply)
                         .padding(8.dp),
                 ) {
                     Text(
                         text = stringResource(id = R.string.tip_reply_thread),
                         style = MaterialTheme.typography.caption,
-                        color = ExtendedTheme.colors.onBottomBarSurface,
+                        color = AppTokens.onBottomBarSurface,
                     )
                 }
             } else {
@@ -2208,7 +2209,7 @@ private fun BottomBar(
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
                     contentDescription = stringResource(id = R.string.btn_more),
-                    tint = ExtendedTheme.colors.textSecondary,
+                    tint = AppTokens.textSecondary,
                 )
             }
         }
@@ -2796,7 +2797,7 @@ fun PostCard(
                                 .fillMaxWidth()
                                 .then(paddingModifier)
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(ExtendedTheme.colors.floorCard)
+                                .background(AppTokens.floorCard)
                                 .padding(vertical = 12.dp),
                             verticalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
@@ -2809,7 +2810,7 @@ fun PostCard(
                                         Text(
                                             text = stringResource(id = R.string.tip_blocked_sub_post),
                                             style = MaterialTheme.typography.body2.copy(
-                                                color = ExtendedTheme.colors.textDisabled,
+                                                color = AppTokens.textDisabled,
                                                 fontSize = 13.sp
                                             ),
                                             modifier = Modifier.padding(horizontal = 12.dp)
@@ -2841,7 +2842,7 @@ fun PostCard(
                                     ),
                                     style = MaterialTheme.typography.caption,
                                     fontSize = 13.sp,
-                                    color = ExtendedTheme.colors.accent,
+                                    color = AppTokens.accent,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(top = 2.dp)
@@ -2916,7 +2917,7 @@ private fun SubPostItem(
             onOpenSubPosts(subPostList.get { id })
         }
     ) {
-        ProvideTextStyle(value = MaterialTheme.typography.body2.copy(color = ExtendedTheme.colors.text)) {
+        ProvideTextStyle(value = MaterialTheme.typography.body2.copy(color = AppTokens.text)) {
             PbContentText(
                 text = subPostContent,
                 modifier = modifier,
@@ -2928,8 +2929,8 @@ private fun SubPostItem(
                 inlineContent = mapOf(
                     "Lz" to buildChipInlineContent(
                         stringResource(id = R.string.tip_lz),
-                        backgroundColor = ExtendedTheme.colors.textSecondary.copy(alpha = 0.1f),
-                        color = ExtendedTheme.colors.textSecondary
+                        backgroundColor = AppTokens.textSecondary.copy(alpha = 0.1f),
+                        color = AppTokens.textSecondary
                     ),
                 )
             )
@@ -2968,8 +2969,8 @@ fun UserNameText(
             ),
             "Bawu" to buildChipInlineContent(
                 bawuType ?: "",
-                color = ExtendedTheme.colors.primary,
-                backgroundColor = ExtendedTheme.colors.primary.copy(alpha = 0.1f)
+                color = AppTokens.primary,
+                backgroundColor = AppTokens.primary.copy(alpha = 0.1f)
             ),
             "Lz" to buildChipInlineContent(stringResource(id = R.string.tip_lz)),
         ),
@@ -3012,7 +3013,7 @@ private fun ThreadMenu(
                     .height(4.dp)
                     .fillMaxWidth(0.25f)
                     .clip(RoundedCornerShape(100))
-                    .background(ExtendedTheme.colors.chip)
+                    .background(AppTokens.chip)
             )
         }
         VerticalGrid(
@@ -3123,7 +3124,7 @@ private fun ThreadMenu(
             ListMenuItem(
                 icon = Icons.Rounded.RocketLaunch,
                 text = stringResource(id = R.string.title_jump_page),
-                iconColor = ExtendedTheme.colors.text,
+                iconColor = AppTokens.text,
                 onClick = {
                     onDismiss()
                     onJumpPageClick()
@@ -3133,7 +3134,7 @@ private fun ThreadMenu(
             ListMenuItem(
                 icon = Icons.Rounded.Share,
                 text = stringResource(id = R.string.title_share),
-                iconColor = ExtendedTheme.colors.text,
+                iconColor = AppTokens.text,
                 onClick = {
                     onDismiss()
                     onShareClick()
@@ -3143,7 +3144,7 @@ private fun ThreadMenu(
             ListMenuItem(
                 icon = Icons.Rounded.ContentCopy,
                 text = stringResource(id = R.string.title_copy_link),
-                iconColor = ExtendedTheme.colors.text,
+                iconColor = AppTokens.text,
                 onClick = {
                     onDismiss()
                     onCopyLinkClick()
@@ -3154,7 +3155,7 @@ private fun ThreadMenu(
                 ListMenuItem(
                     icon = Icons.Rounded.Report,
                     text = stringResource(id = R.string.title_report),
-                    iconColor = ExtendedTheme.colors.text,
+                    iconColor = AppTokens.text,
                     onClick = {
                         onDismiss()
                         onReportClick()
@@ -3166,7 +3167,7 @@ private fun ThreadMenu(
                 ListMenuItem(
                     icon = Icons.Rounded.Delete,
                     text = stringResource(id = R.string.title_delete),
-                    iconColor = ExtendedTheme.colors.text,
+                    iconColor = AppTokens.text,
                     onClick = {
                         onDismiss()
                         onDeleteClick()

@@ -1,90 +1,146 @@
 package com.huanchengfly.tieba.post.ui.common.theme.glass
 
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
+import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedColors
 
 /**
- * **App 自己的设计令牌**（Stage 5 · C）。
+ * **AppTokens —— 全 App 唯一的颜色令牌（运行时填充）。**
  *
- * 定位：我们定规范，Glasmio 施工。`LiquidGlassTheme` 从这里的 token 显式构造
- * `GlasmioTheme` 的 `colorScheme` / `colors` / `dimensions`，**不再依赖 Glasmio 的默认值**；
- * 页面要取色/取圆角时优先读 `LocalAppTokens.current`，而不是 `GlasmioTheme.colors`。
+ * 定位（Stage 6）：`ExtendedColors` 继续负责「从 XML 主题 + 6 色 accent + AMOLED 解析出颜色」
+ * （它是 attr 机制的产物，不能删），解析完成后**把同一批值灌进这里**；页面统一读
+ * `AppTokens.xxx`。两套并存期间值严格一致（同一个 [ExtendedColors] 实例填出来）。
  *
- * 为什么还要保留 `ExtendedColors`：老页面（430 处）仍然读它，本轮不动，避免一次改太多。
- * 新页面 / 关键页面的新代码应该读这里。
+ * 为什么字段是 `mutableStateOf` 而不是常量：主题（亮/暗）、accent（6 色）、AMOLED 都会
+ * 在运行中切换。用 snapshot state 才能让读 `AppTokens.xxx` 的 Composable 自动重组；
+ * 写死成常量会让换主题/换色失效。
  *
- * 深色规范（这次顺带验证「深色偏灰」）：
- * - 背景 **纯黑** `#000000`（不是 Glasmio 默认的 groupedBackground 灰）
- * - 卡片 `#1C1C1E`，卡片上浮层 `#2C2C2E`
- * - 正文白 `#FFFFFF`，次要 `#98989F`，三级 `#5A5A5F`
+ * 字段与 [ExtendedColors] 1:1（命名保持一致，便于机械替换）；另外提供
+ * [textPrimary] / [textTertiary] / [separator] 三个别名，对应设计规范里的叫法
+ * （分别是 text / textDisabled / divider）。
  */
-@Immutable
-data class AppTokens(
-    val isDark: Boolean,
+object AppTokens {
+
+    // ── 主题元信息 ──
+    var theme by mutableStateOf("tieba")
+        private set
+    var isNightMode by mutableStateOf(false)
+        private set
+
+    // ── 主色 ──
+    var primary by mutableStateOf(Color.Unspecified)
+        private set
+    var onPrimary by mutableStateOf(Color.Unspecified)
+        private set
+    var accent by mutableStateOf(Color.Unspecified)
+        private set
+    var onAccent by mutableStateOf(Color.Unspecified)
+        private set
+
+    // ── 顶栏 ──
+    var topBar by mutableStateOf(Color.Unspecified)
+        private set
+    var onTopBar by mutableStateOf(Color.Unspecified)
+        private set
+    var onTopBarSecondary by mutableStateOf(Color.Unspecified)
+        private set
+    var onTopBarActive by mutableStateOf(Color.Unspecified)
+        private set
+    var topBarSurface by mutableStateOf(Color.Unspecified)
+        private set
+    var onTopBarSurface by mutableStateOf(Color.Unspecified)
+        private set
+
+    // ── 底栏 ──
+    var bottomBar by mutableStateOf(Color.Unspecified)
+        private set
+    var bottomBarSurface by mutableStateOf(Color.Unspecified)
+        private set
+    var onBottomBarSurface by mutableStateOf(Color.Unspecified)
+        private set
+
     // ── 文字 ──
-    val textPrimary: Color,
-    val textSecondary: Color,
-    val textTertiary: Color,
+    var text by mutableStateOf(Color.Unspecified)
+        private set
+    var textSecondary by mutableStateOf(Color.Unspecified)
+        private set
+    var textDisabled by mutableStateOf(Color.Unspecified)
+        private set
+
     // ── 表面 ──
-    val background: Color,
-    val card: Color,
-    val cardProminent: Color,
-    val separator: Color,
-    val stroke: Color,
-    // ── 语义色 ──
-    val accent: Color,
-    val destructive: Color,
-    // ── 圆角 / 尺寸 ──
-    val radiusCard: Dp = 26.dp,
-    val radiusCapsule: Dp = 44.dp,
-    val radiusAlert: Dp = 34.dp,
-    val radiusSheet: Dp = 34.dp,
-    val radiusCompact: Dp = 14.dp,
-    val controlHeight: Dp = 44.dp,
-    val iconButtonSize: Dp = 44.dp,
-    val bottomBarHeight: Dp = 62.dp,
-)
+    var background by mutableStateOf(Color.Unspecified)
+        private set
+    var chip by mutableStateOf(Color.Unspecified)
+        private set
+    var onChip by mutableStateOf(Color.Unspecified)
+        private set
+    var unselected by mutableStateOf(Color.Unspecified)
+        private set
+    var card by mutableStateOf(Color.Unspecified)
+        private set
+    var floorCard by mutableStateOf(Color.Unspecified)
+        private set
+    var divider by mutableStateOf(Color.Unspecified)
+        private set
+    var shadow by mutableStateOf(Color.Unspecified)
+        private set
+    var indicator by mutableStateOf(Color.Unspecified)
+        private set
+    var windowBackground by mutableStateOf(Color.Unspecified)
+        private set
+    var placeholder by mutableStateOf(Color.Unspecified)
+        private set
 
-/** 浅色一套。 */
-val LightAppTokens = AppTokens(
-    isDark = false,
-    textPrimary = Color(0xFF000000),
-    textSecondary = Color(0xFF8A8A8E),
-    textTertiary = Color(0xFFC7C7CC),
-    background = Color(0xFFF2F2F7),
-    card = Color(0xFFFFFFFF),
-    cardProminent = Color(0xFFFFFFFF),
-    separator = Color(0x4D3C3C43),
-    stroke = Color(0x14000000),
-    accent = Color(0xFF0088FF),
-    destructive = Color(0xFFFF3B30),
-)
+    // ── 设计规范叫法的别名（不与上面重复存储）──
+    val textPrimary: Color get() = text
+    val textTertiary: Color get() = textDisabled
+    val separator: Color get() = divider
 
-/** 深色一套：纯黑底 + #1C1C1E 卡片。 */
-val DarkAppTokens = AppTokens(
-    isDark = true,
-    textPrimary = Color(0xFFFFFFFF),
-    textSecondary = Color(0xFF98989F),
-    textTertiary = Color(0xFF5A5A5F),
-    background = Color(0xFF000000),
-    card = Color(0xFF1C1C1E),
-    cardProminent = Color(0xFF2C2C2E),
-    separator = Color(0x33FFFFFF),
-    stroke = Color(0x1AFFFFFF),
-    accent = Color(0xFF0091FF),
-    destructive = Color(0xFFFF453A),
-)
+    // ── 语义色（Glasmio 侧用，来自 token 集合）──
+    var destructive by mutableStateOf(Color.Unspecified)
+        private set
 
-/** 当前生效的一套（由 `LiquidGlassTheme` 提供）。 */
-val LocalAppTokens = staticCompositionLocalOf { LightAppTokens }
-
-/**
- * 按明暗取 token；[accent] 非 `Color.Unspecified` 时覆盖默认强调色（App 主题色优先）。
- */
-fun appTokens(isDark: Boolean, accent: Color = Color.Unspecified): AppTokens {
-    val base = if (isDark) DarkAppTokens else LightAppTokens
-    return if (accent == Color.Unspecified) base else base.copy(accent = accent)
+    /**
+     * 用一次主题解析的结果填充所有 token。
+     *
+     * 调用点只有一个：[com.huanchengfly.tieba.post.ui.common.theme.compose.getThemeColorForTheme]
+     * —— 它本来就是「XML 主题 + accent 覆盖 + AMOLED」的唯一收敛点，在它构造出
+     * [ExtendedColors] 之后调用这里，保证两套值来自同一份计算。
+     *
+     * 注意：参数顺序/字段名与 [ExtendedColors] 一致，将来加字段两边一起加。
+     */
+    fun fill(from: ExtendedColors) {
+        theme = from.theme
+        isNightMode = from.isNightMode
+        primary = from.primary
+        onPrimary = from.onPrimary
+        accent = from.accent
+        onAccent = from.onAccent
+        topBar = from.topBar
+        onTopBar = from.onTopBar
+        onTopBarSecondary = from.onTopBarSecondary
+        onTopBarActive = from.onTopBarActive
+        topBarSurface = from.topBarSurface
+        onTopBarSurface = from.onTopBarSurface
+        bottomBar = from.bottomBar
+        bottomBarSurface = from.bottomBarSurface
+        onBottomBarSurface = from.onBottomBarSurface
+        text = from.text
+        textSecondary = from.textSecondary
+        textDisabled = from.textDisabled
+        background = from.background
+        chip = from.chip
+        onChip = from.onChip
+        unselected = from.unselected
+        card = from.card
+        floorCard = from.floorCard
+        divider = from.divider
+        shadow = from.shadow
+        indicator = from.indicator
+        windowBackground = from.windowBackground
+        placeholder = from.placeholder
+        destructive = from.accent
+    }
 }

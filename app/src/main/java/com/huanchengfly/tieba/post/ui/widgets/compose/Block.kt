@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.utils.appPreferences
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 fun BlockTip(
@@ -26,11 +27,11 @@ fun BlockTip(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(6.dp))
-            .background(ExtendedTheme.colors.textSecondary.copy(alpha = 0.1f))
+            .background(AppTokens.textSecondary.copy(alpha = 0.1f))
             .padding(vertical = 8.dp, horizontal = 16.dp)
     ) {
         ProvideTextStyle(value = MaterialTheme.typography.caption) {
-            ProvideContentColor(color = ExtendedTheme.colors.textSecondary) {
+            ProvideContentColor(color = AppTokens.textSecondary) {
                 text()
             }
         }

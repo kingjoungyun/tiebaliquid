@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 fun BaseTextField(
@@ -268,11 +269,11 @@ private class DefaultCounterTextFieldColors(
 object TextFieldDefaults {
     @Composable
     fun textFieldColors(
-        textColor: Color = ExtendedTheme.colors.text,
+        textColor: Color = AppTokens.text,
         disabledTextColor: Color = textColor.copy(alpha = ContentAlpha.disabled),
         backgroundColor: Color = Color.Transparent,
-        cursorColor: Color = ExtendedTheme.colors.accent,
-        placeholderColor: Color = ExtendedTheme.colors.textSecondary.copy(alpha = ContentAlpha.medium),
+        cursorColor: Color = AppTokens.accent,
+        placeholderColor: Color = AppTokens.textSecondary.copy(alpha = ContentAlpha.medium),
         disabledPlaceholderColor: Color = placeholderColor.copy(alpha = ContentAlpha.disabled),
     ): TextFieldColors =
         DefaultTextFieldColors(
@@ -286,13 +287,13 @@ object TextFieldDefaults {
 
     @Composable
     fun counterTextFieldColors(
-        textColor: Color = ExtendedTheme.colors.text,
+        textColor: Color = AppTokens.text,
         disabledTextColor: Color = textColor.copy(alpha = ContentAlpha.disabled),
         backgroundColor: Color = Color.Transparent,
-        cursorColor: Color = ExtendedTheme.colors.accent,
-        placeholderColor: Color = ExtendedTheme.colors.text.copy(alpha = ContentAlpha.medium),
+        cursorColor: Color = AppTokens.accent,
+        placeholderColor: Color = AppTokens.text.copy(alpha = ContentAlpha.medium),
         disabledPlaceholderColor: Color = placeholderColor.copy(alpha = ContentAlpha.disabled),
-        counterColor: Color = ExtendedTheme.colors.text.copy(alpha = ContentAlpha.medium),
+        counterColor: Color = AppTokens.text.copy(alpha = ContentAlpha.medium),
         disabledCounterColor: Color = counterColor.copy(alpha = ContentAlpha.disabled)
     ): CounterTextFieldColors =
         DefaultCounterTextFieldColors(

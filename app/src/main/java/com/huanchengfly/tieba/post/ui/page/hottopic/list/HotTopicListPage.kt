@@ -57,6 +57,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 private fun TopicImage(
@@ -151,7 +152,7 @@ private fun TopicBody(
         Text(
             text = stringResource(id = R.string.hot_num, item.discuss_num.getShortNumString()),
             style = MaterialTheme.typography.caption,
-            color = ExtendedTheme.colors.textSecondary
+            color = AppTokens.textSecondary
         )
     }
 }
@@ -238,8 +239,8 @@ fun HotTopicListPage(
                 refreshing = isRefreshing,
                 state = pullRefreshState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                contentColor = ExtendedTheme.colors.primary,
+                backgroundColor = AppTokens.pullRefreshIndicator,
+                contentColor = AppTokens.primary,
             )
         }
     }

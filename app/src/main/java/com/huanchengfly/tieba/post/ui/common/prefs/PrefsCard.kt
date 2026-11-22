@@ -23,7 +23,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.SquircleShape
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
 import io.github.neoruaa.glasmio.ui.GlasmioGroupedList
 import io.github.neoruaa.glasmio.ui.GlasmioGroupedTableFooter
-import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalAppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalGlassTokens
 
 /**
  * 设置页分组卡片的视觉常量（FlClash `prism_ui` 的 settings 组）。
@@ -80,7 +80,7 @@ object PrefsCardDefaults {
      * 列表与卡片永不用玻璃，只有浮层（dock / 弹层）用。
      */
     @Composable
-    fun surface(): Color = LocalAppTokens.current.card
+    fun surface(): Color = LocalGlassTokens.current.card
 
     /**
      * 组内分割线颜色：浅色 `#00000014`、深色 `#FFFFFF1F`。

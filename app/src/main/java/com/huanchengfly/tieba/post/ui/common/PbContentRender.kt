@@ -59,6 +59,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.VoicePlayer
 import com.huanchengfly.tieba.post.utils.EmoticonUtil.emoticonString
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.huanchengfly.tieba.post.utils.launchUrl
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 帖子页专用的图片圆角覆盖（B 阶段楼层视觉：主楼/楼层图片 12dp）。
@@ -176,7 +177,7 @@ data class PicContentRender(
                     .clip(RoundedCornerShape(radius))
                     .fillMaxWidth(widthFraction)
                     .aspectRatio(width * 1f / height)
-                    .background(ExtendedTheme.colors.chip)
+                    .background(AppTokens.chip)
             )
         }
     }
@@ -205,7 +206,7 @@ data class PicContentRender(
                     .clip(RoundedCornerShape(radius))
                     .fillMaxWidth()
                     .aspectRatio(aspectRatio)
-                    .background(ExtendedTheme.colors.chip)
+                    .background(AppTokens.chip)
             )
         }
     }

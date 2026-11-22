@@ -73,6 +73,7 @@ import com.huanchengfly.tieba.post.utils.AccountUtil.LocalAccount
 import com.huanchengfly.tieba.post.utils.StringUtil
 import com.huanchengfly.tieba.post.utils.compose.calcStatusBarColor
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 fun accountNavIconIfCompact(): (@Composable () -> Unit)? =
@@ -169,11 +170,11 @@ fun AccountNavIcon(
                     Icon(
                         imageVector = Icons.Rounded.Add,
                         contentDescription = stringResource(id = R.string.title_new_account),
-                        tint = ExtendedTheme.colors.onChip,
+                        tint = AppTokens.onChip,
                         modifier = Modifier
                             .size(Sizes.Small)
                             .clip(CircleShape)
-                            .background(color = ExtendedTheme.colors.chip)
+                            .background(color = AppTokens.chip)
                             .padding(8.dp),
                     )
                     Spacer(modifier = Modifier.width(16.dp))
@@ -219,7 +220,7 @@ fun ActionItem(
         return
     }
     var lastClickTime by remember { mutableLongStateOf(0L) }
-    ProvideContentColor(color = ExtendedTheme.colors.onTopBar) {
+    ProvideContentColor(color = AppTokens.onTopBar) {
         IconButton(onClick = {
             val currentTime = System.currentTimeMillis()
             val delayMillis = 500L
@@ -238,7 +239,7 @@ fun ActionItem(
 
 @Composable
 fun BackNavigationIcon(onBackPressed: () -> Unit) {
-    ProvideContentColor(color = ExtendedTheme.colors.onTopBar) {
+    ProvideContentColor(color = AppTokens.onTopBar) {
         IconButton(onClick = onBackPressed) {
             Icon(
                 imageVector = ImageVector.vectorResource(id = R.drawable.ic_round_arrow_back),
@@ -297,8 +298,8 @@ fun TitleCentredToolbar(
     TopAppBarContainer(
         topBar = {
             TopAppBar(
-                backgroundColor = ExtendedTheme.colors.topBar,
-                contentColor = ExtendedTheme.colors.onTopBar,
+                backgroundColor = AppTokens.topBar,
+                contentColor = AppTokens.onTopBar,
                 elevation = 0.dp
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -307,7 +308,7 @@ fun TitleCentredToolbar(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxHeight()
                     ) {
-                        ProvideContentColor(color = ExtendedTheme.colors.onTopBar) {
+                        ProvideContentColor(color = AppTokens.onTopBar) {
                             navigationIcon?.invoke()
 
                             Spacer(modifier = Modifier.weight(1f))
@@ -324,7 +325,7 @@ fun TitleCentredToolbar(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         ProvideTextStyle(value = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold)) {
-                            ProvideContentColor(color = ExtendedTheme.colors.onTopBar) {
+                            ProvideContentColor(color = AppTokens.onTopBar) {
                                 title()
                             }
                         }
@@ -360,8 +361,8 @@ fun Toolbar(
     title: @Composable (() -> Unit),
     navigationIcon: (@Composable () -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
-    backgroundColor: Color = ExtendedTheme.colors.topBar,
-    contentColor: Color = ExtendedTheme.colors.onTopBar,
+    backgroundColor: Color = AppTokens.topBar,
+    contentColor: Color = AppTokens.onTopBar,
     content: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     TopAppBarContainer(
@@ -410,7 +411,7 @@ fun TopAppBarContainer(
         Spacer(
             modifier = statusBarModifier
                 .fillMaxWidth()
-                .background(color = ExtendedTheme.colors.topBar.calcStatusBarColor())
+                .background(color = AppTokens.topBar.calcStatusBarColor())
         )
         Column(
             modifier = Modifier
@@ -430,7 +431,7 @@ fun TopAppBarContainer(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(color = ExtendedTheme.colors.topBar),
+                    .background(color = AppTokens.topBar),
             ) {
                 content()
             }

@@ -57,6 +57,7 @@ import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @OptIn(ExperimentalFoundationApi::class)
 @Destination(
@@ -75,7 +76,7 @@ fun HistoryPage(
     val context = LocalContext.current
     val glassmio = HistoryListUi.DefaultStyle == HistoryListUiStyle.GLASMIO
 
-    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+    LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
             MyScaffold(
                 backgroundColor = if (glassmio) GlasmioTheme.colors.groupedBackground
@@ -124,7 +125,7 @@ fun HistoryPage(
                                 lineHeight = 40.sp,
                                 fontWeight = FontWeight.Bold,
                             ),
-                            color = ExtendedTheme.colors.text,
+                            color = AppTokens.text,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                         )
                         TabRow(
@@ -137,7 +138,7 @@ fun HistoryPage(
                             },
                             divider = {},
                             backgroundColor = Color.Transparent,
-                            contentColor = ExtendedTheme.colors.primary,
+                            contentColor = AppTokens.primary,
                             modifier = Modifier
                                 .width(100.dp * 2)
                                 .align(Alignment.CenterHorizontally)
@@ -164,8 +165,8 @@ fun HistoryPage(
                                             pagerState.animateScrollToPage(index)
                                         }
                                     },
-                                    selectedContentColor = ExtendedTheme.colors.onTopBar,
-                                    unselectedContentColor = ExtendedTheme.colors.onTopBarSecondary,
+                                    selectedContentColor = AppTokens.onTopBar,
+                                    unselectedContentColor = AppTokens.onTopBarSecondary,
                                 )
                             }
                         }

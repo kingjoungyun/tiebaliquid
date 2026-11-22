@@ -31,6 +31,7 @@ import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.core.systemGray5
 import io.github.neoruaa.glasmio.glass.render.backdrops.emptyBackdrop
 import io.github.neoruaa.glasmio.ui.GlasmioCard
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 帖子详情首屏骨架。
@@ -46,17 +47,17 @@ fun ThreadSkeleton(
     val background = if (glassmio) {
         GlasmioTheme.colors.groupedBackground
     } else {
-        ExtendedTheme.colors.background
+        AppTokens.background
     }
     val blockColor = if (glassmio) {
         GlasmioTheme.colors.systemGray5
     } else {
-        ExtendedTheme.colors.chip
+        AppTokens.chip
     }
     val cardColor = if (glassmio) {
         GlasmioTheme.colors.elevatedBackground
     } else {
-        ExtendedTheme.colors.background
+        AppTokens.background
     }
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val topInset = statusBarTop + if (glassmio) ThreadTopBarHeight else 0.dp

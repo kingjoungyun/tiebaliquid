@@ -134,6 +134,7 @@ import io.github.neoruaa.glasmio.glass.render.backdrops.emptyBackdrop
 import io.github.neoruaa.glasmio.ui.GlasmioCard
 import io.github.neoruaa.glasmio.ui.GlasmioIconButton
 import kotlinx.collections.immutable.persistentListOf
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 private fun getGridCells(
     context: Context,
@@ -175,8 +176,8 @@ fun SearchBoxPreview() {
 @Composable
 fun SearchBox(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = ExtendedTheme.colors.topBarSurface,
-    contentColor: Color = ExtendedTheme.colors.onTopBarSurface,
+    backgroundColor: Color = AppTokens.topBarSurface,
+    contentColor: Color = AppTokens.onTopBarSurface,
     onClick: () -> Unit,
 ) {
     Box(
@@ -250,7 +251,7 @@ private fun ForumItemPlaceholder() {
                 .clip(CircleShape)
                 .size(40.dp)
                 .align(CenterVertically)
-                .placeholder(visible = true, color = ExtendedTheme.colors.chip),
+                .placeholder(visible = true, color = AppTokens.chip),
         )
         Spacer(modifier = Modifier.width(14.dp))
         Column(
@@ -260,22 +261,22 @@ private fun ForumItemPlaceholder() {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                color = ExtendedTheme.colors.text,
+                color = AppTokens.text,
                 text = "",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .placeholder(visible = true, color = ExtendedTheme.colors.chip),
+                    .placeholder(visible = true, color = AppTokens.chip),
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                color = ExtendedTheme.colors.text,
+                color = AppTokens.text,
                 text = "",
                 modifier = Modifier
                     .width(64.dp)
-                    .placeholder(visible = true, color = ExtendedTheme.colors.chip),
+                    .placeholder(visible = true, color = AppTokens.chip),
                 fontSize = 10.sp,
                 maxLines = 1,
             )
@@ -285,16 +286,16 @@ private fun ForumItemPlaceholder() {
             modifier = Modifier
                 .width(54.dp)
                 .background(
-                    color = ExtendedTheme.colors.chip,
+                    color = AppTokens.chip,
                     shape = RoundedCornerShape(3.dp)
                 )
                 .padding(vertical = 4.dp)
                 .align(CenterVertically)
-                .placeholder(visible = true, color = ExtendedTheme.colors.chip)
+                .placeholder(visible = true, color = AppTokens.chip)
         ) {
             Text(
                 text = "0",
-                color = ExtendedTheme.colors.onChip,
+                color = AppTokens.onChip,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Center)
@@ -396,7 +397,7 @@ private fun HomeMoreMenu(
                 Icon(
                     imageVector = Icons.Rounded.Check,
                     contentDescription = null,
-                    tint = ExtendedTheme.colors.primary
+                    tint = AppTokens.primary
                 )
             }
         }
@@ -407,7 +408,7 @@ private fun HomeMoreMenu(
         ) {
             Text(
                 text = stringResource(id = R.string.menu_sort_title),
-                color = ExtendedTheme.colors.textSecondary,
+                color = AppTokens.textSecondary,
                 fontSize = 12.sp
             )
         }
@@ -429,7 +430,7 @@ private fun HomeMoreMenu(
                     Icon(
                         imageVector = Icons.Rounded.Check,
                         contentDescription = null,
-                        tint = ExtendedTheme.colors.primary
+                        tint = AppTokens.primary
                     )
                 }
             }
@@ -446,7 +447,7 @@ private fun HomeMoreMenu(
                 Icon(
                     imageVector = Icons.Rounded.Check,
                     contentDescription = null,
-                    tint = ExtendedTheme.colors.primary
+                    tint = AppTokens.primary
                 )
             }
         }
@@ -518,7 +519,7 @@ private fun HomeLargeTitle(
             lineHeight = 40.sp,
             fontWeight = FontWeight.Bold,
         ),
-        color = ExtendedTheme.colors.text,
+        color = AppTokens.text,
         maxLines = 1,
         modifier = modifier.padding(vertical = 8.dp),
     )
@@ -547,7 +548,7 @@ private fun ForumItemContent(
         ) {
             // 贴吧名称
             Text(
-                color = ExtendedTheme.colors.text,
+                color = AppTokens.text,
                 text = item.forumName,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
@@ -560,7 +561,7 @@ private fun ForumItemContent(
                     R.string.hot_num,
                     item.hotNum.getShortNumString()
                 ),
-                color = ExtendedTheme.colors.onChip,
+                color = AppTokens.onChip,
                 fontSize = 10.sp
             )
         }
@@ -577,7 +578,7 @@ private fun ForumItemContent(
                 modifier = Modifier
                     .width(54.dp)
                     .background(
-                        color = ExtendedTheme.colors.chip,
+                        color = AppTokens.chip,
                         shape = RoundedCornerShape(3.dp)
                     )
                     .padding(vertical = 4.dp)
@@ -587,7 +588,7 @@ private fun ForumItemContent(
                 ) {
                     Text(
                         text = "Lv.${item.levelId}",
-                        color = ExtendedTheme.colors.onChip,
+                        color = AppTokens.onChip,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.align(CenterVertically)
@@ -600,7 +601,7 @@ private fun ForumItemContent(
                             modifier = Modifier
                                 .size(12.dp)
                                 .align(CenterVertically),
-                            tint = ExtendedTheme.colors.onChip
+                            tint = AppTokens.onChip
                         )
                     }
                 }
@@ -809,7 +810,7 @@ fun HomePage(
             .fillMaxSize()
             .then(
                 if (glassmio) Modifier.background(
-                    if (ExtendedTheme.colors.isNightMode) Color.Black else Color(0xFFF2F2F7)
+                    if (AppTokens.isNightMode) Color.Black else Color(0xFFF2F2F7)
                 ) else Modifier
             ),
         topBar = {
@@ -833,7 +834,7 @@ fun HomePage(
                             Icon(
                                 imageVector = Icons.Rounded.Search,
                                 contentDescription = stringResource(id = R.string.hint_search),
-                                tint = ExtendedTheme.colors.text,
+                                tint = AppTokens.text,
                                 modifier = Modifier.size(20.dp),
                             )
                         }
@@ -847,7 +848,7 @@ fun HomePage(
                                 Icon(
                                     imageVector = Icons.Outlined.ViewAgenda,
                                     contentDescription = stringResource(id = R.string.title_more_options),
-                                    tint = ExtendedTheme.colors.text,
+                                    tint = AppTokens.text,
                                     modifier = Modifier.size(20.dp),
                                 )
                             }
@@ -1066,7 +1067,7 @@ fun HomePage(
                                                         .padding(horizontal = 4.dp)
                                                         .height(IntrinsicSize.Min)
                                                         .clip(RoundedCornerShape(100))
-                                                        .background(color = ExtendedTheme.colors.chip)
+                                                        .background(color = AppTokens.chip)
                                                         .debounceClickable(onClick = {
                                                             navigator.navigate(
                                                                 ForumPageDestination(
@@ -1182,14 +1183,14 @@ fun HomePage(
                 modifier = Modifier
                     .padding(top = LocalMainTabTopInset.current)
                     .align(Alignment.TopCenter),
-                backgroundColor = ExtendedTheme.colors.pullRefreshIndicator,
-                contentColor = ExtendedTheme.colors.primary,
+                backgroundColor = AppTokens.pullRefreshIndicator,
+                contentColor = AppTokens.primary,
             )
         }
     }
     }
     if (glassmio) {
-        LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+        LiquidGlassTheme(accent = AppTokens.primary) {
             HarmonyTextProvider {
                 homeScaffold()
             }
@@ -1218,7 +1219,7 @@ private fun HomePageSkeletonScreen(
                     text = stringResource(id = R.string.title_top_forum),
                     modifier = Modifier.placeholder(
                         visible = true,
-                        color = ExtendedTheme.colors.chip
+                        color = AppTokens.chip
                     ),
                     invert = true
                 )
@@ -1242,7 +1243,7 @@ private fun HomePageSkeletonScreen(
                     text = stringResource(id = R.string.forum_list_title),
                     modifier = Modifier.placeholder(
                         visible = true,
-                        color = ExtendedTheme.colors.chip
+                        color = AppTokens.chip
                     ),
                     invert = true
                 )
@@ -1285,7 +1286,7 @@ fun EmptyScreen(
                 Text(
                     text = stringResource(id = R.string.home_empty_login),
                     style = MaterialTheme.typography.body1,
-                    color = ExtendedTheme.colors.textSecondary,
+                    color = AppTokens.textSecondary,
                     textAlign = TextAlign.Center
                 )
             }

@@ -55,6 +55,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreen
 import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Destination
 @Composable
@@ -157,7 +158,7 @@ private fun ForumDetailContent(
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
-                .background(color = ExtendedTheme.colors.chip)
+                .background(color = AppTokens.chip)
                 .padding(vertical = 20.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -165,7 +166,7 @@ private fun ForumDetailContent(
                 statNum = forumInfo.get { member_count },
                 statText = stringResource(id = R.string.text_stat_follow)
             )
-            HorizontalDivider(color = Color(if (ExtendedTheme.colors.isNightMode) 0xFF808080 else 0xFFDEDEDE))
+            HorizontalDivider(color = Color(if (AppTokens.isNightMode) 0xFF808080 else 0xFFDEDEDE))
             StatCardItem(
                 statNum = forumInfo.get { thread_count },
                 statText = stringResource(id = R.string.text_stat_threads)
@@ -206,7 +207,7 @@ private fun RowScope.StatCardItem(
         Text(
             text = statText,
             fontSize = 12.sp,
-            color = ExtendedTheme.colors.textSecondary
+            color = AppTokens.textSecondary
         )
     }
 }

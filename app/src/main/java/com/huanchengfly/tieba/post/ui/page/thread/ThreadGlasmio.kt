@@ -69,6 +69,7 @@ import io.github.neoruaa.glasmio.core.IosTypography
 import io.github.neoruaa.glasmio.glass.GlassSurface
 import io.github.neoruaa.glasmio.ui.GlasmioIconButton
 import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 帖子详情页的 Glasmio 外壳（`ThreadPageUiStyle.GLASMIO`）。
@@ -89,7 +90,7 @@ fun ThreadPageSkin(
         content()
         return
     }
-    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+    LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
             LiquidGlassBackdropHost(
             modifier = Modifier.fillMaxSize(),

@@ -66,6 +66,7 @@ import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberMenuState
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 吧页的 Glasmio 皮肤（`ForumPageUiStyle.GLASMIO`）。
@@ -94,7 +95,7 @@ fun ForumPageSkin(enabled: Boolean, content: @Composable () -> Unit) {
         content()
         return
     }
-    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+    LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
             // 页级 backdrop host：本页的玻璃弹层（⋯ 菜单等）要采到「这一页的真实内容」。
             // 页面内容进 sampledContent（被录进 LayerBackdrop）；页面里的玻璃控件（顶栏圆钮）
@@ -295,7 +296,7 @@ private fun ForumActionPill(
             text = text,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
-            color = ExtendedTheme.colors.onAccent,
+            color = AppTokens.onAccent,
             maxLines = 1,
         )
     }

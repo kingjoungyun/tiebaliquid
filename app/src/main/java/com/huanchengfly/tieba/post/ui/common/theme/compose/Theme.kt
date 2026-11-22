@@ -23,6 +23,7 @@ import com.huanchengfly.tieba.post.rememberPreferenceAsState
 import com.huanchengfly.tieba.post.utils.ThemeUtil
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.huanchengfly.tieba.post.utils.compose.darken
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Stable
 data class ExtendedColors(
@@ -447,6 +448,8 @@ private fun getThemeColorForTheme(theme: String): ExtendedColors {
             )
         ),
     )
+    // Stage 6：同一份解析结果灌进 AppTokens（页面统一读 AppTokens.xxx）
+    AppTokens.fill(extended)
     // A2：深色统一纯黑。只归零「页面/窗口/栏」这类背景 token，卡片（card/floorCard/chip）、
     // 文字、分割线保持主题语义，否则卡片会和背景糊成一片。半透明主题有背景图，走独立分支不处理。
     return if (extended.isNightMode && !ThemeUtil.isTranslucentTheme(nowTheme)) {
