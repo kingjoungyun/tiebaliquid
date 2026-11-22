@@ -12,9 +12,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
@@ -28,6 +30,8 @@ import androidx.compose.foundation.layout.imeAnimationTarget
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeightIn
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
@@ -36,14 +40,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Badge
-import androidx.compose.material.BadgedBox
-import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
@@ -67,6 +68,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onVisibilityChanged
 import androidx.compose.ui.platform.LocalContext
@@ -78,6 +82,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -97,6 +102,15 @@ import com.huanchengfly.tieba.post.pxToDpFloat
 import com.huanchengfly.tieba.post.toMD5
 import com.huanchengfly.tieba.post.toastShort
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+import com.huanchengfly.tieba.post.ui.common.prefs.widgets.PrefsSwitch
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
+import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
+import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
+import io.github.neoruaa.glasmio.glass.GlassSurface
 import com.huanchengfly.tieba.post.ui.page.destinations.ReplyPageDestination
 import com.huanchengfly.tieba.post.ui.page.reply.ReplyPanelType.EMOJI
 import com.huanchengfly.tieba.post.ui.page.reply.ReplyPanelType.IMAGE
@@ -109,7 +123,6 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.DialogNegativeButton
 import com.huanchengfly.tieba.post.ui.widgets.compose.DialogPositiveButton
 import com.huanchengfly.tieba.post.ui.widgets.compose.DialogState
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyBackHandler
-import com.huanchengfly.tieba.post.ui.widgets.compose.VerticalDivider
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import com.huanchengfly.tieba.post.ui.widgets.edittext.widget.UndoableEditText
 import com.huanchengfly.tieba.post.utils.AccountUtil
@@ -158,12 +171,7 @@ fun ReplyDialog(
         dialogState = state,
         imePadding = false,
     ) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
-            color = AppTokens.windowBackground,
-            elevation = 0.dp,
-        ) {
+        ReplyGlassShell(cornerRadius = 26.dp) {
             ReplyPageContent(
                 viewModel = pageViewModel(),
                 onBack = { dismiss() },
@@ -481,46 +489,64 @@ internal fun ReplyPageContent(
             }),
         verticalArrangement = Arrangement.Bottom
     ) {
+        // 玻璃标题行：左上角悬浮关闭钮 + 标题 + 字数。
+        // 改造前是「一行 M2 纯文字 + 1dp VerticalDivider」，没有任何可点的返回。
+        // destination（bottom sheet）会顶到屏幕最上沿，这里补状态栏内边距；
+        // Dialog 形态自己带窗口内边距，不重复加。
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(if (isDialog) Modifier else Modifier.statusBarsPadding())
+                .padding(start = 8.dp, end = 16.dp, top = 6.dp, bottom = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            GlassIconButton(
+                onClick = onBack,
+                icon = PhosphorIcons["x"] ?: Icons.Rounded.Close,
+                contentDescription = stringResource(id = R.string.btn_close),
+            )
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "$topTitle",
+                text = topTitle,
                 modifier = Modifier.weight(1f),
-                fontWeight = FontWeight.Bold
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = AppTokens.text,
             )
             Text(
                 text = "$textLength",
-                style = MaterialTheme.typography.caption,
+                fontSize = 13.sp,
                 color = AppTokens.textSecondary
             )
         }
-        VerticalDivider(modifier = Modifier.padding(horizontal = 16.dp))
         if (isTopicThread) {
-            BaseTextField(
-                value = threadTitle,
-                onValueChange = { if (it.length <= 31) threadTitle = it },
+            // 主题帖标题：玻璃胶囊（与正文同一个材质）
+            ReplyGlassInput(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                singleLine = true,
-                textStyle = MaterialTheme.typography.subtitle1.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                ),
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Sentences,
-                ),
-                placeholder = {
-                    Text(
-                        text = stringResource(id = R.string.hint_thread_title),
-                        style = MaterialTheme.typography.subtitle1.copy(fontSize = 15.sp),
-                        color = AppTokens.textSecondary,
-                    )
-                },
-            )
-            VerticalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+            ) {
+                BaseTextField(
+                    value = threadTitle,
+                    onValueChange = { if (it.length <= 31) threadTitle = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.subtitle1.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                    ),
+                    placeholder = {
+                        Text(
+                            text = stringResource(id = R.string.hint_thread_title),
+                            style = MaterialTheme.typography.subtitle1.copy(fontSize = 15.sp),
+                            color = AppTokens.textSecondary,
+                        )
+                    },
+                )
+            }
         }
         Box(
             modifier = Modifier
@@ -528,50 +554,58 @@ internal fun ReplyPageContent(
                 .fillMaxWidth()
                 .imeNestedScroll(textFieldScrollState),
         ) {
-            Box(
+            // 正文输入：玻璃胶囊/卡片（多行），placeholder 由 EditText 的 hint 用次级色
+            ReplyGlassInput(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .requiredHeightIn(min = minResult, max = maxResult)
-                    .verticalScroll(textFieldScrollState)
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
             ) {
-                AndroidView(
-                    factory = { ctx ->
-                        (View.inflate(
-                            ctx,
-                            R.layout.layout_reply_edit_text,
-                            null
-                        ) as UndoableEditText).apply {
-                            editTextView = this
-                            hint = when {
-                                isTopicThread -> ctx.getString(R.string.tip_thread_content)
-                                subPostId != null && subPostId != 0L && replyUserName != null ->
-                                    ctx.getString(R.string.hint_reply, replyUserName)
-                                else -> ctx.getString(R.string.tip_reply)
-                            }
-                            setOnFocusChangeListener { _, hasFocus ->
-                                if (hasFocus) {
-                                    switchToPanel(NONE)
-                                }
-                            }
-                            addTextChangedListener(
-                                afterTextChanged = {
-                                    coroutineScope.launch {
-                                        curTextFlow.emit(it?.toString() ?: "")
-                                    }
-                                }
-                            )
-                            if (waitEditTextToSet) {
-                                waitEditTextToSet = false
-                                this.setText(StringUtil.getEmoticonContent(this, initialText))
-                                this.setSelection(initialText.length)
-                            }
-                        }
-                    },
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .wrapContentHeight(align = Alignment.Top)
-                )
+                        .requiredHeightIn(min = minResult, max = maxResult)
+                        .verticalScroll(textFieldScrollState)
+                ) {
+                    AndroidView(
+                        factory = { ctx ->
+                            (View.inflate(
+                                ctx,
+                                R.layout.layout_reply_edit_text,
+                                null
+                            ) as UndoableEditText).apply {
+                                editTextView = this
+                                hint = when {
+                                    isTopicThread -> ctx.getString(R.string.tip_thread_content)
+                                    subPostId != null && subPostId != 0L && replyUserName != null ->
+                                        ctx.getString(R.string.hint_reply, replyUserName)
+                                    else -> ctx.getString(R.string.tip_reply)
+                                }
+                                // placeholder 用次级色（原 XML 里是 M2 的 hint 色）
+                                setHintTextColor(AppTokens.textSecondary.toArgb())
+                                setOnFocusChangeListener { _, hasFocus ->
+                                    if (hasFocus) {
+                                        switchToPanel(NONE)
+                                    }
+                                }
+                                addTextChangedListener(
+                                    afterTextChanged = {
+                                        coroutineScope.launch {
+                                            curTextFlow.emit(it?.toString() ?: "")
+                                        }
+                                    }
+                                )
+                                if (waitEditTextToSet) {
+                                    waitEditTextToSet = false
+                                    this.setText(StringUtil.getEmoticonContent(this, initialText))
+                                    this.setSelection(initialText.length)
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(align = Alignment.Top)
+                    )
+                }
             }
 //            BaseTextField(
 //                value = text,
@@ -591,45 +625,56 @@ internal fun ReplyPageContent(
 //                placeholder = { Text(text = stringResource(id = R.string.tip_reply)) },
 //            )
         }
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(24.dp)
+//            BaseTextField(
+//                value = text,
+//                onValueChange = { text = it },
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(16.dp)
+//                    .requiredHeightIn(min = minResult, max = maxResult)
+//                    .focusRequester(focusRequester)
+//                    .verticalScroll(textFieldScrollState)
+//                    .onFocusChanged {
+//                        Log.i("ReplyPage", "onFocusChanged: $it")
+//                        if (it.hasFocus) {
+//                            switchToKeyboard(NONE)
+//                        }
+//                    },
+//                placeholder = { Text(text = stringResource(id = R.string.tip_reply)) },
+//            )
+        // 底部工具条：玻璃条 + 圆钮；发送是 accent 实心胶囊
+        ReplyGlassBar(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp),
         ) {
-            IconButton(
+            GlassIconButton(
                 onClick = { switchToPanel(EMOJI) },
-                modifier = Modifier.size(24.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.EmojiEmotions,
-                    contentDescription = stringResource(id = R.string.insert_emotions),
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+                icon = PhosphorIcons["smiley"] ?: Icons.Outlined.EmojiEmotions,
+                contentDescription = stringResource(id = R.string.insert_emotions),
+            )
             if (postId == null || postId == 0L) {
-                IconButton(
-                    onClick = { switchToPanel(IMAGE) },
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    BadgedBox(
-                        badge = {
-                            if (selectedImageList.isNotEmpty()) {
-                                Badge(
-                                    backgroundColor = AppTokens.accent,
-                                    contentColor = AppTokens.background,
-                                ) {
-                                    Text(
-                                        text = "${selectedImageList.size}",
-                                        style = MaterialTheme.typography.caption
-                                    )
-                                }
-                            }
+                Box {
+                    GlassIconButton(
+                        onClick = { switchToPanel(IMAGE) },
+                        icon = PhosphorIcons["image"] ?: Icons.Outlined.InsertPhoto,
+                        contentDescription = stringResource(id = R.string.insert_photo),
+                    )
+                    if (selectedImageList.isNotEmpty()) {
+                        // 已选图片数量角标（信息与改造前一致）
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .clip(CircleShape)
+                                .background(AppTokens.accent)
+                                .padding(horizontal = 5.dp, vertical = 1.dp),
+                        ) {
+                            Text(
+                                text = "${selectedImageList.size}",
+                                fontSize = 10.sp,
+                                color = AppTokens.onAccent,
+                            )
                         }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.InsertPhoto,
-                            contentDescription = stringResource(id = R.string.insert_photo),
-                            modifier = Modifier.size(24.dp)
-                        )
                     }
                 }
             }
@@ -646,55 +691,74 @@ internal fun ReplyPageContent(
             Spacer(modifier = Modifier.weight(1f))
             if (isReplying) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp)
+                        .size(24.dp),
                     strokeWidth = 2.dp,
                     color = AppTokens.primary
                 )
             } else {
-                IconButton(
-                    onClick = {
-                        if (context.appPreferences.safeMode) {
-                            safeModeDialogOnOpen = false
-                            warningDialogState.show()
-                            return@IconButton
-                        }
-                        val replyContent = if (subPostId == null || subPostId == 0L) {
-                            getText()
-                        } else {
-                            "回复 #(reply, ${replyUserPortrait}, ${replyUserName}) :${getText()}"
-                        }
-                        if (selectedImageList.isEmpty()) {
-                            viewModel.send(
-                                ReplyUiIntent.Send(
-                                    content = replyContent,
-                                    forumId = forumId,
-                                    forumName = forumName,
-                                    threadId = threadId,
-                                    tbs = curTbs,
-                                    title = threadTitle.takeIf { isTopicThread },
-                                    postId = postId,
-                                    subPostId = subPostId,
-                                    replyUserId = replyUserId
+                // 发送：accent 实心胶囊（不可发送时降为 chip 色，仍然保留点击禁用语义）
+                val sendContentColor =
+                    if (canSend) AppTokens.onAccent else AppTokens.textSecondary
+                Row(
+                    modifier = Modifier
+                        .height(36.dp)
+                        .clip(CircleShape)
+                        .background(if (canSend) AppTokens.accent else AppTokens.chip)
+                        .clickable(enabled = canSend) {
+                            if (context.appPreferences.safeMode) {
+                                safeModeDialogOnOpen = false
+                                warningDialogState.show()
+                                return@clickable
+                            }
+                            val replyContent = if (subPostId == null || subPostId == 0L) {
+                                getText()
+                            } else {
+                                "回复 #(reply, ${replyUserPortrait}, ${replyUserName}) :${getText()}"
+                            }
+                            if (selectedImageList.isEmpty()) {
+                                viewModel.send(
+                                    ReplyUiIntent.Send(
+                                        content = replyContent,
+                                        forumId = forumId,
+                                        forumName = forumName,
+                                        threadId = threadId,
+                                        tbs = curTbs,
+                                        title = threadTitle.takeIf { isTopicThread },
+                                        postId = postId,
+                                        subPostId = subPostId,
+                                        replyUserId = replyUserId
+                                    )
                                 )
-                            )
-                        } else {
-                            waitUploadSuccessToSend = true
-                            viewModel.send(
-                                ReplyUiIntent.UploadImages(
-                                    forumName,
-                                    selectedImageList,
-                                    isOriginImage
+                            } else {
+                                waitUploadSuccessToSend = true
+                                viewModel.send(
+                                    ReplyUiIntent.UploadImages(
+                                        forumName,
+                                        selectedImageList,
+                                        isOriginImage
+                                    )
                                 )
-                            )
+                            }
                         }
-                    },
-                    enabled = canSend,
-                    modifier = Modifier.size(24.dp)
+                        .padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.Send,
+                        imageVector = PhosphorIcons["paper-plane-tilt"]
+                            ?: Icons.AutoMirrored.Rounded.Send,
                         contentDescription = stringResource(id = R.string.send_reply),
-                        modifier = Modifier.size(24.dp)
+                        tint = sendContentColor,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(id = R.string.send_reply),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = sendContentColor,
+                        maxLines = 1,
                     )
                 }
             }
@@ -858,19 +922,23 @@ fun ReplyPage(
     tbs: String? = null,
     viewModel: ReplyViewModel = pageViewModel(),
 ) {
-    ReplyPageContent(
-        viewModel = viewModel,
-        onBack = { navigator.navigateUp() },
-        forumId = forumId,
-        forumName = forumName,
-        threadId = threadId,
-        postId = postId,
-        subPostId = subPostId,
-        replyUserId = replyUserId,
-        replyUserName = replyUserName,
-        replyUserPortrait = replyUserPortrait,
-        tbs = tbs
-    )
+    // destination 是 M2 的 ModalBottomSheet（16dp 顶圆角），玻璃壳跟着这个圆角走，
+    // 避免两种圆角叠出白边。
+    ReplyGlassShell(cornerRadius = 16.dp) {
+        ReplyPageContent(
+            viewModel = viewModel,
+            onBack = { navigator.navigateUp() },
+            forumId = forumId,
+            forumName = forumName,
+            threadId = threadId,
+            postId = postId,
+            subPostId = subPostId,
+            replyUserId = replyUserId,
+            replyUserName = replyUserName,
+            replyUserPortrait = replyUserPortrait,
+            tbs = tbs
+        )
+    }
 }
 
 @Composable
@@ -955,14 +1023,24 @@ private fun ImagePanel(
                         modifier = Modifier
                             .fillMaxHeight()
                             .aspectRatio(1f)
+                            .clip(RoundedCornerShape(14.dp))
                     )
-                    IconButton(
-                        onClick = { onRemoveImage(index) },
-                        modifier = Modifier.align(Alignment.TopEnd)
+                    // 删除角标：深色半透明圆底 + 白叉，保证在任何图片上都看得见
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(4.dp)
+                            .size(22.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.45f))
+                            .clickable { onRemoveImage(index) },
+                        contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = stringResource(id = R.string.desc_remove_image)
+                            imageVector = PhosphorIcons["x"] ?: Icons.Rounded.Close,
+                            contentDescription = stringResource(id = R.string.desc_remove_image),
+                            tint = Color.White,
+                            modifier = Modifier.size(13.dp)
                         )
                     }
                 }
@@ -973,6 +1051,7 @@ private fun ImagePanel(
                         modifier = Modifier
                             .fillMaxHeight()
                             .aspectRatio(1f)
+                            .clip(RoundedCornerShape(14.dp))
                             .background(AppTokens.chip)
                             .clickable {
                                 coroutineScope.emitGlobalEvent(
@@ -986,28 +1065,139 @@ private fun ImagePanel(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Add,
+                            imageVector = PhosphorIcons["plus"] ?: Icons.Rounded.Add,
                             contentDescription = stringResource(id = R.string.desc_add_image),
-                            modifier = Modifier.size(48.dp)
+                            tint = AppTokens.textSecondary,
+                            modifier = Modifier.size(32.dp)
                         )
                     }
                 }
             }
         }
+        // 「原图」开关：M2 Checkbox → Glasmio 开关（与设置页同一套 PrefsSwitch，含 API<33 兜底）
         Row(
             modifier = Modifier
-                .padding(vertical = 16.dp)
+                .padding(vertical = 12.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
                 ) {
                     onIsOriginImageChange(!isOriginImage)
                 },
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Checkbox(checked = isOriginImage, onCheckedChange = onIsOriginImageChange)
-            Text(text = stringResource(id = R.string.origin_image))
+            PrefsSwitch(checked = isOriginImage, onCheckedChange = onIsOriginImageChange)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(id = R.string.origin_image),
+                color = AppTokens.text,
+            )
         }
+    }
+}
+/* ────────────────────────── P3：回复页玻璃外壳 ────────────────────────── */
+
+/**
+ * 回复页 / 回复弹窗的**玻璃卡片**外壳。
+ *
+ * - 圆角：弹窗 26dp、bottom-sheet 目的地 16dp（跟 M2 `ModalBottomSheetLayout` 的圆角对齐，
+ *   避免两种圆角叠出一圈白边）；
+ * - backdrop：回复页是独立 Window / 独立 sheet，读不到页面那层 `LayerBackdrop`，
+ *   所以按全 App 的做法**自带一个纯色 host**（和 `AppActionSheet` 同一个模式），
+ *   里面的玻璃控件采样这块纯色底即可；
+ * - 降级：API < 33（`isLiquidGlassSupported()` 为 false）时退回原来的不透明 `Surface`
+ *   + `windowBackground`，外观与改造前一致，不会崩、不会白屏。
+ */
+@Composable
+private fun ReplyGlassShell(
+    cornerRadius: Dp,
+    content: @Composable () -> Unit,
+) {
+    val shape = RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius)
+    if (!isLiquidGlassSupported()) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = shape,
+            color = AppTokens.windowBackground,
+            elevation = 0.dp,
+        ) {
+            content()
+        }
+        return
+    }
+    LiquidGlassTheme(accent = AppTokens.primary) {
+        HarmonyTextProvider {
+            GlasmioBackdropHost(
+                sampledColor = glassColors().background,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                GlassSurface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = shape,
+                ) {
+                    content()
+                }
+            }
+        }
+    }
+}
+
+/** 内层玻璃：输入胶囊。没有玻璃能力时退化成 chip 底色的圆角块。 */
+@Composable
+private fun ReplyGlassInput(
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    val shape = RoundedCornerShape(20.dp)
+    if (!isLiquidGlassSupported()) {
+        Box(
+            modifier = modifier
+                .clip(shape)
+                .background(AppTokens.chip)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            content = content,
+        )
+        return
+    }
+    GlassSurface(
+        modifier = modifier,
+        shape = shape,
+    ) {
+        Box(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            content = content,
+        )
+    }
+}
+
+/** 内层玻璃：底部工具条（胶囊）。 */
+@Composable
+private fun ReplyGlassBar(
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.() -> Unit,
+) {
+    val shape = RoundedCornerShape(28.dp)
+    if (!isLiquidGlassSupported()) {
+        Row(
+            modifier = modifier
+                .clip(shape)
+                .background(AppTokens.chip)
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            content = content,
+        )
+        return
+    }
+    GlassSurface(
+        modifier = modifier,
+        shape = shape,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            content = content,
+        )
     }
 }
