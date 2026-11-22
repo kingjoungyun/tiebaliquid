@@ -39,6 +39,7 @@ import androidx.compose.material.icons.outlined.Reply
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -56,6 +57,12 @@ import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.arch.getOrNull
 import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.toastShort
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+import com.huanchengfly.tieba.post.ui.common.prefs.GroupHeader
+import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsUiStyle
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCard
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsUiStyle
+import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.page.destinations.AccountManagePageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.FansListPageDestination
@@ -83,6 +90,7 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.SquircleShape
 import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageSkin
 import com.huanchengfly.tieba.post.ui.page.thread.ThreadTopBarHeight
 
@@ -129,6 +137,7 @@ fun ToolboxPage(
     val socialEntries = listOf(
         ToolboxEntry(
             icon = Icons.Outlined.Groups,
+            phosphor = "users",
             title = stringResource(id = R.string.title_toolbox_fans),
             summary = stringResource(id = R.string.summary_toolbox_fans),
         ) {
@@ -136,6 +145,7 @@ fun ToolboxPage(
         },
         ToolboxEntry(
             icon = Icons.Outlined.Person,
+            phosphor = "user-plus",
             title = stringResource(id = R.string.title_toolbox_follow),
             summary = stringResource(id = R.string.summary_toolbox_follow),
         ) {
@@ -146,6 +156,7 @@ fun ToolboxPage(
     val contentEntries = listOf(
         ToolboxEntry(
             icon = Icons.Outlined.Article,
+            phosphor = "file-text",
             title = stringResource(id = R.string.title_toolbox_threads),
             summary = stringResource(id = R.string.summary_toolbox_threads),
         ) {
@@ -155,6 +166,7 @@ fun ToolboxPage(
         },
         ToolboxEntry(
             icon = Icons.Outlined.Reply,
+            phosphor = "chat-circle",
             title = stringResource(id = R.string.title_toolbox_posts),
             summary = stringResource(id = R.string.summary_toolbox_posts),
         ) {
@@ -164,6 +176,7 @@ fun ToolboxPage(
         },
         ToolboxEntry(
             icon = Icons.Outlined.CollectionsBookmark,
+            phosphor = "bookmark-simple",
             title = stringResource(id = R.string.title_toolbox_collect),
             summary = stringResource(id = R.string.summary_toolbox_collect),
         ) {
@@ -171,6 +184,7 @@ fun ToolboxPage(
         },
         ToolboxEntry(
             icon = Icons.Outlined.History,
+            phosphor = "clock-counter-clockwise",
             title = stringResource(id = R.string.title_toolbox_history),
             summary = stringResource(id = R.string.summary_toolbox_history),
         ) {
@@ -182,6 +196,7 @@ fun ToolboxPage(
         add(
             ToolboxEntry(
                 icon = Icons.Outlined.Forum,
+                phosphor = "list-bullets",
                 title = stringResource(id = R.string.title_toolbox_like_forum),
                 summary = stringResource(id = R.string.summary_toolbox_like_forum),
             ) {
@@ -193,6 +208,7 @@ fun ToolboxPage(
             add(
                 ToolboxEntry(
                     icon = Icons.Rounded.CheckCircle,
+                    phosphor = "check-circle",
                     title = stringResource(id = R.string.title_toolbox_oksign),
                     summary = stringResource(id = R.string.summary_toolbox_oksign),
                 ) {
@@ -205,6 +221,7 @@ fun ToolboxPage(
     val appEntries = listOf(
         ToolboxEntry(
             icon = Icons.Outlined.Settings,
+            phosphor = "gear",
             title = stringResource(id = R.string.title_toolbox_settings),
             summary = stringResource(id = R.string.summary_toolbox_settings),
         ) {
@@ -212,6 +229,7 @@ fun ToolboxPage(
         },
         ToolboxEntry(
             icon = Icons.Outlined.ManageAccounts,
+            phosphor = "user",
             title = stringResource(id = R.string.title_toolbox_account),
             summary = stringResource(id = R.string.summary_toolbox_account),
         ) {
@@ -242,48 +260,66 @@ fun ToolboxPage(
             },
             bottomBar = {},
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(
-                    top = statusBarTop + ThreadTopBarHeight,
-                    bottom = 24.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                item {
-                    Text(
-                        text = "工具箱",
-                        style = LocalTextStyle.current.copy(
-                            fontSize = 34.sp,
-                            lineHeight = 40.sp,
-                            fontWeight = FontWeight.Bold,
-                        ),
-                        color = AppTokens.text,
-                        modifier = Modifier.padding(vertical = 8.dp),
-                    )
+            CompositionLocalProvider(LocalPrefsUiStyle provides PrefsUiStyle.GLASSMIO) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    contentPadding = PaddingValues(
+                        top = statusBarTop + ThreadTopBarHeight,
+                        bottom = 24.dp,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    item {
+                        Text(
+                            text = "工具箱",
+                            style = LocalTextStyle.current.copy(
+                                fontSize = 34.sp,
+                                lineHeight = 40.sp,
+                                fontWeight = FontWeight.Bold,
+                            ),
+                            color = AppTokens.text,
+                            modifier = Modifier.padding(vertical = 8.dp),
+                        )
+                    }
+                    item {
+                        ToolboxProfileCard(
+                            user = user?.getOrNull(),
+                            fallbackAccount = account,
+                            modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
+                            onClick = {
+                                requireLogin {
+                                    navigator.navigate(UserProfilePageDestination(selfUid))
+                                }
+                            },
+                        )
+                    }
+                    item {
+                        ToolboxPrefsGroup(
+                            title = stringResource(id = R.string.title_toolbox_group_social),
+                            entries = socialEntries,
+                        )
+                    }
+                    item {
+                        ToolboxPrefsGroup(
+                            title = stringResource(id = R.string.title_toolbox_group_content),
+                            entries = contentEntries,
+                        )
+                    }
+                    item {
+                        ToolboxPrefsGroup(
+                            title = stringResource(id = R.string.title_toolbox_group_forum),
+                            entries = forumEntries,
+                        )
+                    }
+                    item {
+                        ToolboxPrefsGroup(
+                            title = stringResource(id = R.string.title_toolbox_group_app),
+                            entries = appEntries,
+                        )
+                    }
                 }
-                item {
-                    ToolboxProfileCard(
-                        user = user?.getOrNull(),
-                        fallbackAccount = account,
-                        modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
-                        onClick = {
-                            requireLogin {
-                                navigator.navigate(UserProfilePageDestination(selfUid))
-                            }
-                        },
-                    )
-                }
-                item { ToolboxGroupTitle(stringResource(id = R.string.title_toolbox_group_social)) }
-                items(items = socialEntries) { ToolboxEntryRow(entry = it) }
-                item { ToolboxGroupTitle(stringResource(id = R.string.title_toolbox_group_content)) }
-                items(items = contentEntries) { ToolboxEntryRow(entry = it) }
-                item { ToolboxGroupTitle(stringResource(id = R.string.title_toolbox_group_forum)) }
-                items(items = forumEntries) { ToolboxEntryRow(entry = it) }
-                item { ToolboxGroupTitle(stringResource(id = R.string.title_toolbox_group_app)) }
-                items(items = appEntries) { ToolboxEntryRow(entry = it) }
             }
         }
         return
@@ -344,10 +380,41 @@ fun ToolboxPage(
 
 private class ToolboxEntry(
     val icon: ImageVector,
+    val phosphor: String,
     val title: String,
     val summary: String,
     val onClick: () -> Unit,
 )
+
+/**
+ * 一组入口 = 一张 26dp 分组卡片（`PrefsCard` + `GroupHeader`），组内每行是设置页的
+ * `TextPref`：23dp Phosphor 图标（accent 着色）+ 标题 + 行尾 chevron，没有副标题。
+ */
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun ToolboxPrefsGroup(
+    title: String,
+    entries: List<ToolboxEntry>,
+) {
+    PrefsCard(
+        header = { GroupHeader(title) },
+    ) {
+        entries.forEach { entry ->
+            TextPref(
+                title = entry.title,
+                onClick = entry.onClick,
+                leadingIcon = {
+                    Icon(
+                        imageVector = PhosphorIcons[entry.phosphor] ?: entry.icon,
+                        contentDescription = null,
+                        tint = AppTokens.accent,
+                        modifier = Modifier.size(23.dp),
+                    )
+                },
+            )
+        }
+    }
+}
 
 @Composable
 private fun ToolboxGroupTitle(
@@ -398,7 +465,7 @@ private fun ToolboxProfileCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(SquircleShape(26.dp))
             .background(color = AppTokens.card)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 16.dp),
