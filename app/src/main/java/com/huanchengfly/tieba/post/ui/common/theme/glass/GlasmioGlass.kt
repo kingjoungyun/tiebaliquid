@@ -279,9 +279,12 @@ enum class GlassOverlayPage { PREFS, FORUM }
 /**
  * 页面顶栏是否搬进 host 的 `overlayContent`（P2：让顶栏悬浮钮采真实内容）。
  *
- * **默认值按真机 A/B 结论定**（<device>，设备温度 ~28°C，8 轮 × 每轮一次滑动）：
- * - `PREFS`（设置页）开启：p50 18.5 → 19.5ms（+1.0），jank 6.4% → 5.0%（变好）→ 可以推广
- * - `FORUM`（吧页）**关闭**：p50 13.5 → 44.5ms（+31ms，远超 3ms 判据）→ 不推广，回退旧路径
+ * **默认值**（改过一次）：
+ * - `PREFS`（设置页）开启：真机 A/B p50 18.5 → 19.5ms（+1.0）、jank 6.4% → 5.0%（变好）。
+ * - `FORUM`（吧页）**现在也开启**：早期 A/B 在模拟器 SwiftShader 上测到 p50 +31ms，当时回退；
+ *   但回退后吧页顶栏三颗圆钮采的是 44dp 纯色小 host（"假玻璃"：背后永远没有内容流动）。
+ *   双录代码（`ForumPage:1179`）本来就在，这里只翻默认值 —— 追求观感一致优先，
+ *   如在低端机/模拟器上量到掉帧，把这一行改回 false 即可（或 `tieba_overlay_topbar 0`）。
  *
  * 覆盖开关（同一个 APK 不用重装，改完重启 App 生效）：
  * `adb shell settings put global tieba_overlay_topbar 1|0` → 强制全开 / 全关（仅 debug）。
@@ -291,7 +294,7 @@ fun useOverlayTopBarHost(page: GlassOverlayPage): Boolean {
     if (!isLiquidGlassSupported()) return false
     val default = when (page) {
         GlassOverlayPage.PREFS -> true
-        GlassOverlayPage.FORUM -> false
+        GlassOverlayPage.FORUM -> true
     }
     if (!BuildConfig.DEBUG) return default
     val context = LocalContext.current

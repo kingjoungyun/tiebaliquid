@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -67,12 +68,21 @@ fun GlassIconButton(
     size: Dp = GlassTokens.Spacing.topBarActionSize,
     tint: Color? = null,
     navigationSurfaceColor: Color? = glassNavigationTint(),
+    /**
+     * 自带纯色 host 的**采样底色**：默认页面分组底色（`groupedBackground`）。
+     *
+     * 以前这里传的是 [navigationSurfaceColor]（玻璃 tint，浅色下接近白），而 host 又没被裁成圆形，
+     * 结果圆钮背后露出一个 44dp 白方块、和 `#F2F2F7` 的页面底撞色。现在默认对齐页面底，
+     * 需要别的底色（例如看图页的纯黑）时显式覆盖。
+     */
+    hostFill: Color = AppTokens.groupedBackground,
     icon: @Composable (Color) -> Unit,
 ) {
     GlassCircleHost(
         modifier = modifier,
         size = size,
-        fill = navigationSurfaceColor ?: glassNavigationTint(),
+        fill = hostFill,
+        surfaceTint = navigationSurfaceColor,
     ) { materialTint ->
         GlasmioIconButton(
             onClick = onClick,
@@ -97,6 +107,7 @@ fun GlassIconButton(
     iconSize: Dp = GlassTokens.Spacing.topBarActionIconSize,
     tint: Color? = null,
     navigationSurfaceColor: Color? = glassNavigationTint(),
+    hostFill: Color = AppTokens.groupedBackground,
 ) {
     GlassIconButton(
         onClick = onClick,
@@ -106,6 +117,7 @@ fun GlassIconButton(
         size = size,
         tint = tint,
         navigationSurfaceColor = navigationSurfaceColor,
+        hostFill = hostFill,
     ) { color ->
         Image(
             imageVector = icon,
@@ -128,12 +140,15 @@ fun GlassCircleSurface(
     modifier: Modifier = Modifier,
     size: Dp = GlassTokens.Spacing.topBarActionSize,
     navigationSurfaceColor: Color? = glassNavigationTint(),
+    /** 纯色 host 的采样底色，语义同 [GlassIconButton] 的 `hostFill`。 */
+    hostFill: Color = AppTokens.groupedBackground,
     content: @Composable BoxScope.(Color) -> Unit,
 ) {
     GlassCircleHost(
         modifier = modifier,
         size = size,
-        fill = navigationSurfaceColor ?: glassNavigationTint(),
+        fill = hostFill,
+        surfaceTint = navigationSurfaceColor,
     ) { materialTint ->
         LiquidGlassTheme(accent = AppTokens.primary) {
             GlasmioGlassSurface(
@@ -160,6 +175,7 @@ private fun GlassCircleHost(
     modifier: Modifier,
     size: Dp,
     fill: Color,
+    surfaceTint: Color?,
     content: @Composable (materialTint: Color) -> Unit,
 ) {
     if (!isLiquidGlassSupported()) {
@@ -171,7 +187,7 @@ private fun GlassCircleHost(
                 modifier = Modifier.matchParentSize(),
                 shape = CircleShape,
                 material = NavigationGlassMaterial.RegularSmall,
-                navigationSurfaceColor = fill,
+                navigationSurfaceColor = surfaceTint ?: fill,
                 innerGlow = true,
             ) {}
             content(tint)
@@ -193,9 +209,14 @@ private fun GlassCircleHost(
         // 这类按钮采的是**纯色**底（因为它在页面的录制层里，采页面 = 自己采样自己），
         // 所以视觉上容易变成「白盘」。给它补一圈极淡的 rim + 内发光（P2/B+C 的 C 方案）：
         // 只加绘制、不加录制，代价 ~0，但在纯色背景上能看出玻璃壳的存在。
+        //
+        // **host 必须裁成圆形**：采样层是 `background(sampledColor)` 铺满 host 的矩形，
+        // 不裁的话圆钮四角会露出一个 44dp 的实色方块（浅色下是白块，比 `#F2F2F7` 更亮）。
         GlasmioBackdropHost(
             sampledColor = fill,
-            modifier = modifier.size(size),
+            modifier = modifier
+                .size(size)
+                .clip(CircleShape),
         ) {
             CompositionLocalProvider(
                 LocalLiquidGlassHosted provides true,

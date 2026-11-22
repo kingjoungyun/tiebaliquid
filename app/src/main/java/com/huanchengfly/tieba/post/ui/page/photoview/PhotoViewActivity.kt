@@ -267,6 +267,8 @@ class PhotoViewActivity : BaseComposeActivityWithParcelable<PhotoViewData>() {
                         contentDescription = stringResource(id = R.string.button_back),
                         tint = Color.White,
                         navigationSurfaceColor = Color.Black,
+                        // 全屏看图恒为黑底：采样底也要给黑，否则圆钮底下是一圈浅色盘。
+                        hostFill = Color.Black,
                         modifier = Modifier
                             .align(Alignment.TopStart)
                             .statusBarsPadding()
