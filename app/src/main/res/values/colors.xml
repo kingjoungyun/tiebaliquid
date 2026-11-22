@@ -11,7 +11,6 @@
     <color name="colorPrimary">#FFFFFFFF</color>
     <color name="colorAccent">#FF4477E0</color>
     <color name="colorUnselected">#FFCCCCCC</color>
-    <color name="colorToolbarText">#FF474b54</color>
     <color name="transparent">#00000000</color>
     <color name="color_place_holder">#FFF0F0F0</color>
     <color name="color_place_holder_night">#99000000</color>
@@ -44,8 +43,6 @@
     <color name="color_text_disabled_translucent">@color/color_text_disabled_translucent_light
     </color>
 
-    <color name="color_text_translucent_dark">#FF000000</color>
-    <color name="color_text_secondary_translucent_dark">#B3000000</color>
     <color name="color_text_disabled_translucent_dark">#80000000</color>
 
     <color name="default_color_primary">#FF4477E0</color>
@@ -76,15 +73,12 @@
     <color name="default_color_placeholder">#FFF0F0F0</color>
 
     <color name="theme_color_primary_white">@color/tieba</color>
-    <color name="theme_color_primary_tieba">@color/tieba</color>
     <color name="theme_color_primary_blue">@color/tieba</color>
     <color name="theme_color_primary_pink">#FFFF9A9E</color>
     <color name="theme_color_primary_red">@color/red</color>
     <color name="theme_color_primary_black">@color/black</color>
     <color name="theme_color_primary_purple">#FF512DA8</color>
     <color name="theme_color_primary_dark">@color/tieba</color>
-    <color name="theme_color_primary_blue_dark">@color/tieba</color>
-    <color name="theme_color_primary_grey_dark">@color/tieba</color>
     <color name="theme_color_primary_amoled_dark">@color/tieba</color>
 
     <color name="theme_color_accent_white">@color/tieba</color>
@@ -95,8 +89,6 @@
     <color name="theme_color_accent_black">@color/black</color>
     <color name="theme_color_accent_purple">#FF512DA8</color>
     <color name="theme_color_accent_dark">@color/tieba</color>
-    <color name="theme_color_accent_blue_dark">@color/tieba</color>
-    <color name="theme_color_accent_grey_dark">@color/tieba</color>
     <color name="theme_color_accent_amoled_dark">@color/tieba</color>
 
     <!--
@@ -129,7 +121,6 @@
 
     <color name="theme_color_window_background_light">#FFF8F8F8</color>
     <color name="theme_color_window_background_dark">#FF10171F</color>
-    <color name="theme_color_window_background_blue_dark">#17212B</color>
     <color name="theme_color_window_background_grey_dark">#FF202020</color>
     <color name="theme_color_window_background_amoled_dark">#FF1E1E1E</color>
     <color name="theme_color_window_background_translucent">
@@ -144,8 +135,6 @@
 
     <color name="theme_color_toolbar_white">@color/white</color>
     <color name="theme_color_toolbar_dark">#17212B</color>
-    <color name="theme_color_toolbar_blue_dark">#17212B</color>
-    <color name="theme_color_toolbar_grey_dark">#202020</color>
     <color name="theme_color_toolbar_amoled_dark">#000000</color>
     <color name="theme_color_toolbar_translucent">#00FFFFFF</color>
     <color name="theme_color_toolbar_translucent_light">#00FFFFFF</color>
@@ -155,26 +144,15 @@
     <color name="theme_color_toolbar_item_dark">@color/white</color>
     <color name="theme_color_toolbar_item_night">#EEEEEE</color>
     <color name="theme_color_toolbar_item_translucent">#DFFFFFFF</color>
-    <color name="theme_color_toolbar_item_translucent_light">#DFFFFFFF</color>
-    <color name="theme_color_toolbar_item_translucent_dark">#FF000000</color>
-
     <color name="theme_color_toolbar_item_secondary_white">#DD545967</color>
     <color name="theme_color_toolbar_item_secondary_light">#99FFFFFF</color>
     <color name="theme_color_toolbar_item_secondary_translucent">#8AFFFFFF</color>
-    <color name="theme_color_toolbar_item_secondary_translucent_light">#8AFFFFFF</color>
-    <color name="theme_color_toolbar_item_secondary_translucent_dark">#B3000000</color>
     <color name="theme_color_toolbar_item_secondary_dark">#CCE6E7EE</color>
-    <color name="theme_color_toolbar_item_secondary_blue_dark">#CCEEEEEE</color>
-    <color name="theme_color_toolbar_item_secondary_grey_dark">#CCEEEEEE</color>
     <color name="theme_color_toolbar_item_secondary_amoled_dark">#CCEEEEEE</color>
 
     <color name="theme_color_toolbar_item_active_white">@color/theme_color_accent_white</color>
     <color name="theme_color_toolbar_item_active_translucent">#FFFFFFFF</color>
-    <color name="theme_color_toolbar_item_active_translucent_light">#FFFFFFFF</color>
-    <color name="theme_color_toolbar_item_active_translucent_dark">#FF000000</color>
     <color name="theme_color_toolbar_item_active_dark">@color/white</color>
-    <color name="theme_color_toolbar_item_active_blue_dark">@color/white</color>
-    <color name="theme_color_toolbar_item_active_grey_dark">@color/white</color>
     <color name="theme_color_toolbar_item_active_amoled_dark">@color/white</color>
 
     <color name="theme_color_toolbar_surface_light">#F8F8F8</color>
@@ -222,19 +200,12 @@
     <color name="theme_color_on_accent_grey_dark">#FF202020</color>
     <color name="theme_color_on_accent_amoled_dark">#FF000000</color>
     <color name="theme_color_on_accent_translucent">#FFFFFFFF</color>
-    <color name="theme_color_on_accent_translucent_light">#FFFFFFFF</color>
-    <color name="theme_color_on_accent_translucent_dark">#FF212121</color>
-
     <color name="theme_color_nav_light">@color/white</color>
     <color name="theme_color_nav_dark">#FF15202B</color>
-    <color name="theme_color_nav_blue_dark">#1B2733</color>
-    <color name="theme_color_nav_grey_dark">#FF303030</color>
     <color name="theme_color_nav_amoled_dark">#FF171717</color>
 
     <color name="theme_color_unselected_day">@color/colorUnselected</color>
     <color name="theme_color_unselected_translucent">#43FFFFFF</color>
-    <color name="theme_color_unselected_translucent_light">#43FFFFFF</color>
-    <color name="theme_color_unselected_translucent_dark">#4D000000</color>
     <color name="theme_color_unselected_dark">#FF415C68</color>
     <color name="theme_color_unselected_blue_dark">#5A6670</color>
     <color name="theme_color_unselected_grey_dark">#FF808080</color>
@@ -242,8 +213,6 @@
 
     <color name="theme_color_floor_card_light">#FFF8F8F8</color>
     <color name="theme_color_floor_card_translucent">#15FFFFFF</color>
-    <color name="theme_color_floor_card_translucent_light">#15FFFFFF</color>
-    <color name="theme_color_floor_card_translucent_dark">#2A000000</color>
     <color name="theme_color_floor_card_dark">#FF1A2A39</color>
     <color name="theme_color_floor_card_blue_dark">#242F3D</color>
     <color name="theme_color_floor_card_grey_dark">#FF1E1E1E</color>
@@ -251,8 +220,6 @@
 
     <color name="theme_color_card_light">#FFFFFFFF</color>
     <color name="theme_color_card_translucent">#10FFFFFF</color>
-    <color name="theme_color_card_translucent_light">#10FFFFFF</color>
-    <color name="theme_color_card_translucent_dark">#20000000</color>
     <color name="theme_color_card_dark">#FF131D27</color>
     <color name="theme_color_card_blue_dark">#202B37</color>
     <color name="theme_color_card_grey_dark">#FF2A2A2A</color>
@@ -272,8 +239,6 @@
     <color name="theme_color_divider_translucent_light">#10FFFFFF</color>
     <color name="theme_color_divider_translucent_dark">#15000000</color>
     <color name="theme_color_divider_dark">#FF10171D</color>
-    <color name="theme_color_divider_blue_dark">#242F3D</color>
-    <color name="theme_color_divider_grey_dark">#FF1E1E1E</color>
     <color name="theme_color_divider_amoled_dark">#FF1E1E1E</color>
 
     <color name="theme_color_shadow_day">@color/color_shadow</color>

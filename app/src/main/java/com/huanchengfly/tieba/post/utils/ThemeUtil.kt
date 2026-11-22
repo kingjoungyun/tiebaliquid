@@ -178,9 +178,14 @@ object ThemeUtil {
         dataStore.putBoolean(KEY_USE_DYNAMIC_THEME, useDynamicTheme)
     }
 
-    fun isUsingDynamicTheme(): Boolean {
-        return context.appPreferences.useDynamicColorTheme
-    }
+    /**
+     * 动态取色（Material You）已关（Stage 6）：主题只剩 2 套 + 6 个预设 accent，
+     * 系统的 wallpaper 取色不再参与。方法保留是为了不在调用点大改，但**恒返回 false**，
+     * 于是 `getCurrentTheme(checkDynamic = true)` 永远不会拼出 `*_dynamic` 主题名。
+     * 设置页里 `useDynamicColorTheme` 的入口也已移除（见 AppThemePage）。
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun isUsingDynamicTheme(): Boolean = false
 
     fun switchNightMode() {
         if (isNightMode()) {
@@ -423,19 +428,32 @@ object ThemeUtil {
     }
 
     @StyleRes
+    /**
+     * 主题裁到 **2 套**（Stage 6）：
+     * - 亮色：`TiebaLite.Tieba`（6 个预设 accent 色在运行时覆盖 colorPrimary，不再各配一套 style）
+     * - 暗色：`TiebaLite.Dark.Amoled`（纯黑）
+     *
+     * 旧的 black/purple/pink/red/blue_dark/grey_dark/translucent/custom 共 10 套 style 已删除；
+     * 存量用户机器上如果还存着旧 theme 字符串，这里会安全落到这两套之一（不会因为找不到 style 而崩）。
+     */
     private fun getThemeByName(themeName: String): Int {
         return when (themeName.lowercase(Locale.getDefault())) {
-            THEME_TRANSLUCENT, THEME_TRANSLUCENT_LIGHT -> R.style.TiebaLite_Translucent_Light
-            THEME_TRANSLUCENT_DARK -> R.style.TiebaLite_Translucent_Dark
-            THEME_DEFAULT -> R.style.TiebaLite_Tieba
-            THEME_BLACK -> R.style.TiebaLite_Black
-            THEME_PURPLE -> R.style.TiebaLite_Purple
-            THEME_PINK -> R.style.TiebaLite_Pink
-            THEME_RED -> R.style.TiebaLite_Red
-            THEME_BLUE_DARK -> R.style.TiebaLite_Dark_Blue
-            THEME_GREY_DARK -> R.style.TiebaLite_Dark_Grey
-            THEME_AMOLED_DARK -> R.style.TiebaLite_Dark_Amoled
-            THEME_CUSTOM -> R.style.TiebaLite_Custom
+            THEME_DEFAULT,
+            THEME_BLACK,
+            THEME_PURPLE,
+            THEME_PINK,
+            THEME_RED,
+            -> R.style.TiebaLite_Tieba
+
+            THEME_AMOLED_DARK,
+            THEME_BLUE_DARK,
+            THEME_GREY_DARK,
+            -> R.style.TiebaLite_Dark_Amoled
+
+            // 半透明主题入口已删：历史值一律按明暗映射，不再有 translucent style
+            THEME_TRANSLUCENT, THEME_TRANSLUCENT_LIGHT -> R.style.TiebaLite_Tieba
+            THEME_TRANSLUCENT_DARK -> R.style.TiebaLite_Dark_Amoled
+            THEME_CUSTOM -> R.style.TiebaLite_Tieba
             else -> R.style.TiebaLite_Tieba
         }
     }
