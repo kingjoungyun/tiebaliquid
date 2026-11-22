@@ -238,6 +238,9 @@ dependencies {
     // GlasmioGroupedList / GlasmioGroupedTableFooter）：生产设置页的渲染层（PrefsScreen 的
     // GLASSMIO 路径）真机也要用，所以走 implementation（此前只有 debug 预览页用，走 debugImplementation）。
     implementation(libs.glasmio.preference)
+    // 导航壳（Stage 1 的 Navigation 3 / NavDisplay 用）。本轮只声明依赖、不写业务代码，
+    // 目的是把传递依赖（navigation3 / navigationevent / miuix）先拉通、可离线解析。
+    implementation(libs.glasmio.scaffold)
 
     // Android Studio Preview support
     implementation(libs.compose.ui.tooling.preview)

@@ -1,0 +1,37 @@
+Glasmio — third-party NOTICE
+=============================
+
+This project vendors the published artifacts of Glasmio into a local Maven
+repository so that dependency resolution does not depend on an online Maven
+mirror and is byte-for-byte reproducible.
+
+  Upstream:     Glasmio
+  Repository:   https://github.com/NEORUAA/Glasmio
+  Author:       NEORUAA and Glasmio contributors
+  Version:      0.1.3
+  License:      Apache License, Version 2.0 (see LICENSE in this directory)
+  Vendored at:  libs/maven/io/github/neoruaa/glasmio/
+
+Vendored modules (AAR + POM, exactly the published files, unmodified):
+
+  io.github.neoruaa.glasmio:glasmio-core:0.1.3
+  io.github.neoruaa.glasmio:glasmio-glass:0.1.3
+  io.github.neoruaa.glasmio:glasmio-ui:0.1.3
+  io.github.neoruaa.glasmio:glasmio-preference:0.1.3
+  io.github.neoruaa.glasmio:glasmio-icons:0.1.3
+  io.github.neoruaa.glasmio:glasmio-scaffold:0.1.3
+
+Updating to another version:
+
+  pwsh -File scripts/sync-glasmio.ps1 -Version 0.1.4
+  # then bump the version in gradle/libs.versions.toml
+
+Notes:
+
+- Glasmio 0.1.3 is built against Compose BOM 2026.09.00 / foundation 1.12.1 /
+  material3 1.4.0 and with compileSdk 37. This host project builds against
+  compileSdk 36 with AGP 8.13.2, so `check*AarMetadata` is intentionally
+  disabled in app/build.gradle.kts (the AARs are consumed as binaries).
+- glasmio-scaffold additionally depends on androidx.navigation3,
+  androidx.navigationevent and top.yukonga.miuix.kmp; those are *not* vendored
+  here and still resolve from the configured online mirrors.
