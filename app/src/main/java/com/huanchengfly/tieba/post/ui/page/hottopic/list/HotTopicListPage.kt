@@ -69,6 +69,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
+import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
@@ -172,7 +173,7 @@ private fun TopicBody(
 }
 
 @OptIn(ExperimentalMaterialApi::class)
-@Destination
+@Destination(deepLinks = [DeepLink(uriPattern = "tblite://hot")])
 @Composable
 fun HotTopicListPage(
     viewModel: HotTopicListViewModel = pageViewModel<HotTopicListUiIntent, HotTopicListViewModel>(
@@ -201,7 +202,7 @@ fun HotTopicListPage(
             topBar = {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
                         .statusBarsPadding()
                         .height(ThreadTopBarHeight)
                         .padding(horizontal = 8.dp)
@@ -227,7 +228,7 @@ fun HotTopicListPage(
                 ) {
                     item(key = "HotTitle") {
                         Text(
-                            text = stringResource(id = R.string.title_hot_message_list),
+                            text = "热榜",
                             style = LocalTextStyle.current.copy(
                                 fontSize = 34.sp,
                                 lineHeight = 40.sp,
