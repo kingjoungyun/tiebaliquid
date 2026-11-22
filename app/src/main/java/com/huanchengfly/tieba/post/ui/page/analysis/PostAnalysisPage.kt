@@ -125,14 +125,14 @@ fun PostAnalysisPage(
     val glassmio = AnalysisUi.DefaultStyle == AnalysisUiStyle.GLASMIO
     ProvideNavigator(navigator = navigator) {
         MyScaffold(
-            backgroundColor = if (glassmio) AppTokens.background
+            backgroundColor = if (glassmio) AppTokens.groupedBackground
             else ExtendedTheme.colors.background,
             topBar = {
                 if (glassmio) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(AppTokens.background)
+                            .background(AppTokens.groupedBackground)
                             .statusBarsPadding(),
                     ) {
                         Row(
@@ -146,6 +146,7 @@ fun PostAnalysisPage(
                                 onClick = { navigator.navigateUp() },
                                 icon = Icons.AutoMirrored.Rounded.ArrowBack,
                                 contentDescription = stringResource(id = R.string.button_back),
+                                navigationSurfaceColor = AppTokens.groupedBackground,
                             )
                         }
                         Text(

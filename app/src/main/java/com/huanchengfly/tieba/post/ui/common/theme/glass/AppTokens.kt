@@ -20,6 +20,9 @@ import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedColors
  * 字段与 [ExtendedColors] 1:1（命名保持一致，便于机械替换）；另外提供
  * [textPrimary] / [textTertiary] / [separator] 三个别名，对应设计规范里的叫法
  * （分别是 text / textDisabled / divider）。
+ *
+ * [groupedBackground] 是唯一一个**不来自** XML attr 的 token：它是设计规范里的
+ * iOS grouped background（浅色 `#F2F2F7` / 深色 `#000000`），在 [fill] 里按明暗计算。
  */
 object AppTokens {
 
@@ -71,6 +74,16 @@ object AppTokens {
 
     // ── 表面 ──
     var background by mutableStateOf(Color.Unspecified)
+        private set
+
+    /**
+     * 分组卡列表页的页面底（iOS grouped background）。
+     *
+     * `background` 是 Material 的「页面底色」，浅色主题里就是纯白，和 `card` 同色；
+     * 设置 / 工具箱 / 分析 / 我的 / 历史这类「白卡片分组列表」需要再低一层的灰底才能看出边界。
+     * 浅色固定 `#F2F2F7`，深色固定 `#000000`（A2 的 AMOLED 纯黑）。
+     */
+    var groupedBackground by mutableStateOf(Color.Unspecified)
         private set
     var chip by mutableStateOf(Color.Unspecified)
         private set
@@ -131,6 +144,7 @@ object AppTokens {
         textSecondary = from.textSecondary
         textDisabled = from.textDisabled
         background = from.background
+        groupedBackground = if (from.isNightMode) Color.Black else Color(0xFFF2F2F7)
         chip = from.chip
         onChip = from.onChip
         unselected = from.unselected

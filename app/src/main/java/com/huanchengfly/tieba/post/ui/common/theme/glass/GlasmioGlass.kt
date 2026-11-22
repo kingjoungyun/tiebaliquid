@@ -476,7 +476,7 @@ fun LiquidGlassTheme(
         container = tokens.card,
         prominentContainer = tokens.cardProminent,
         subtleStroke = tokens.stroke,
-        groupedBackground = tokens.background,
+        groupedBackground = AppTokens.groupedBackground,
         elevatedBackground = tokens.card,
         separator = tokens.separator,
         tertiaryContent = tokens.textTertiary,

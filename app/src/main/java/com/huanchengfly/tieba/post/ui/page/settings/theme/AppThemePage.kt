@@ -117,13 +117,12 @@ fun AppThemePage(
         it.color.toArgb() == effectiveAccent.toArgb()
     }
 
-    // 浅色主题里 windowBackground/background 都是纯白，和卡片同色会看不出分组；
-    // 用 chip（浅灰）当页面底。深色下 chip 仍是深灰，会破坏 A2 的纯黑，所以深色固定黑。
-    // 半透明主题用 background（transparent），让背景图透出来，避免深灰 chip 配深色文字。
-    val pageBackground = when {
-        ThemeUtil.isTranslucentTheme(currentTheme) -> AppTokens.background
-        isDark -> AppTokens.background
-        else -> AppTokens.chip
+    // 浅色 / 深色都用统一的 grouped background（浅 #F2F2F7 / 深 #000000），
+    // 白色卡片压在上面才有边界；半透明主题保留 background，让背景图透出来。
+    val pageBackground = if (ThemeUtil.isTranslucentTheme(currentTheme)) {
+        AppTokens.background
+    } else {
+        AppTokens.groupedBackground
     }
     // 二级页范式：无 M2 顶栏（否则白底顶栏会和分组底色撞成一条白带），
     // 背景铺到状态栏下面，返回是左上角浮起的玻璃圆钮，大标题静态起排。
