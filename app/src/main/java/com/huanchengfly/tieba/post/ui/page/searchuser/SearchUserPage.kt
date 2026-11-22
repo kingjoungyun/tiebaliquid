@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,11 +25,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.Article
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.ErrorOutline
@@ -65,6 +68,9 @@ import com.huanchengfly.tieba.post.arch.getOrNull
 import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.toastShort
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.FansListPageDestination
@@ -77,10 +83,12 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.AvatarPlaceholder
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
+import com.huanchengfly.tieba.post.ui.widgets.compose.SearchBox
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.utils.AccountUtil
 import com.huanchengfly.tieba.post.utils.StringUtil
+import io.github.neoruaa.glasmio.core.GlasmioTheme
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
@@ -135,19 +143,44 @@ fun SearchUserPage(
     initialUid: String? = null,
     viewModel: SearchUserViewModel = pageViewModel(),
 ) {
+    val glassmio = SearchUserPageUi.DefaultStyle == SearchUserPageUiStyle.GLASMIO
+    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+        HarmonyTextProvider {
     ProvideNavigator(navigator = navigator) {
         MyScaffold(
+            backgroundColor = if (glassmio) GlasmioTheme.colors.groupedBackground
+            else ExtendedTheme.colors.background,
             topBar = {
-                TitleCentredToolbar(
-                    title = {
-                        Text(
-                            text = stringResource(id = R.string.title_search_user),
-                            style = MaterialTheme.typography.h6,
-                            fontWeight = FontWeight.Bold,
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(GlasmioTheme.colors.groupedBackground)
+                        .statusBarsPadding(),
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .padding(horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        GlassIconButton(
+                            onClick = { navigator.navigateUp() },
+                            icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = stringResource(id = R.string.button_back),
                         )
-                    },
-                    navigationIcon = { BackNavigationIcon(onBackPressed = { navigator.navigateUp() }) },
-                )
+                    }
+                    Text(
+                        text = stringResource(id = R.string.title_search_user),
+                        style = LocalTextStyle.current.copy(
+                            fontSize = 34.sp,
+                            lineHeight = 40.sp,
+                            fontWeight = FontWeight.Bold,
+                        ),
+                        color = ExtendedTheme.colors.text,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    )
+                }
             },
         ) { contentPaddings ->
             SearchUserContent(
@@ -155,6 +188,8 @@ fun SearchUserPage(
                 contentPadding = contentPaddings,
                 initialUid = initialUid,
             )
+        }
+    }
         }
     }
 }
@@ -186,6 +221,7 @@ private fun SearchUserContent(
     val context = LocalContext.current
     val navigator = LocalNavigator.current
     val loggedIn = AccountUtil.LocalAccount.current != null
+    val glassmio = SearchUserPageUi.DefaultStyle == SearchUserPageUiStyle.GLASMIO
 
     val isSearching by viewModel.uiState.collectPartialAsState(
         prop1 = SearchUserUiState::isSearching,
@@ -271,6 +307,10 @@ private fun SearchUserContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
+            .background(
+                if (glassmio) GlasmioTheme.colors.groupedBackground
+                else ExtendedTheme.colors.background
+            )
             .padding(contentPadding)
             .padding(horizontal = 16.dp),
         // 主页 tab 内嵌时，顶栏高度必须走 contentPadding 才能让内容从顶栏下面经过。
@@ -292,6 +332,7 @@ private fun SearchUserContent(
                     localError = null
                 },
                 onPaste = { pasteFromClipboard() },
+                glassmio = glassmio,
             )
         }
 
@@ -302,6 +343,7 @@ private fun SearchUserContent(
                 user = currentUser,
                 errorMessage = errorMessage,
                 notFoundHint = notFoundHint,
+                glassmio = glassmio,
             )
         }
 
@@ -327,6 +369,7 @@ private fun UidInputCard(
     onQuery: () -> Unit,
     onClear: () -> Unit,
     onPaste: () -> Unit,
+    glassmio: Boolean = false,
 ) {
     Column(
         modifier = Modifier
@@ -337,6 +380,33 @@ private fun UidInputCard(
             .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        if (glassmio) {
+            SearchBox(
+                keyword = value,
+                onKeywordChange = onValueChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                onKeywordSubmit = { onQuery() },
+                placeholder = {
+                    Text(
+                        text = stringResource(id = R.string.hint_search_user_uid),
+                        color = ExtendedTheme.colors.textSecondary,
+                        fontSize = 14.sp,
+                    )
+                },
+                prependIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.PersonSearch,
+                        contentDescription = null,
+                        tint = ExtendedTheme.colors.textSecondary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                },
+                shape = RoundedCornerShape(22.dp),
+                color = GlasmioTheme.colors.elevatedBackground,
+            )
+        } else {
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
@@ -369,6 +439,7 @@ private fun UidInputCard(
                 }
             },
         )
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -462,6 +533,7 @@ private fun SearchUserResultArea(
     user: User?,
     errorMessage: String?,
     notFoundHint: String,
+    glassmio: Boolean = false,
 ) {
     when {
         isSearching && user == null -> {
@@ -499,7 +571,7 @@ private fun SearchUserResultArea(
         }
 
         user != null -> {
-            SearchUserProfileCard(user = user)
+            SearchUserProfileCard(user = user, glassmio = glassmio)
         }
 
         hasSearched -> {
@@ -546,6 +618,7 @@ private fun StatusCard(
 private fun SearchUserProfileCard(
     user: User,
     modifier: Modifier = Modifier,
+    glassmio: Boolean = false,
 ) {
     val name = user.nameShow.takeUnless { it.isEmpty() }
         ?: user.name.takeUnless { it.isEmpty() }
@@ -555,8 +628,11 @@ private fun SearchUserProfileCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(color = ExtendedTheme.colors.card)
+            .clip(RoundedCornerShape(if (glassmio) 26.dp else 16.dp))
+            .background(
+                color = if (glassmio) GlasmioTheme.colors.elevatedBackground
+                else ExtendedTheme.colors.card
+            )
             .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -564,13 +640,13 @@ private fun SearchUserProfileCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Box(modifier = Modifier.size(56.dp)) {
+            Box(modifier = Modifier.size(if (glassmio) 64.dp else 56.dp)) {
                 if (portrait.isNullOrEmpty()) {
-                    AvatarPlaceholder(size = 56.dp)
+                    AvatarPlaceholder(size = if (glassmio) 64.dp else 56.dp)
                 } else {
                     Avatar(
                         data = StringUtil.getAvatarUrl(portrait),
-                        size = 56.dp,
+                        size = if (glassmio) 64.dp else 56.dp,
                         contentDescription = stringResource(id = R.string.user_portrait),
                     )
                 }
@@ -581,7 +657,10 @@ private fun SearchUserProfileCard(
             ) {
                 Text(
                     text = name,
-                    style = MaterialTheme.typography.h6,
+                    style = if (glassmio) LocalTextStyle.current.copy(
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    ) else MaterialTheme.typography.h6,
                     fontWeight = FontWeight.Bold,
                     color = ExtendedTheme.colors.text,
                     maxLines = 1,
