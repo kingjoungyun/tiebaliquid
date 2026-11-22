@@ -3,6 +3,7 @@ package com.huanchengfly.tieba.post.ui.page.analysis
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,15 +11,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Icon
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,14 +36,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.arch.pageViewModel
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
@@ -49,6 +60,10 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
+import io.github.neoruaa.glasmio.core.GlasmioTheme
+import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
+import io.github.neoruaa.glasmio.glass.GlassSurface
 
 /**
  * 「TA 的发言分析」页。
@@ -168,14 +183,12 @@ fun PostAnalysisPage(
                 contentPadding = PaddingValues(vertical = 12.dp),
             ) {
                 item {
-                    OutlinedTextField(
+                    AnalysisSearchField(
                         value = keyword,
                         onValueChange = { keyword = it },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
-                        singleLine = true,
-                        label = { Text(text = stringResource(id = R.string.hint_analysis_keyword)) },
                     )
                 }
 
@@ -243,6 +256,81 @@ fun PostAnalysisPage(
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 玻璃胶囊搜索框：44dp 高、Glasmio `GlassSurface` 默认材质 + 22dp 圆角。
+ *
+ * 分析页本身没有页级 backdrop host，所以这里给输入框自带一个 44dp 的**纯色**小 host
+ * （`GlasmioBackdropHost(sampledColor = ...)`，`fillsBoundsUniformly`），玻璃采的是这层纯色，
+ * 既拿得到真材质，也不会自己采样自己。输入框在 host 的 overlay 层，不在录制层里。
+ */
+@Composable
+private fun AnalysisSearchField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    GlasmioBackdropHost(
+        sampledColor = AppTokens.card,
+        modifier = modifier.height(44.dp),
+    ) {
+        LiquidGlassTheme(accent = AppTokens.primary) {
+            val colors = GlasmioTheme.colors
+            GlassSurface(
+                modifier = Modifier.fillMaxSize(),
+                shape = RoundedCornerShape(22.dp),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        imageVector = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
+                        contentDescription = null,
+                        tint = colors.secondaryContent,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (value.isEmpty()) {
+                            Text(
+                                text = stringResource(id = R.string.hint_analysis_keyword),
+                                fontSize = 15.sp,
+                                color = colors.secondaryContent,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        BasicTextField(
+                            value = value,
+                            onValueChange = onValueChange,
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            textStyle = TextStyle(
+                                fontSize = 15.sp,
+                                color = colors.content,
+                            ),
+                            cursorBrush = SolidColor(colors.accent),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        )
+                    }
+                    if (value.isNotEmpty()) {
+                        Icon(
+                            imageVector = PhosphorIcons["x"] ?: Icons.Rounded.Close,
+                            contentDescription = null,
+                            tint = colors.secondaryContent,
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clickable { onValueChange("") },
+                        )
                     }
                 }
             }

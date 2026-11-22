@@ -24,8 +24,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.SquircleShape
 
-/** 一个分析卡片：标题 + 内容。 */
+/** 一个分析卡片：标题 + 内容（26dp 连续圆角，与设置页分组卡同一套几何）。 */
 @Composable
 internal fun AnalysisSection(
     title: String,
@@ -35,7 +36,7 @@ internal fun AnalysisSection(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .background(color = AppTokens.card, shape = RoundedCornerShape(16.dp))
+            .background(color = AppTokens.card, shape = SquircleShape(26.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -89,8 +90,8 @@ internal fun BarChart(
         if (axisLabel.isNotEmpty()) {
             Text(
                 text = axisLabel,
-                style = MaterialTheme.typography.caption,
-                color = AppTokens.text,
+                fontSize = 13.sp,
+                color = AppTokens.textSecondary,
             )
         }
     }
@@ -160,8 +161,8 @@ internal fun RankList(
                 }
                 Text(
                     text = bucket.count.toString(),
-                    style = MaterialTheme.typography.caption,
-                    color = AppTokens.text,
+                    fontSize = 13.sp,
+                    color = AppTokens.textSecondary,
                 )
             }
         }
@@ -216,9 +217,9 @@ internal fun StatRow(label: String, value: String) {
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.body2,
-            fontWeight = FontWeight.Bold,
-            color = AppTokens.text,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = AppTokens.textSecondary,
         )
     }
 }
