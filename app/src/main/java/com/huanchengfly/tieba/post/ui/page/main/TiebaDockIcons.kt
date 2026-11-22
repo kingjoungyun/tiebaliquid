@@ -84,13 +84,15 @@ internal object TiebaDockGlyphs {
  */
 internal val TiebaGlasmioIconResolver = GlasmioIconResolver { systemName ->
     when (systemName) {
-        // dock 的四格保留贴吧自己的图形（品牌一致性），其余一律走 Phosphor。
-        "house", "house.fill" -> TiebaDockGlyphs.Home
-        "square.3.layers.3d" -> TiebaDockGlyphs.Explore
-        "dot.radiowaves.left.and.right" -> TiebaDockGlyphs.Notifications
-        "person", "person.fill" -> TiebaDockGlyphs.User
-        // 设置行 / 顶栏 / 列表箭头等：Phosphor（MIT），映射表见 PhosphorIcons.kt。
+        // dock 四格：用 Phosphor 的 **regular** 字重。
+        // 试过 fill（house-fill / archive-fill / bell-fill / user-fill）：24dp 下实心块太重，
+        // 未选中项一片黑，和页面里的线性图标反差过大（对比图见 stage5_dock_icons_fill.png）。
+        // 选中态本来就由「镜头 + accent 着色」表达（见 TiebaDockIcons 顶部注释），不需要 fill 再加一层。
+        "house", "house.fill" -> PhosphorIcons["house"]
+        "square.3.layers.3d" -> PhosphorIcons["archive"]
+        "dot.radiowaves.left.and.right" -> PhosphorIcons["bell"]
+        "person", "person.fill" -> PhosphorIcons["user"]
+        // 其余（设置行 / 顶栏 / 列表箭头）：按生成脚本里的别名表走（fill 变体保留）。
         else -> PhosphorIcons.resolve(systemName)
     }
 }
-
