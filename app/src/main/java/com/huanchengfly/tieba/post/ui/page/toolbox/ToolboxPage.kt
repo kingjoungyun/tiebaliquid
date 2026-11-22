@@ -4,6 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,9 +22,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.Article
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.CollectionsBookmark
@@ -74,6 +81,9 @@ import com.huanchengfly.tieba.post.utils.appPreferences
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
+import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageSkin
+import com.huanchengfly.tieba.post.ui.page.thread.ThreadTopBarHeight
 
 /**
  * 「我的贴吧」聚合页。
@@ -207,6 +217,76 @@ fun ToolboxPage(
             navigator.navigate(AccountManagePageDestination)
         },
     )
+
+    val glassmio = ToolboxUi.DefaultStyle == ToolboxUiStyle.GLASMIO
+    if (glassmio) {
+        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        ThreadPageSkin(
+            enabled = true,
+            topBar = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .height(ThreadTopBarHeight)
+                        .padding(horizontal = 8.dp)
+                ) {
+                    GlassIconButton(
+                        onClick = { navigator.navigateUp() },
+                        icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = stringResource(id = R.string.button_back),
+                        modifier = Modifier.align(Alignment.CenterStart),
+                    )
+                }
+            },
+            bottomBar = {},
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(
+                    top = statusBarTop + ThreadTopBarHeight,
+                    bottom = 24.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                item {
+                    Text(
+                        text = stringResource(id = R.string.title_toolbox_center),
+                        style = LocalTextStyle.current.copy(
+                            fontSize = 34.sp,
+                            lineHeight = 40.sp,
+                            fontWeight = FontWeight.Bold,
+                        ),
+                        color = AppTokens.text,
+                        modifier = Modifier.padding(vertical = 8.dp),
+                    )
+                }
+                item {
+                    ToolboxProfileCard(
+                        user = user?.getOrNull(),
+                        fallbackAccount = account,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
+                        onClick = {
+                            requireLogin {
+                                navigator.navigate(UserProfilePageDestination(selfUid))
+                            }
+                        },
+                    )
+                }
+                item { ToolboxGroupTitle(stringResource(id = R.string.title_toolbox_group_social)) }
+                items(items = socialEntries) { ToolboxEntryRow(entry = it) }
+                item { ToolboxGroupTitle(stringResource(id = R.string.title_toolbox_group_content)) }
+                items(items = contentEntries) { ToolboxEntryRow(entry = it) }
+                item { ToolboxGroupTitle(stringResource(id = R.string.title_toolbox_group_forum)) }
+                items(items = forumEntries) { ToolboxEntryRow(entry = it) }
+                item { ToolboxGroupTitle(stringResource(id = R.string.title_toolbox_group_app)) }
+                items(items = appEntries) { ToolboxEntryRow(entry = it) }
+            }
+        }
+        return
+    }
 
     MyScaffold(
         topBar = {
