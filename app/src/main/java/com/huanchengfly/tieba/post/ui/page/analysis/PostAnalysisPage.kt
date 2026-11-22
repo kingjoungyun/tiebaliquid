@@ -1,15 +1,22 @@
 package com.huanchengfly.tieba.post.ui.page.analysis
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
@@ -23,7 +30,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
@@ -38,6 +47,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
 
 /**
  * 「TA 的发言分析」页。
@@ -97,20 +107,56 @@ fun PostAnalysisPage(
         }
     }
 
+    val glassmio = AnalysisUi.DefaultStyle == AnalysisUiStyle.GLASMIO
     ProvideNavigator(navigator = navigator) {
         MyScaffold(
+            backgroundColor = if (glassmio) AppTokens.background
+            else ExtendedTheme.colors.background,
             topBar = {
-                TitleCentredToolbar(
-                    title = {
+                if (glassmio) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(AppTokens.background)
+                            .statusBarsPadding(),
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp)
+                                .padding(horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            GlassIconButton(
+                                onClick = { navigator.navigateUp() },
+                                icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = stringResource(id = R.string.button_back),
+                            )
+                        }
                         Text(
                             text = stringResource(id = R.string.title_post_analysis),
-                            style = MaterialTheme.typography.h6,
+                            style = LocalTextStyle.current.copy(
+                                fontSize = 34.sp,
+                                lineHeight = 40.sp,
+                                fontWeight = FontWeight.Bold,
+                            ),
+                            color = AppTokens.text,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                         )
-                    },
-                    navigationIcon = {
-                        BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
-                    },
-                )
+                    }
+                } else {
+                    TitleCentredToolbar(
+                        title = {
+                            Text(
+                                text = stringResource(id = R.string.title_post_analysis),
+                                style = MaterialTheme.typography.h6,
+                            )
+                        },
+                        navigationIcon = {
+                            BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
+                        },
+                    )
+                }
             },
         ) { contentPaddings ->
             LazyColumn(
