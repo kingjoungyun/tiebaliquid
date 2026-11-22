@@ -135,7 +135,7 @@ fun ToolboxPage(
 
     val socialEntries = listOf(
         ToolboxEntry(
-            icon = Icons.Outlined.Groups,
+            icon = PhosphorIcons["users-three"] ?: Icons.Outlined.Groups,
             phosphor = "users",
             title = stringResource(id = R.string.title_toolbox_fans),
             summary = stringResource(id = R.string.summary_toolbox_fans),
@@ -143,7 +143,7 @@ fun ToolboxPage(
             requireLogin { navigator.navigate(FansListPageDestination(selfUid)) }
         },
         ToolboxEntry(
-            icon = Icons.Outlined.Person,
+            icon = PhosphorIcons["user"] ?: Icons.Outlined.Person,
             phosphor = "user-plus",
             title = stringResource(id = R.string.title_toolbox_follow),
             summary = stringResource(id = R.string.summary_toolbox_follow),
@@ -154,7 +154,7 @@ fun ToolboxPage(
 
     val contentEntries = listOf(
         ToolboxEntry(
-            icon = Icons.Outlined.Article,
+            icon = PhosphorIcons["file-text"] ?: Icons.Outlined.Article,
             phosphor = "file-text",
             title = stringResource(id = R.string.title_toolbox_threads),
             summary = stringResource(id = R.string.summary_toolbox_threads),
@@ -164,7 +164,7 @@ fun ToolboxPage(
             }
         },
         ToolboxEntry(
-            icon = Icons.Outlined.Reply,
+            icon = PhosphorIcons["arrow-bend-up-left"] ?: Icons.Outlined.Reply,
             phosphor = "chat-circle",
             title = stringResource(id = R.string.title_toolbox_posts),
             summary = stringResource(id = R.string.summary_toolbox_posts),
@@ -174,7 +174,7 @@ fun ToolboxPage(
             }
         },
         ToolboxEntry(
-            icon = Icons.Outlined.CollectionsBookmark,
+            icon = PhosphorIcons["bookmark-simple"] ?: Icons.Outlined.CollectionsBookmark,
             phosphor = "bookmark-simple",
             title = stringResource(id = R.string.title_toolbox_collect),
             summary = stringResource(id = R.string.summary_toolbox_collect),
@@ -182,7 +182,7 @@ fun ToolboxPage(
             requireLogin { navigator.navigate(ThreadStorePageDestination) }
         },
         ToolboxEntry(
-            icon = Icons.Outlined.History,
+            icon = PhosphorIcons["clock-counter-clockwise"] ?: Icons.Outlined.History,
             phosphor = "clock-counter-clockwise",
             title = stringResource(id = R.string.title_toolbox_history),
             summary = stringResource(id = R.string.summary_toolbox_history),
@@ -194,7 +194,7 @@ fun ToolboxPage(
     val forumEntries = buildList {
         add(
             ToolboxEntry(
-                icon = Icons.Outlined.Forum,
+                icon = PhosphorIcons["chats-circle"] ?: Icons.Outlined.Forum,
                 phosphor = "list-bullets",
                 title = stringResource(id = R.string.title_toolbox_like_forum),
                 summary = stringResource(id = R.string.summary_toolbox_like_forum),
@@ -219,7 +219,7 @@ fun ToolboxPage(
 
     val appEntries = listOf(
         ToolboxEntry(
-            icon = Icons.Outlined.Settings,
+            icon = PhosphorIcons["gear"] ?: Icons.Outlined.Settings,
             phosphor = "gear",
             title = stringResource(id = R.string.title_toolbox_settings),
             summary = stringResource(id = R.string.summary_toolbox_settings),
@@ -227,7 +227,7 @@ fun ToolboxPage(
             navigator.navigate(SettingsPageDestination)
         },
         ToolboxEntry(
-            icon = Icons.Outlined.ManageAccounts,
+            icon = PhosphorIcons["users-three"] ?: Icons.Outlined.ManageAccounts,
             phosphor = "user",
             title = stringResource(id = R.string.title_toolbox_account),
             summary = stringResource(id = R.string.summary_toolbox_account),
@@ -506,7 +506,7 @@ private fun ToolboxProfileCard(
                 )
             }
             Icon(
-                imageVector = Icons.Outlined.ChevronRight,
+                imageVector = PhosphorIcons["caret-right"] ?: Icons.Outlined.ChevronRight,
                 contentDescription = null,
                 tint = AppTokens.textDisabled,
                 modifier = Modifier.size(Sizes.Small),
@@ -603,7 +603,7 @@ private fun ToolboxEntryRow(
             )
         }
         Icon(
-            imageVector = Icons.Outlined.ChevronRight,
+            imageVector = PhosphorIcons["caret-right"] ?: Icons.Outlined.ChevronRight,
             contentDescription = null,
             tint = AppTokens.textDisabled,
             modifier = Modifier.size(18.dp)

@@ -324,7 +324,7 @@ fun PermissionSettingDialogM2(
                 leadingIcon = {
                     LeadingIcon {
                         AvatarIcon(
-                            icon = Icons.Outlined.Block,
+                            icon = PhosphorIcons["prohibit"] ?: Icons.Outlined.Block,
                             size = Sizes.Small,
                             contentDescription = null,
                         )
@@ -351,7 +351,7 @@ fun PermissionSettingDialogM2(
                 leadingIcon = {
                     LeadingIcon {
                         AvatarIcon(
-                            icon = Icons.Outlined.Block,
+                            icon = PhosphorIcons["prohibit"] ?: Icons.Outlined.Block,
                             size = Sizes.Small,
                             contentDescription = null,
                         )
@@ -379,7 +379,7 @@ fun PermissionSettingDialogM2(
                 leadingIcon = {
                     LeadingIcon {
                         AvatarIcon(
-                            icon = Icons.Outlined.Block,
+                            icon = PhosphorIcons["prohibit"] ?: Icons.Outlined.Block,
                             size = Sizes.Small,
                             contentDescription = null,
                         )
@@ -528,7 +528,7 @@ private fun UserProfileToolbar(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.NoAccounts,
+                            imageVector = PhosphorIcons["user-minus"] ?: Icons.Rounded.NoAccounts,
                             contentDescription = stringResource(id = R.string.btn_block)
                         )
                     }
@@ -1178,10 +1178,10 @@ private fun UserProfileDetail(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         if (isSelf) {
-                            Icon(imageVector = Icons.Rounded.Edit, contentDescription = null)
+                            Icon(imageVector = PhosphorIcons["pencil-simple"] ?: Icons.Rounded.Edit, contentDescription = null)
                             Text(text = stringResource(id = R.string.menu_edit_info))
                         } else if (user.get { has_concerned } == 0) {
-                            Icon(imageVector = Icons.Rounded.Add, contentDescription = null)
+                            Icon(imageVector = PhosphorIcons["plus"] ?: Icons.Rounded.Add, contentDescription = null)
                             Text(text = stringResource(id = R.string.button_follow))
                         } else {
                             Text(text = stringResource(id = R.string.button_unfollow))
@@ -1276,7 +1276,7 @@ private fun UserProfileDetail(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Verified,
+                        imageVector = PhosphorIcons["seal-check"] ?: Icons.Rounded.Verified,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
                         tint = AppTokens.primary,
@@ -1295,7 +1295,7 @@ private fun UserProfileDetail(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Verified,
+                        imageVector = PhosphorIcons["seal-check"] ?: Icons.Rounded.Verified,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
                         tint = AppTokens.primary,
@@ -1326,7 +1326,7 @@ private fun UserProfileDetail(
                 ),
                 appendIcon = {
                     Icon(
-                        imageVector = Icons.Outlined.ContentCopy,
+                        imageVector = PhosphorIcons["copy"] ?: Icons.Outlined.ContentCopy,
                         contentDescription = null
                     )
                 },

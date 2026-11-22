@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.settings.theme
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -274,7 +276,7 @@ private fun AccentSwatch(
     ) {
         if (selected) {
             Icon(
-                imageVector = Icons.Rounded.Check,
+                imageVector = PhosphorIcons["check"] ?: Icons.Rounded.Check,
                 contentDescription = stringResource(id = R.string.desc_checked),
                 tint = Color.White,
                 modifier = Modifier.size(20.dp),

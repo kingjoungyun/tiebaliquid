@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.settings.block.blocklist
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -155,7 +157,7 @@ fun BlockKeywordPage(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = Icons.Outlined.TextFields,
+                                    imageVector = PhosphorIcons["text-t"] ?: Icons.Outlined.TextFields,
                                     contentDescription = null,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -236,7 +238,7 @@ private fun BlockKeywordItemPlaceholder() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = Icons.Outlined.TextFields,
+            imageVector = PhosphorIcons["text-t"] ?: Icons.Outlined.TextFields,
             contentDescription = null,
             modifier = Modifier.placeholder(visible = true, color = MaterialTheme.colors.surface)
         )

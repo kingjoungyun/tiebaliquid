@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.main.notifications
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -196,7 +198,7 @@ private fun NotificationsHeader(
             Spacer(modifier = Modifier.weight(1f))
             GlassIconButton(
                 onClick = onSearch,
-                icon = Icons.Rounded.Search,
+                icon = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
                 contentDescription = stringResource(id = R.string.title_search),
             )
         }

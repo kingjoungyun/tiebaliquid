@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.searchuser
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.foundation.background
@@ -398,7 +400,7 @@ private fun UidInputCard(
                 },
                 prependIcon = {
                     Icon(
-                        imageVector = Icons.Outlined.PersonSearch,
+                        imageVector = PhosphorIcons["user-list"] ?: Icons.Outlined.PersonSearch,
                         contentDescription = null,
                         tint = AppTokens.textSecondary,
                         modifier = Modifier.size(18.dp),
@@ -423,7 +425,7 @@ private fun UidInputCard(
             keyboardActions = KeyboardActions(onSearch = { onQuery() }),
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Outlined.PersonSearch,
+                    imageVector = PhosphorIcons["user-list"] ?: Icons.Outlined.PersonSearch,
                     contentDescription = null,
                     tint = AppTokens.textSecondary,
                 )
@@ -432,7 +434,7 @@ private fun UidInputCard(
                 if (value.isNotEmpty()) {
                     IconButton(onClick = onClear) {
                         Icon(
-                            imageVector = Icons.Rounded.Close,
+                            imageVector = PhosphorIcons["x"] ?: Icons.Rounded.Close,
                             contentDescription = stringResource(id = R.string.action_search_user_clear),
                             tint = AppTokens.textSecondary,
                         )
@@ -453,7 +455,7 @@ private fun UidInputCard(
 
             SearchUserPrimaryButton(
                 text = stringResource(id = R.string.action_search_user_query),
-                icon = Icons.Outlined.PersonSearch,
+                icon = PhosphorIcons["user-list"] ?: Icons.Outlined.PersonSearch,
                 enabled = !isSearching,
                 onClick = onQuery,
                 modifier = Modifier.weight(1f),
@@ -467,7 +469,7 @@ private fun UidInputCard(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.ErrorOutline,
+                    imageVector = PhosphorIcons["warning-circle"] ?: Icons.Outlined.ErrorOutline,
                     contentDescription = null,
                     tint = AppTokens.accent,
                     modifier = Modifier.size(16.dp),
@@ -556,7 +558,7 @@ private fun SearchUserResultArea(
         errorMessage != null && user == null -> {
             StatusCard {
                 Icon(
-                    imageVector = Icons.Outlined.ErrorOutline,
+                    imageVector = PhosphorIcons["warning-circle"] ?: Icons.Outlined.ErrorOutline,
                     contentDescription = null,
                     tint = AppTokens.accent,
                     modifier = Modifier.size(32.dp),
@@ -578,7 +580,7 @@ private fun SearchUserResultArea(
         hasSearched -> {
             StatusCard {
                 Icon(
-                    imageVector = Icons.Outlined.PersonSearch,
+                    imageVector = PhosphorIcons["user-list"] ?: Icons.Outlined.PersonSearch,
                     contentDescription = null,
                     tint = AppTokens.textDisabled,
                     modifier = Modifier.size(32.dp),
@@ -815,7 +817,7 @@ private fun SearchUserEntryRow(
             )
         }
         Icon(
-            imageVector = Icons.Outlined.ChevronRight,
+            imageVector = PhosphorIcons["caret-right"] ?: Icons.Outlined.ChevronRight,
             contentDescription = null,
             tint = AppTokens.textDisabled,
             modifier = Modifier.size(18.dp),
@@ -853,7 +855,7 @@ private fun quickEntries(
 
         listOf(
             SearchUserEntry(
-                icon = Icons.Outlined.Article,
+                icon = PhosphorIcons["file-text"] ?: Icons.Outlined.Article,
                 title = context.getString(R.string.title_search_user_threads),
                 summary = context.getString(R.string.summary_search_user_threads),
                 onClick = {
@@ -861,7 +863,7 @@ private fun quickEntries(
                 },
             ),
             SearchUserEntry(
-                icon = Icons.Outlined.Reply,
+                icon = PhosphorIcons["arrow-bend-up-left"] ?: Icons.Outlined.Reply,
                 title = context.getString(R.string.title_search_user_posts),
                 summary = context.getString(R.string.summary_search_user_posts),
                 onClick = {
@@ -877,25 +879,25 @@ private fun quickEntries(
                 },
             ),
             SearchUserEntry(
-                icon = Icons.Outlined.Groups,
+                icon = PhosphorIcons["users-three"] ?: Icons.Outlined.Groups,
                 title = context.getString(R.string.title_search_user_follow),
                 summary = context.getString(R.string.summary_search_user_follow),
                 onClick = { requireLogin { navigator.navigate(FollowListPageDestination(uid)) } },
             ),
             SearchUserEntry(
-                icon = Icons.Outlined.Person,
+                icon = PhosphorIcons["user"] ?: Icons.Outlined.Person,
                 title = context.getString(R.string.title_search_user_fans),
                 summary = context.getString(R.string.summary_search_user_fans),
                 onClick = { requireLogin { navigator.navigate(FansListPageDestination(uid)) } },
             ),
             SearchUserEntry(
-                icon = Icons.Outlined.Forum,
+                icon = PhosphorIcons["chats-circle"] ?: Icons.Outlined.Forum,
                 title = context.getString(R.string.title_search_user_like_forum),
                 summary = context.getString(R.string.summary_search_user_like_forum),
                 onClick = { navigator.navigate(UserLikeForumListPageDestination(uid)) },
             ),
             SearchUserEntry(
-                icon = Icons.Outlined.PersonSearch,
+                icon = PhosphorIcons["user-list"] ?: Icons.Outlined.PersonSearch,
                 title = context.getString(R.string.title_search_user_analysis),
                 summary = context.getString(R.string.summary_search_user_analysis),
                 onClick = {

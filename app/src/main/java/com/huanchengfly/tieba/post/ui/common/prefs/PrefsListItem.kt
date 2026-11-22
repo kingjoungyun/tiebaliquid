@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.common.prefs
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -418,7 +420,7 @@ private fun LegacyPrefsRow(
                     Spacer(modifier = Modifier.width(8.dp))
                 }
                 Icon(
-                    imageVector = Icons.Rounded.ChevronRight,
+                    imageVector = PhosphorIcons["caret-right"] ?: Icons.Rounded.ChevronRight,
                     contentDescription = null,
                     tint = glassColors().textSecondary.copy(alpha = ChevronAlpha * contentAlpha),
                     modifier = Modifier.size(PrefsCardDefaults.ChevronSize),

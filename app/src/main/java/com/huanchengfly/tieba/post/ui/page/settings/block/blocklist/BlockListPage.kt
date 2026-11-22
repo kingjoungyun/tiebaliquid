@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.settings.block.blocklist
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -133,7 +135,7 @@ fun BlockListPage(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = Icons.Outlined.Block,
+                                    imageVector = PhosphorIcons["prohibit"] ?: Icons.Outlined.Block,
                                     contentDescription = null,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -208,7 +210,7 @@ private fun BlockUserItemPlaceholder() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = Icons.Outlined.Block,
+            imageVector = PhosphorIcons["prohibit"] ?: Icons.Outlined.Block,
             contentDescription = null,
             modifier = Modifier.placeholder(visible = true, color = MaterialTheme.colors.surface)
         )
@@ -229,7 +231,7 @@ private fun BlockUserItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = Icons.Outlined.AccountCircle,
+            imageVector = PhosphorIcons["user-circle"] ?: Icons.Outlined.AccountCircle,
             contentDescription = stringResource(id = R.string.block_type_user),
             tint = MaterialTheme.colors.onSurface
         )

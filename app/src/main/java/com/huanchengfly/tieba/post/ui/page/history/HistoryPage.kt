@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.history
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -114,7 +116,7 @@ fun HistoryPage(
                                         }
                                     }
                                 },
-                                icon = Icons.Outlined.Delete,
+                                icon = PhosphorIcons["trash"] ?: Icons.Outlined.Delete,
                                 contentDescription = stringResource(id = R.string.title_history_delete),
                             )
                         }

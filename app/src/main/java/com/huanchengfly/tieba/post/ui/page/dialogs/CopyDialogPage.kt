@@ -1,5 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.dialogs
 
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -106,7 +108,7 @@ private fun CopyTextPageContent(
             navigationIcon = {
                 IconButton(onClick = onCancel) {
                     Icon(
-                        imageVector = Icons.Rounded.Close,
+                        imageVector = PhosphorIcons["x"] ?: Icons.Rounded.Close,
                         contentDescription = stringResource(id = R.string.btn_close)
                     )
                 }
