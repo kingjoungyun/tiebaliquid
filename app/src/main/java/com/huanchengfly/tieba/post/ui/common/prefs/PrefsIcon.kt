@@ -1,6 +1,7 @@
 package com.huanchengfly.tieba.post.ui.common.prefs
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.icons.SfIcon
@@ -23,11 +24,15 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalGlassTokens
  * 因为那不是图标而是用户内容。
  */
 @Composable
-fun PrefsIcon(symbol: String) {
+fun PrefsIcon(
+    symbol: String,
+    /** 着色；默认 accent（主题色）。破坏性操作行传 [com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens.destructive]。 */
+    tint: Color = LocalGlassTokens.current.accent,
+) {
     SfIcon(
         systemName = symbol,
         contentDescription = null,
         size = 23.dp,
-        tint = LocalGlassTokens.current.accent,
+        tint = tint,
     )
 }

@@ -25,6 +25,8 @@ fun ListMenuItem(
     text: String,
     modifier: Modifier = Modifier,
     iconColor: Color = AppTokens.primary,
+    /** 文字色；留空则跟随 `LocalContentColor`（菜单/玻璃壳注入的颜色）。 */
+    textColor: Color = Color.Unspecified,
     onClick: (() -> Unit)? = null,
     customContent: @Composable (RowScope.() -> Unit)? = null,
 ) {
@@ -45,6 +47,7 @@ fun ListMenuItem(
             text = text,
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
+            color = textColor,
             maxLines = 1,
             modifier = Modifier.weight(1f),
         )

@@ -3155,7 +3155,8 @@ private fun ThreadMenu(
                 ListMenuItem(
                     icon = Icons.Rounded.Report,
                     text = stringResource(id = R.string.title_report),
-                    iconColor = AppTokens.text,
+                    iconColor = AppTokens.destructive,
+                    textColor = AppTokens.destructive,
                     onClick = {
                         onDismiss()
                         onReportClick()
@@ -3167,7 +3168,8 @@ private fun ThreadMenu(
                 ListMenuItem(
                     icon = Icons.Rounded.Delete,
                     text = stringResource(id = R.string.title_delete),
-                    iconColor = AppTokens.text,
+                    iconColor = AppTokens.destructive,
+                    textColor = AppTokens.destructive,
                     onClick = {
                         onDismiss()
                         onDeleteClick()

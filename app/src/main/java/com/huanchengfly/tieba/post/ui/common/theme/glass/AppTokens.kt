@@ -111,7 +111,14 @@ object AppTokens {
     val textTertiary: Color get() = textDisabled
     val separator: Color get() = divider
 
-    // ── 语义色（Glasmio 侧用，来自 token 集合）──
+    /**
+     * 破坏性操作色（删除 / 退出账号 / 举报 …）。
+     *
+     * **不来自 XML 主题**：[ExtendedColors] 没有对应语义（历史原因，danger 只在个别页面
+     * 硬编码成红色），所以取 [GlassTokenSet] 的规范值（浅 `#FF3B30` / 深 `#FF453A`，
+     * iOS 系统红），这样全站危险操作只有一处定义，且与 Glasmio 组件（`GlasmioTheme.colors
+     * .destructive`、`AppActionSheet` 的 `destructive` 项）保持同一档颜色。
+     */
     var destructive by mutableStateOf(Color.Unspecified)
         private set
 
@@ -155,6 +162,7 @@ object AppTokens {
         indicator = from.indicator
         windowBackground = from.windowBackground
         placeholder = from.placeholder
-        destructive = from.accent
+        // 复用静态 token 集合里的规范值，避免同一档红色散落两处定义。
+        destructive = glassTokenSet(from.isNightMode).destructive
     }
 }

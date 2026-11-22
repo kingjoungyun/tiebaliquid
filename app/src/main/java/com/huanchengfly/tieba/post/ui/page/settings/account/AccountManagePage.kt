@@ -142,8 +142,15 @@ fun AccountManagePage(
                 TextPref(
                     title = stringResource(id = R.string.title_exit_account),
                     onClick = { AccountUtil.exit(context) },
+                    // 破坏性操作：iOS 的系统红（AppTokens.destructive），图标同色；
+                    // 点一下即执行，不需要「可进入」的箭头。
+                    textColor = AppTokens.destructive,
+                    showChevron = false,
                     leadingIcon = {
-                        PrefsIcon("rectangle.portrait.and.arrow.right")
+                        PrefsIcon(
+                            "rectangle.portrait.and.arrow.right",
+                            tint = AppTokens.destructive,
+                        )
                     },
                 )
             }
