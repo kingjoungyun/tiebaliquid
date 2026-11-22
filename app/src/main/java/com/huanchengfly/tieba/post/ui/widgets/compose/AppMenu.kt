@@ -125,6 +125,70 @@ fun AppMenu(
 }
 
 /**
+ * **锚点式菜单**（B：液体形变 / source transfer）。
+ *
+ * 与 [AppMenu] 的区别只有一点：触发器（那颗玻璃按钮）作为 [anchor] **交给 Glasmio**，
+ * 由它测量锚点尺寸、绑定点击、并做「菜单从触发器长出来」的形变（`morphFromAnchor = true`）。
+ * [AppMenu] 走的是 `externalAnchorBounds` + 空的 anchor 槽，只会「缩放 + 模糊淡入」，不会形变；
+ * 它作为回退路径保留（没有 backdrop / API < 33 时两条路都退到 M2 `DropdownMenu`）。
+ *
+ * 用法：
+ * ```
+ * AnchorMenu(
+ *     expanded = menuState.expanded,
+ *     onExpandedChange = { if (it) menuState.expanded = true else menuScope.dismiss() },
+ *     anchor = { onClick -> GlasmioIconButton(onClick = onClick) { Icon(...) } },
+ * ) { ProvideContentColor(...) { menuScope.menuContent() } }
+ * ```
+ *
+ * 注意：`anchor` 里的 onClick **必须**是 Glasmio 传进来的那个（它会自己打开菜单），
+ * 不要自己写 `menuState.expanded = true`，否则形变拿不到正确的起始状态。
+ */
+@Composable
+fun AnchorMenu(
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    menuWidth: Dp = AppMenuWidth,
+    heightOverride: Dp? = null,
+    backdrop: Backdrop? = null,
+    anchor: @Composable (onClick: () -> Unit) -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    // 回退：没有 backdrop / API < 33 —— 触发器仍然可点（用 onExpandedChange 打开），菜单退回 M2。
+    if (!isLiquidGlassSupported() || !LocalGlassBackdropAvailable.current) {
+        Box {
+            anchor { onExpandedChange(true) }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { onExpandedChange(false) },
+                modifier = modifier.background(ExtendedTheme.colors.menuBackground),
+                content = content,
+            )
+        }
+        return
+    }
+
+    val glassBackdrop = backdrop ?: LocalBlurBackdrop.current
+    val menuHeight = rememberMenuContentHeight(menuWidth = menuWidth, content = content)
+    GlasmioMenu(
+        expanded = expanded,
+        // 打开/关闭都要转发：Glasmio 的 anchor 点击只会回调 true，我们必须把 expanded 置起来。
+        onExpandedChange = { opened -> onExpandedChange(opened) },
+        itemCount = 1,
+        heightOverride = heightOverride ?: (menuHeight + 24.dp).takeIf { it > 0.dp },
+        menuWidth = menuWidth,
+        backdrop = glassBackdrop,
+        // 关键：真形变 + 由 Glasmio 接管触发器点击
+        morphFromAnchor = true,
+        keepAnchorVisible = true,
+        anchor = anchor,
+    ) { _, _ ->
+        content()
+    }
+}
+
+/**
  * 量一段菜单内容的自然高度（宽度锁定为 [menuWidth]）。
  *
  * 用 [SubcomposeLayout] 而不是普通布局：内容只用来量高，必须在调用方布局里占 0 尺寸，

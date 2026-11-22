@@ -59,6 +59,13 @@ import io.github.neoruaa.glasmio.core.IosTypography
 import io.github.neoruaa.glasmio.glass.render.backdrops.emptyBackdrop
 import io.github.neoruaa.glasmio.ui.GlasmioCard
 import kotlin.math.max
+import androidx.compose.foundation.clickable
+import androidx.compose.runtime.mutableStateOf
+import com.huanchengfly.tieba.post.ui.widgets.compose.AnchorMenu
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import com.huanchengfly.tieba.post.ui.widgets.compose.rememberMenuState
 
 /**
  * 吧页的 Glasmio 皮肤（`ForumPageUiStyle.GLASMIO`）。
@@ -337,21 +344,38 @@ fun ForumTopBar(
             )
             Spacer(modifier = Modifier.width(8.dp))
         }
-        ClickMenu(
-            menuContent = menuContent,
-            menuShape = RoundedCornerShape(14.dp),
-            triggerShape = CircleShape,
+        // B：锚点式菜单 —— `GlassCircleSurface` 外观不变，外面套一层可点击 Box 作为 Glasmio 的
+        // anchor，由它测量并做「从小圆钮长成菜单」的 source transfer。
+        var forumMenuExpanded by remember { mutableStateOf(false) }
+        AnchorMenu(
+            expanded = forumMenuExpanded,
+            onExpandedChange = { forumMenuExpanded = it },
+            menuWidth = 240.dp,
+            anchor = { onClick ->
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable(onClick = onClick),
+                ) {
+                    GlassCircleSurface(
+                        size = GlassTokens.Spacing.topBarActionSize,
+                    ) { tint ->
+                        Icon(
+                            imageVector = (PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreVert),
+                            contentDescription = stringResource(id = R.string.btn_more),
+                            tint = tint,
+                            modifier = Modifier.size(GlassTokens.Spacing.topBarActionIconSize),
+                        )
+                    }
+                }
+            },
         ) {
-            GlassCircleSurface(
-                size = GlassTokens.Spacing.topBarActionSize,
-            ) { tint ->
-                Icon(
-                    imageVector = Icons.Rounded.MoreVert,
-                    contentDescription = stringResource(id = R.string.btn_more),
-                    tint = tint,
-                    modifier = Modifier.size(GlassTokens.Spacing.topBarActionIconSize),
-                )
+            // MenuScope.dismiss() 既要清自己的 expanded，也要关掉我们的 AnchorMenu。
+            val dismissState = rememberMenuState()
+            val scope = remember(dismissState) {
+                MenuScope(dismissState, onDismiss = { forumMenuExpanded = false })
             }
+            scope.menuContent()
         }
     }
 }

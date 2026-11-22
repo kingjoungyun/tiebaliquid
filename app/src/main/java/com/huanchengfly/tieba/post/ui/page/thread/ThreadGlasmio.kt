@@ -58,7 +58,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassBackdropHost
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
-import com.huanchengfly.tieba.post.ui.widgets.compose.AppMenu
+import com.huanchengfly.tieba.post.ui.widgets.compose.AnchorMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.MenuScope
 import com.huanchengfly.tieba.post.ui.widgets.compose.ProvideContentColor
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
@@ -209,27 +209,22 @@ fun ThreadGlassTopBar(
                     .align(Alignment.CenterEnd)
                     .semantics { contentDescription = moreDescription },
             ) {
-                GlasmioIconButton(
-                    onClick = { menuState.expanded = true },
-                    modifier = Modifier.onGloballyPositioned { coordinates ->
-                        if (coordinates.isAttached) {
-                            menuTriggerBounds = coordinates.boundsInWindow()
-                        }
-                    },
-                ) {
-                    Icon(
-                        imageVector = (PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreVert),
-                        contentDescription = null,
-                        tint = colors.content,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                AppMenu(
+                // B：锚点式菜单 —— 触发器交给 Glasmio，菜单从这颗按钮「长出来」（source transfer）。
+                AnchorMenu(
                     expanded = menuState.expanded,
-                    onDismissRequest = { menuScope.dismiss() },
+                    onExpandedChange = { opened ->
+                        if (opened) menuState.expanded = true else menuScope.dismiss()
+                    },
                     menuWidth = 330.dp,
-                    anchorBounds = menuTriggerBounds?.let {
-                        Rect(left = it.left, top = it.bottom, right = it.right, bottom = it.bottom)
+                    anchor = { onClick ->
+                        GlasmioIconButton(onClick = onClick) {
+                            Icon(
+                                imageVector = (PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreVert),
+                                contentDescription = null,
+                                tint = colors.content,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     },
                 ) {
                     ProvideContentColor(color = colors.content) {
