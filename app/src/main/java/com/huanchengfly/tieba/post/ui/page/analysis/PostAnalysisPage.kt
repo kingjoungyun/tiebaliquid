@@ -44,6 +44,7 @@ import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
+import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
@@ -56,7 +57,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
  * 这里直接本地过滤，不必为搜索再发一次请求。
  * 清空关键词即回到统计视图（按月/时段/贴吧/IP/词云），底部可导出 JSON 或 CSV。
  */
-@Destination
+@Destination(deepLinks = [DeepLink(uriPattern = "tblite://analysis/{uid}")])
 @Composable
 fun PostAnalysisPage(
     uid: Long,
