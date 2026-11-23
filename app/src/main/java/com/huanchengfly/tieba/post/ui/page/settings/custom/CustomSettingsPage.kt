@@ -22,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
@@ -40,7 +39,6 @@ import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.utils.AppIconUtil
 import com.huanchengfly.tieba.post.utils.LauncherIcons
-import com.huanchengfly.tieba.post.utils.ThemeUtil
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.collections.immutable.persistentListOf
@@ -72,24 +70,6 @@ fun CustomSettingsPage(
                 onClick = {
                     context.goToActivity<AppFontSizeActivity>()
                 }
-            )
-        }
-        prefsItem {
-            val darkThemeValues = stringArrayResource(id = R.array.dark_theme_values)
-            val darkThemeNames = stringArrayResource(id = R.array.dark_theme_names)
-            ListPref(
-                key = "dark_theme",
-                title = stringResource(id = R.string.settings_night_mode),
-                defaultValue = ThemeUtil.THEME_AMOLED_DARK,
-                leadingIcon = {
-                    PrefsIcon("moon.fill")
-                },
-                entries = darkThemeValues.associateWith { value ->
-                    darkThemeNames[darkThemeValues.indexOf(
-                        value
-                    )]
-                },
-                useSelectedAsSummary = true,
             )
         }
         prefsItem {
@@ -180,7 +160,9 @@ fun CustomSettingsPage(
             SwitchPref(
                 key = "follow_system_night",
                 title = stringResource(id = R.string.title_settings_follow_system_night),
-                defaultChecked = true,
+                // 与 AppPreferencesUtils.followSystemNight 的实际默认值（false）保持一致；
+                // 之前这里写 true，首次进入的用户看到「已开启」但实际不跟随。
+                defaultChecked = false,
             ) {
                 PrefsIcon("sun.max")
             }

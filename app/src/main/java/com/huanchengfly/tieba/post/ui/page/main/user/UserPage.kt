@@ -52,7 +52,6 @@ import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.models.database.Account
 import com.huanchengfly.tieba.post.ui.common.theme.compose.pullRefreshIndicator
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
-import com.huanchengfly.tieba.post.ui.page.destinations.AboutPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.AppThemePageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.FansListPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.FollowListPageDestination
@@ -64,17 +63,12 @@ import com.huanchengfly.tieba.post.ui.page.destinations.UserPostListPageDestinat
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.WebViewPageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
-import com.huanchengfly.tieba.post.ui.widgets.compose.ConfirmDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.HorizontalDivider
 import com.huanchengfly.tieba.post.ui.widgets.compose.ListMenuItem
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
-import com.huanchengfly.tieba.post.ui.widgets.compose.AppSwitch
 import com.huanchengfly.tieba.post.ui.widgets.compose.VerticalDivider
-import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import com.huanchengfly.tieba.post.utils.CuidUtils
 import com.huanchengfly.tieba.post.utils.StringUtil
-import com.huanchengfly.tieba.post.utils.ThemeUtil
-import com.huanchengfly.tieba.post.utils.appPreferences
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
@@ -285,7 +279,6 @@ fun UserPage(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun LegacyUserPage(viewModel: UserViewModel) {
-    val context = LocalContext.current
     val navigator = LocalNavigator.current
     val isLoading by viewModel.uiState.collectPartialAsState(
         prop1 = UserUiState::isLoading,
@@ -296,19 +289,7 @@ private fun LegacyUserPage(viewModel: UserViewModel) {
         initial = null
     )
 
-    val switchToNightDialogState = rememberDialogState()
-    ConfirmDialog(
-        dialogState = switchToNightDialogState,
-        onConfirm = {},
-        onCancel = {
-            context.appPreferences.followSystemNight = false
-            ThemeUtil.switchNightMode()
-        },
-        confirmText = stringResource(id = R.string.btn_keep_following),
-        cancelText = stringResource(id = R.string.btn_close_following)
-    ) {
-        Text(text = stringResource(id = R.string.message_dialog_follow_system_night))
-    }
+    // 夜间开关已从本页删除：深色只在「主题选择」页切，跟随系统的二次确认逻辑在 AppThemePage。
 
     Scaffold(
         backgroundColor = Color.Transparent,
@@ -408,24 +389,7 @@ private fun LegacyUserPage(viewModel: UserViewModel) {
                     onClick = {
                         navigator.navigate(AppThemePageDestination)
                     }
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.my_info_night),
-                        color = AppTokens.textSecondary,
-                        fontSize = 12.sp,
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    AppSwitch(
-                        checked = ThemeUtil.isNightMode(ThemeUtil.themeState.value),
-                        onCheckedChange = {
-                            if (context.appPreferences.followSystemNight) {
-                                switchToNightDialogState.show()
-                            } else {
-                                ThemeUtil.switchNightMode()
-                            }
-                        }
-                    )
-                }
+                )
                 if (account != null) {
                     ListMenuItem(
                         icon = ImageVector.vectorResource(id = R.drawable.ic_help_outline_black_24),
@@ -446,11 +410,6 @@ private fun LegacyUserPage(viewModel: UserViewModel) {
                     icon = ImageVector.vectorResource(id = R.drawable.ic_settings_24),
                     text = stringResource(id = R.string.my_info_settings),
                     onClick = { navigator.navigate(SettingsPageDestination) },
-                )
-                ListMenuItem(
-                    icon = ImageVector.vectorResource(id = R.drawable.ic_info_black_24),
-                    text = stringResource(id = R.string.my_info_about),
-                    onClick = { navigator.navigate(AboutPageDestination) },
                 )
             }
 

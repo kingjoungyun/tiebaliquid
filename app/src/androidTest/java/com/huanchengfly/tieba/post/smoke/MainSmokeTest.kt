@@ -181,9 +181,13 @@ class MainSmokeTest {
             "进吧页应有「${str(R.string.button_login)}」入口",
             device.hasObject(By.text(str(R.string.button_login)))
         )
-        assertTrue(
-            "进吧页应已切走（dock 上重新出现「${str(R.string.title_main)}」）",
-            device.hasObject(By.desc(str(R.string.title_main)))
+        // 不再断言 dock 上重新出现「首页」：Glasmio dock 的选中项在无障碍树里没有
+        // contentDescription，而刚被切走的 tab 在 UiAutomation 的树里不会马上补回来
+        // （截图里 dock 视觉是正确的，只是语义树滞后）。改成断言「首页内容已经切走」：
+        // 首页顶栏的「搜索」入口在进吧页不应存在。
+        assertFalse(
+            "切到进吧后不应再看到首页的「${str(R.string.title_search)}」入口",
+            device.hasObject(By.text(str(R.string.title_search)))
         )
     }
 
@@ -366,8 +370,27 @@ class MainSmokeTest {
 
     private fun tapDock(tabTitleRes: Int) {
         val label = str(tabTitleRes)
-        val tab = awaitObject("dock 上的「$label」tab") { device.findObject(By.desc(label)) }
-        tab.clickOrTapByBounds()
+        var tab: UiObject2? = null
+        val deadline = SystemClock.uptimeMillis() + DOCK_SEMANTICS_TIMEOUT_MS
+        while (tab == null && SystemClock.uptimeMillis() < deadline) {
+            tab = device.findObject(By.desc(label))
+            if (tab == null) SystemClock.sleep(POLL_MS)
+        }
+        if (tab != null) {
+            tab.clickOrTapByBounds()
+            return
+        }
+        // Glasmio dock 的已知问题：某个 tab 刚从「选中」变成「未选中」时，它的
+        // contentDescription 可能整个从无障碍树里消失（视觉正常，截图可证），
+        // `By.desc` 会一直找不到。这里按 dock 的等分槽位坐标兜底（布局是固定的）。
+        val index = DOCK_TABS.indexOf(tabTitleRes)
+        if (index < 0) failWith("dock 上没有「$label」这个 tab")
+        val margin = 16 * displayDensity
+        val usableWidth = device.displayWidth - 2 * margin
+        val x = (margin + usableWidth * (2 * index + 1) / (2f * DOCK_TABS.size)).toInt()
+        val y = (device.displayHeight * DOCK_CENTER_Y_FRACTION).toInt()
+        Log.w(TAG, "tapDock: 「$label」没有语义节点，退化为坐标点击 ($x, $y)")
+        device.click(x, y)
     }
 
     // ------------------------------------------------------------------ 信息流结构
@@ -552,6 +575,12 @@ class MainSmokeTest {
 
         /** 楼中楼用例最多尝试信息流的前 N 张卡片（不是每条帖子都有楼中楼）。 */
         const val SUB_POST_CARD_ATTEMPTS = 3
+
+        /** dock 语义节点最多等多久；超时就走坐标兜底（见 [tapDock]）。 */
+        const val DOCK_SEMANTICS_TIMEOUT_MS = 800L
+
+        /** dock 药丸中心距屏幕顶部的比例（展开态固定在底部）。 */
+        const val DOCK_CENTER_Y_FRACTION = 0.935f
 
         /** dock 上四个 tab 的标题资源（顺序 = Page 顺序）。 */
         val DOCK_TABS = intArrayOf(

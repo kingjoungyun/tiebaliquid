@@ -43,8 +43,10 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.toColorInt
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
+import com.huanchengfly.tieba.post.ui.widgets.compose.ConfirmDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
+import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import com.huanchengfly.tieba.post.utils.ThemeUtil
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.ramcosta.composedestinations.annotation.Destination
@@ -107,6 +109,31 @@ fun AppThemePage(
     val context = LocalContext.current
     val currentTheme by remember { ThemeUtil.themeState }
     val isDark = ThemeUtil.isNightMode(currentTheme)
+
+    // 「跟随系统夜间」的二次确认（原「我的页夜间行」的逻辑，随该行一起搬到这里）。
+    // 开着跟随时手动切深色，下一次 onResume（BaseActivity）会按系统状态再切回来，
+    // 表现为「开关自己跳回去」；所以先问用户是否停止跟随，关闭跟随后再切才不会被打回。
+    val switchToNightDialogState = rememberDialogState()
+    ConfirmDialog(
+        dialogState = switchToNightDialogState,
+        onConfirm = {},
+        onCancel = {
+            context.appPreferences.followSystemNight = false
+            ThemeUtil.switchNightMode()
+        },
+        confirmText = stringResource(id = R.string.btn_keep_following),
+        cancelText = stringResource(id = R.string.btn_close_following)
+    ) {
+        Text(text = stringResource(id = R.string.message_dialog_follow_system_night))
+    }
+
+    val onToggleDark: () -> Unit = {
+        if (context.appPreferences.followSystemNight) {
+            switchToNightDialogState.show()
+        } else {
+            ThemeUtil.switchNightMode()
+        }
+    }
 
     // 读取全局 accent（snapshot state：写入后本页与全站会重组）。
     val accentRaw = ThemeUtil.accentState.value
@@ -218,7 +245,7 @@ fun AppThemePage(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { ThemeUtil.switchNightMode() }
+                        .clickable { onToggleDark() }
                         .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -236,7 +263,7 @@ fun AppThemePage(
                     }
                     PrefsSwitch(
                         checked = isDark,
-                        onCheckedChange = { ThemeUtil.switchNightMode() },
+                        onCheckedChange = { onToggleDark() },
                     )
                 }
             }

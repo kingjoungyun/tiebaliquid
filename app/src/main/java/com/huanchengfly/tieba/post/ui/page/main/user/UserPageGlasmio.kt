@@ -31,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
@@ -51,11 +50,9 @@ import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCard
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsIcon
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsLargeTitle
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsUiStyle
-import com.huanchengfly.tieba.post.ui.common.prefs.widgets.PrefsSwitch
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
-import com.huanchengfly.tieba.post.ui.page.destinations.AboutPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.AppThemePageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.HistoryPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.LoginPageDestination
@@ -65,13 +62,9 @@ import com.huanchengfly.tieba.post.ui.page.destinations.ToolboxPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.WebViewPageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
-import com.huanchengfly.tieba.post.ui.widgets.compose.ConfirmDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
-import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import com.huanchengfly.tieba.post.utils.CuidUtils
 import com.huanchengfly.tieba.post.utils.StringUtil
-import com.huanchengfly.tieba.post.utils.ThemeUtil
-import com.huanchengfly.tieba.post.utils.appPreferences
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.core.IosTypography
 import io.github.neoruaa.glasmio.core.systemGray5
@@ -94,15 +87,15 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
  * ┌────────────────────────────────┐
  * │ 浏览记录                       › │
  * │ 主题选择                       › │
- * │ 夜间                  (开关)     │
  * └────────────────────────────────┘
  * 更多
  * ┌────────────────────────────────┐
  * │ 设置                           › │
- * │ 关于                           › │
  * └────────────────────────────────┘
  * ```
  *
+ * 深色模式只在「主题选择」页切（含「跟随系统」二次确认）；「关于」只在「设置 → 更多」里，
+ * 本页不再重复放这两个入口。
  * 账户卡上的统计数字只做摘要；「关注 / 粉丝 / 我的帖子」三个入口在账户卡点进去的
  * 个人主页里（`UserProfilePage`），与本页的账户卡不重复。
  *
@@ -124,7 +117,6 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 internal fun GlasmioUserPage(viewModel: UserViewModel) {
-    val context = LocalContext.current
     val navigator = LocalNavigator.current
     val isLoading by viewModel.uiState.collectPartialAsState(
         prop1 = UserUiState::isLoading,
@@ -135,30 +127,10 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
         initial = null
     )
 
-    // 与旧版同一套「跟随系统夜间」确认逻辑：只有用户开了「跟随系统」才需要二次确认。
-    val switchToNightDialogState = rememberDialogState()
-    ConfirmDialog(
-        dialogState = switchToNightDialogState,
-        onConfirm = {},
-        onCancel = {
-            context.appPreferences.followSystemNight = false
-            ThemeUtil.switchNightMode()
-        },
-        confirmText = stringResource(id = R.string.btn_keep_following),
-        cancelText = stringResource(id = R.string.btn_close_following)
-    ) {
-        Text(text = stringResource(id = R.string.message_dialog_follow_system_night))
-    }
+    // 夜间开关与「跟随系统」确认逻辑不在本页：深色只从「主题选择」页切，
+    // 确认逻辑也随开关一起搬到了 AppThemePage。
 
     val currentAccount = account
-    val nightChecked = ThemeUtil.isNightMode(ThemeUtil.themeState.value)
-    val onNightToggle: () -> Unit = {
-        if (context.appPreferences.followSystemNight) {
-            switchToNightDialogState.show()
-        } else {
-            ThemeUtil.switchNightMode()
-        }
-    }
 
     // 统计数字用与旧版一致的入场动画；未登录时保持在 0。
     val concernNum by animateIntAsState(
@@ -256,19 +228,6 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
                                     },
                                 )
                             }
-                            UserRow(index = 2) {
-                                TextPref(
-                                    title = stringResource(id = R.string.my_info_night),
-                                    leadingIcon = { PrefsIcon("moon") },
-                                    darkenOnDisable = false,
-                                    onClick = onNightToggle,
-                                ) {
-                                    PrefsSwitch(
-                                        checked = nightChecked,
-                                        onCheckedChange = { onNightToggle() },
-                                    )
-                                }
-                            }
                         }
                     }
 
@@ -315,15 +274,6 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
                                     leadingIcon = { PrefsIcon("gearshape") },
                                     onClick = {
                                         navigator.navigate(SettingsPageDestination)
-                                    },
-                                )
-                            }
-                            UserRow(index = if (currentAccount != null) 4 else 2) {
-                                TextPref(
-                                    title = stringResource(id = R.string.my_info_about),
-                                    leadingIcon = { PrefsIcon("info.circle") },
-                                    onClick = {
-                                        navigator.navigate(AboutPageDestination)
                                     },
                                 )
                             }
