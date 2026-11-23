@@ -94,8 +94,10 @@ class MainSmokeTest {
     fun settingsReachableFromProfile() {
         // 3. 设置可达：「我」→「设置」→ 账号/安全分组都在。
         tapDock(R.string.title_user)
-        val entry = awaitObject("我的页的「${str(R.string.title_settings)}」入口") {
-            device.findObject(By.text(str(R.string.title_settings)))
+        // 我的页那一行的文案资源是 my_info_settings（与设置页自己的标题 title_settings 同字），
+        // 断言指向前者：入口在「我的页」，删的是同一页的「夜间 / 关于」，设置行保留。
+        val entry = awaitObject("我的页的「${str(R.string.my_info_settings)}」入口") {
+            device.findObject(By.text(str(R.string.my_info_settings)))
         }
         entry.clickOrTapByBounds()
 
@@ -130,8 +132,8 @@ class MainSmokeTest {
         }
 
         tapDock(R.string.title_user)
-        awaitObject("我的页「${str(R.string.title_settings)}」入口") {
-            device.findObject(By.text(str(R.string.title_settings)))
+        awaitObject("我的页「${str(R.string.my_info_settings)}」入口") {
+            device.findObject(By.text(str(R.string.my_info_settings)))
         }
 
         tapDock(R.string.title_main)
@@ -262,9 +264,11 @@ class MainSmokeTest {
     @Test
     fun settingsPersonalizationRows() {
         // 9. 我 → 设置 → 个性化：断言三行静态设置项 + 返回钮。
+        //    「夜间模式主题」行已随无效入口删除（纯黑/蓝/灰都映射到同一套深色），改断言
+        //    保留下来的「跟随系统夜间模式」行。
         tapDock(R.string.title_user)
-        val settingsEntry = awaitObject("我的页「${str(R.string.title_settings)}」入口") {
-            device.findObject(By.text(str(R.string.title_settings)))
+        val settingsEntry = awaitObject("我的页「${str(R.string.my_info_settings)}」入口") {
+            device.findObject(By.text(str(R.string.my_info_settings)))
         }
         settingsEntry.clickOrTapByBounds()
 
@@ -277,8 +281,8 @@ class MainSmokeTest {
             device.findObject(By.text(str(R.string.title_custom_font_size)))
         }
         assertTrue(
-            "个性化页应有「${str(R.string.settings_night_mode)}」行",
-            device.hasObject(By.text(str(R.string.settings_night_mode)))
+            "个性化页应有「${str(R.string.title_settings_follow_system_night)}」行",
+            device.hasObject(By.text(str(R.string.title_settings_follow_system_night)))
         )
         assertTrue(
             "个性化页应有「${str(R.string.settings_app_icon)}」行",
@@ -292,38 +296,50 @@ class MainSmokeTest {
 
     @Test
     fun nightModeToggleKeepsAppAlive() {
-        // 10. 夜间模式切换不崩：读当前开关状态 → 切到相反态 → 断言进程存活 + 我的页仍在 → 切回原状态。
+        // 10. 深色模式切换不崩：我的 → 主题选择 → 读当前开关状态 → 切到相反态 →
+        //     断言进程存活 + 主题选择页仍在 → 切回原状态。
+        //     我的页的「夜间」行已删，深色开关只保留在主题选择页（AppThemePage）。
         //     切主题可能会重建 Activity，所以每次都重新查节点，不用缓存的 UiObject2。
         tapDock(R.string.title_user)
-        val toggle = awaitObject("我的页「夜间」开关") { nightSwitch() }
+        val themeEntry = awaitObject("我的页「${str(R.string.title_theme)}」入口") {
+            device.findObject(By.text(str(R.string.title_theme)))
+        }
+        themeEntry.clickOrTapByBounds()
+
+        awaitObject("主题选择页「${str(R.string.title_theme_dark)}」行") {
+            device.findObject(By.text(str(R.string.title_theme_dark)))
+        }
+        val toggle = awaitObject("主题选择页的「${str(R.string.title_theme_dark)}」开关") {
+            darkModeSwitch()
+        }
         val wasChecked = toggle.isChecked
 
         try {
             toggle.clickOrTapByBounds()
-            await("夜间开关切到 ${!wasChecked}", 15_000) { nightSwitch()?.isChecked == !wasChecked }
+            await("深色开关切到 ${!wasChecked}", 15_000) { darkModeSwitch()?.isChecked == !wasChecked }
 
             val pid = device.executeShellCommand("pidof $APP_PACKAGE").trim()
-            assertTrue("切夜间模式后 App 进程应仍存活（pidof 返回空）", pid.isNotEmpty())
-            // 切主题可能触发 Activity 重建：用 await 等「我的」页重新出现，而不是立刻断言。
-            await("切夜间模式后「我的」页重新出现", 10_000) {
-                device.hasObject(By.text(str(R.string.mine_title)))
+            assertTrue("切深色模式后 App 进程应仍存活（pidof 返回空）", pid.isNotEmpty())
+            // 切主题可能触发 Activity 重建：用 await 等「主题选择」页重新出现，而不是立刻断言。
+            await("切深色模式后主题选择页重新出现", 10_000) {
+                device.hasObject(By.text(str(R.string.title_theme)))
             }
         } finally {
             // 不管断言是否失败，都尽量切回原状态，避免污染下一次跑批。
             runCatching {
-                val current = nightSwitch()
+                val current = darkModeSwitch()
                 if (current != null && current.isChecked != wasChecked) {
                     current.clickOrTapByBounds()
-                    await("夜间开关恢复为 $wasChecked", 10_000) { nightSwitch()?.isChecked == wasChecked }
+                    await("深色开关恢复为 $wasChecked", 10_000) { darkModeSwitch()?.isChecked == wasChecked }
                 }
-            }.onFailure { Log.w(TAG, "nightModeToggleKeepsAppAlive: 恢复夜间开关失败（需手工切回）: $it") }
+            }.onFailure { Log.w(TAG, "nightModeToggleKeepsAppAlive: 恢复深色开关失败（需手工切回）: $it") }
         }
     }
 
     // ------------------------------------------------------------------ 第二批的辅助
 
-    /** 我的页的夜间开关：整页唯一的 checkable 节点。 */
-    private fun nightSwitch(): UiObject2? = device.findObjects(By.checkable(true)).firstOrNull()
+    /** 主题选择页的「深色模式」开关：该页唯一的 checkable 节点。 */
+    private fun darkModeSwitch(): UiObject2? = device.findObjects(By.checkable(true)).firstOrNull()
 
     // ------------------------------------------------------------------ 启动 / 导航
 
