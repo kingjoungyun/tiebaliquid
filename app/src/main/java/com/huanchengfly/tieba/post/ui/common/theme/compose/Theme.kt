@@ -316,152 +316,40 @@ private fun getBlackDarkDynamicColor(tonalPalette: TonalPalette): ExtendedColors
 @Composable
 private fun getThemeColorForTheme(theme: String): ExtendedColors {
     val context = LocalContext.current
-    val nowTheme = ThemeUtil.getCurrentTheme(theme)
-    val textColor =
-        Color(App.ThemeDelegate.getColorByAttr(context, R.attr.colorText, nowTheme))
-    val bottomBarColor =
-        Color(App.ThemeDelegate.getColorByAttr(context, R.attr.colorNavBar, nowTheme))
-    val extended = ExtendedColors(
-        theme = nowTheme,
-        isNightMode = ThemeUtil.isNightMode(nowTheme),
-        primary = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorNewPrimary,
-                nowTheme
-            )
-        ),
-        onPrimary = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorOnAccent,
-                nowTheme
-            )
-        ),
-        accent = Color(App.ThemeDelegate.getColorByAttr(context, R.attr.colorAccent, nowTheme)),
-        onAccent = Color(App.ThemeDelegate.getColorByAttr(context, R.attr.colorOnAccent, nowTheme)),
-        topBar = Color(App.ThemeDelegate.getColorByAttr(context, R.attr.colorToolbar, nowTheme)),
-        onTopBar = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorToolbarItem,
-                nowTheme
-            )
-        ),
-        onTopBarSecondary = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorToolbarItemSecondary,
-                nowTheme
-            )
-        ),
-        onTopBarActive = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorToolbarItemActive,
-                nowTheme
-            )
-        ),
-        topBarSurface = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorToolbarSurface,
-                nowTheme
-            )
-        ),
-        onTopBarSurface = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorOnToolbarSurface,
-                nowTheme
-            )
-        ),
-        bottomBar = bottomBarColor,
-        bottomBarSurface = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorNavBarSurface,
-                nowTheme
-            )
-        ),
-        onBottomBarSurface = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorOnNavBarSurface,
-                nowTheme
-            )
-        ),
-        text = textColor.copy(alpha = ContentAlpha.high),
-        textSecondary = textColor.copy(alpha = ContentAlpha.medium),
-        textDisabled = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.color_text_disabled,
-                nowTheme
-            )
-        ),
-        background = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorBackground,
-                nowTheme
-            )
-        ),
-        chip = Color(App.ThemeDelegate.getColorByAttr(context, R.attr.colorChip, nowTheme)),
-        onChip = Color(App.ThemeDelegate.getColorByAttr(context, R.attr.colorOnChip, nowTheme)),
-        unselected = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorUnselected,
-                nowTheme
-            )
-        ),
-        card = Color(App.ThemeDelegate.getColorByAttr(context, R.attr.colorCard, nowTheme)),
-        floorCard = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorFloorCard,
-                nowTheme
-            )
-        ),
-        divider = Color(App.ThemeDelegate.getColorByAttr(context, R.attr.colorDivider, nowTheme)),
-        shadow = Color(App.ThemeDelegate.getColorByAttr(context, R.attr.shadow_color, nowTheme)),
-        indicator = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorIndicator,
-                nowTheme
-            )
-        ),
-        windowBackground = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorWindowBackground,
-                nowTheme
-            )
-        ),
-        placeholder = Color(
-            App.ThemeDelegate.getColorByAttr(
-                context,
-                R.attr.colorPlaceholder,
-                nowTheme
-            )
-        ),
+    // Stage 6 commit 1：颜色**直接从 XML 主题属性解析进 AppTokens**（唯一来源），
+    // ExtendedColors 不再参与计算，只是把同一批值再包一层给还没迁移的读点用。
+    AppTokens.fillFromTheme(context, theme)
+    return ExtendedColors(
+        theme = AppTokens.theme,
+        isNightMode = AppTokens.isNightMode,
+        primary = AppTokens.primary,
+        onPrimary = AppTokens.onPrimary,
+        accent = AppTokens.accent,
+        onAccent = AppTokens.onAccent,
+        topBar = AppTokens.topBar,
+        onTopBar = AppTokens.onTopBar,
+        onTopBarSecondary = AppTokens.onTopBarSecondary,
+        onTopBarActive = AppTokens.onTopBarActive,
+        topBarSurface = AppTokens.topBarSurface,
+        onTopBarSurface = AppTokens.onTopBarSurface,
+        bottomBar = AppTokens.bottomBar,
+        bottomBarSurface = AppTokens.bottomBarSurface,
+        onBottomBarSurface = AppTokens.onBottomBarSurface,
+        text = AppTokens.text,
+        textSecondary = AppTokens.textSecondary,
+        textDisabled = AppTokens.textDisabled,
+        background = AppTokens.background,
+        chip = AppTokens.chip,
+        onChip = AppTokens.onChip,
+        unselected = AppTokens.unselected,
+        card = AppTokens.card,
+        floorCard = AppTokens.floorCard,
+        divider = AppTokens.divider,
+        shadow = AppTokens.shadow,
+        indicator = AppTokens.indicator,
+        windowBackground = AppTokens.windowBackground,
+        placeholder = AppTokens.placeholder,
     )
-    // Stage 6：同一份解析结果灌进 AppTokens（页面统一读 AppTokens.xxx）
-    AppTokens.fill(extended)
-    // A2：深色统一纯黑。只归零「页面/窗口/栏」这类背景 token，卡片（card/floorCard/chip）、
-    // 文字、分割线保持主题语义，否则卡片会和背景糊成一片。半透明主题有背景图，走独立分支不处理。
-    return if (extended.isNightMode && !ThemeUtil.isTranslucentTheme(nowTheme)) {
-        extended.copy(
-            background = Color.Black,
-            windowBackground = Color.Black,
-            topBar = Color.Black,
-            bottomBar = Color.Black,
-        )
-    } else {
-        extended
-    }
 }
 
 @Composable

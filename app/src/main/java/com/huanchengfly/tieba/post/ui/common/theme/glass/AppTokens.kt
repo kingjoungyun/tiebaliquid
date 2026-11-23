@@ -165,4 +165,61 @@ object AppTokens {
         // 复用静态 token 集合里的规范值，避免同一档红色散落两处定义。
         destructive = glassTokenSet(from.isNightMode).destructive
     }
+
+    /**
+     * **从 XML 主题属性直接解析填充**（commit 1：不再经过 ExtendedColors）。
+     *
+     * 字段与属性一一对应（与迁移前 `getThemeColorForTheme` 完全相同的读法）：
+     * 主题名走 [com.huanchengfly.tieba.post.utils.ThemeUtil.getCurrentTheme]，
+     * accent 覆盖由 `App.ThemeDelegate.getColorByAttr` 内部处理，因此「同一主题 + 同一 accent
+     * → 同一批颜色」这条不变式仍然成立。
+     *
+     * 深色纯黑覆盖（原 A2 逻辑）也在这里：只归零页面/窗口/顶底栏背景，卡片与文字保持主题语义。
+     */
+    fun fillFromTheme(context: android.content.Context, theme: String) {
+        val nowTheme = com.huanchengfly.tieba.post.utils.ThemeUtil.getCurrentTheme(theme)
+        fun attr(id: Int): Color =
+            Color(com.huanchengfly.tieba.post.App.ThemeDelegate.getColorByAttr(context, id, nowTheme))
+
+        val textColor = attr(com.huanchengfly.tieba.post.R.attr.colorText)
+        this.theme = nowTheme
+        isNightMode = com.huanchengfly.tieba.post.utils.ThemeUtil.isNightMode(nowTheme)
+        primary = attr(com.huanchengfly.tieba.post.R.attr.colorNewPrimary)
+        onPrimary = attr(com.huanchengfly.tieba.post.R.attr.colorOnAccent)
+        accent = attr(com.huanchengfly.tieba.post.R.attr.colorAccent)
+        onAccent = attr(com.huanchengfly.tieba.post.R.attr.colorOnAccent)
+        topBar = attr(com.huanchengfly.tieba.post.R.attr.colorToolbar)
+        onTopBar = attr(com.huanchengfly.tieba.post.R.attr.colorToolbarItem)
+        onTopBarSecondary = attr(com.huanchengfly.tieba.post.R.attr.colorToolbarItemSecondary)
+        onTopBarActive = attr(com.huanchengfly.tieba.post.R.attr.colorToolbarItemActive)
+        topBarSurface = attr(com.huanchengfly.tieba.post.R.attr.colorToolbarSurface)
+        onTopBarSurface = attr(com.huanchengfly.tieba.post.R.attr.colorOnToolbarSurface)
+        bottomBar = attr(com.huanchengfly.tieba.post.R.attr.colorNavBar)
+        bottomBarSurface = attr(com.huanchengfly.tieba.post.R.attr.colorNavBarSurface)
+        onBottomBarSurface = attr(com.huanchengfly.tieba.post.R.attr.colorOnNavBarSurface)
+        // ContentAlpha 在 M2 里是 @Composable getter，这里用它的固定值（high=0.87 / medium=0.60）
+        text = textColor.copy(alpha = 0.87f)
+        textSecondary = textColor.copy(alpha = 0.60f)
+        textDisabled = attr(com.huanchengfly.tieba.post.R.attr.color_text_disabled)
+        background = attr(com.huanchengfly.tieba.post.R.attr.colorBackground)
+        chip = attr(com.huanchengfly.tieba.post.R.attr.colorChip)
+        onChip = attr(com.huanchengfly.tieba.post.R.attr.colorOnChip)
+        unselected = attr(com.huanchengfly.tieba.post.R.attr.colorUnselected)
+        card = attr(com.huanchengfly.tieba.post.R.attr.colorCard)
+        floorCard = attr(com.huanchengfly.tieba.post.R.attr.colorFloorCard)
+        divider = attr(com.huanchengfly.tieba.post.R.attr.colorDivider)
+        shadow = attr(com.huanchengfly.tieba.post.R.attr.shadow_color)
+        indicator = attr(com.huanchengfly.tieba.post.R.attr.colorIndicator)
+        windowBackground = attr(com.huanchengfly.tieba.post.R.attr.colorWindowBackground)
+        placeholder = attr(com.huanchengfly.tieba.post.R.attr.colorPlaceholder)
+        destructive = accent
+
+        // A2：深色统一纯黑（半透明主题有背景图，跳过）
+        if (isNightMode && !com.huanchengfly.tieba.post.utils.ThemeUtil.isTranslucentTheme(nowTheme)) {
+            background = Color.Black
+            windowBackground = Color.Black
+            topBar = Color.Black
+            bottomBar = Color.Black
+        }
+    }
 }
