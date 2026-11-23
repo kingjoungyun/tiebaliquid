@@ -520,7 +520,8 @@ internal fun ReplyPageContent(
             )
         }
         if (isTopicThread) {
-            // 主题帖标题：玻璃胶囊（与正文同一个材质）
+            // 主题帖标题：和正文同一个玻璃胶囊 + 同一套 iOS 字阶。
+            // 字数上限（31）是业务规则，仍在 onValueChange 里。
             ReplyGlassInput(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -531,9 +532,10 @@ internal fun ReplyPageContent(
                     onValueChange = { if (it.length <= 31) threadTitle = it },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.subtitle1.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
+                    textStyle = LocalTextStyle.current.copy(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = AppTokens.text,
                     ),
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences,
@@ -541,7 +543,7 @@ internal fun ReplyPageContent(
                     placeholder = {
                         Text(
                             text = stringResource(id = R.string.hint_thread_title),
-                            style = MaterialTheme.typography.subtitle1.copy(fontSize = 15.sp),
+                            style = LocalTextStyle.current.copy(fontSize = 16.sp),
                             color = AppTokens.textSecondary,
                         )
                     },
