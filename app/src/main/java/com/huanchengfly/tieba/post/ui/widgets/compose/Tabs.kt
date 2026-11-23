@@ -432,29 +432,6 @@ fun PagerTabIndicator(
 }
 
 @Composable
-fun TabIndicator(
-    selectedTabIndex: Int,
-    tabPositions: List<TabPosition>
-) {
-    if (tabPositions.isNotEmpty()) {
-        val tabIndicatorWidth = 16.dp
-        val currentTab = tabPositions[selectedTabIndex]
-        val currentTabLeft = currentTab.left + (currentTab.width / 2 - tabIndicatorWidth / 2)
-        val animatedIndicatorOffset by animateDpAsState(targetValue = currentTabLeft)
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .wrapContentSize(Alignment.BottomStart)
-                .offset(x = animatedIndicatorOffset, y = (-8).dp)
-                .width(tabIndicatorWidth)
-                .height(3.dp)
-                .clip(RoundedCornerShape(100))
-                .background(color = LocalContentColor.current)
-        )
-    }
-}
-
-@Composable
 fun TabClickMenu(
     selected: Boolean,
     onClick: () -> Unit,
