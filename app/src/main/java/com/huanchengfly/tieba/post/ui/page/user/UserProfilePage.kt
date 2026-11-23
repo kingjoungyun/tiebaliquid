@@ -106,7 +106,6 @@ import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCard
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsIcon
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsUiStyle
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme

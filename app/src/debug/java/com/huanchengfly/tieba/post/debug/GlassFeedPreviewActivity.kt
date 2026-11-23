@@ -55,7 +55,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.huanchengfly.tieba.post.R
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.widgets.compose.ForumInfoChip
@@ -75,6 +74,7 @@ import io.github.neoruaa.glasmio.ui.GlasmioCard
 import io.github.neoruaa.glasmio.ui.GlasmioIconButton
 import io.github.neoruaa.glasmio.ui.GlasmioMenu
 import io.github.neoruaa.glasmio.ui.GlasmioMenuItem
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 技术验证（spike）：信息流帖子卡 + 跨窗口菜单采背景。**只读预览，不接业务数据。**
@@ -167,7 +167,7 @@ private fun FeedSpikePage(
     cardMode: Int,
     onBack: () -> Unit,
 ) {
-    val isDark = ExtendedTheme.colors.isNightMode
+    val isDark = AppTokens.isNightMode
     SideEffect {
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = !isDark
@@ -175,7 +175,7 @@ private fun FeedSpikePage(
         }
     }
 
-    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+    LiquidGlassTheme(accent = AppTokens.primary) {
         val colors = GlasmioTheme.colors
         val context = LocalContext.current
         // 只解码一次：10 张卡共用同一张本地图（1080²），避免把「每卡各解码一张」算进滚动性能。

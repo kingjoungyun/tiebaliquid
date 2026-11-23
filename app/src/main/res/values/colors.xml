@@ -93,7 +93,7 @@
 
     <!--
       theme_color_new_primary_* 是默认主题（THEME_DEFAULT）下 `colorNewPrimary` 的取值，
-      也就是 Compose 侧 `ExtendedTheme.colors.primary`（全局 accent 的兜底来源）。
+      也就是 Compose 侧 `AppTokens.primary`（全局 accent 的兜底来源）。
       浅色档历史上是纯黑，导致「全新安装、没进过主题页」时玻璃 accent / 开关 / 图标全黑。
       这里直接改成品牌蓝 #0A84FF：改资源值即可，不新增存储、不写默认 accent，
       用户一旦在主题页选过色，仍然走 `custom_primary_color` 覆盖分支（优先级更高）。

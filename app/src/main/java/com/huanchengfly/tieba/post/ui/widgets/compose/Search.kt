@@ -58,7 +58,6 @@ import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.api.models.SearchThreadBean
 import com.huanchengfly.tieba.post.arch.BaseComposeActivity
 import com.huanchengfly.tieba.post.ui.common.PbContentText
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import io.github.neoruaa.glasmio.glass.GlassSurface
 import com.huanchengfly.tieba.post.ui.common.windowsizeclass.WindowWidthSizeClass
 import com.huanchengfly.tieba.post.utils.DateTimeUtils

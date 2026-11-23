@@ -57,7 +57,6 @@ import com.huanchengfly.tieba.post.pxToSp
 import com.huanchengfly.tieba.post.pxToSpFloat
 import com.huanchengfly.tieba.post.spToPxFloat
 import com.huanchengfly.tieba.post.ui.common.PbContentText
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.utils.EmoticonManager
 import com.huanchengfly.tieba.post.utils.EmoticonUtil.emoticonString
 import com.huanchengfly.tieba.post.utils.calcLineHeightPx

@@ -15,7 +15,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import io.github.neoruaa.glasmio.core.LocalGlassColors as GlasmioLocalGlassColors
 import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
 import io.github.neoruaa.glasmio.glass.GlassEmphasis

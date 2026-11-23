@@ -137,7 +137,6 @@ import com.huanchengfly.tieba.post.ui.common.PbContentText
 import com.huanchengfly.tieba.post.ui.common.LocalThreadImageRadius
 import com.huanchengfly.tieba.post.ui.common.LocalThreadImagesEnabled
 import com.huanchengfly.tieba.post.ui.common.PicWaterfallContentRender
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.invertChipBackground
 import com.huanchengfly.tieba.post.ui.common.theme.compose.invertChipContent
 import com.huanchengfly.tieba.post.ui.common.theme.compose.loadMoreIndicator

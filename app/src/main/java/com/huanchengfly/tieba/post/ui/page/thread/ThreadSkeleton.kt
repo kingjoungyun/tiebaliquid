@@ -26,7 +26,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.core.systemGray5
 import io.github.neoruaa.glasmio.glass.render.backdrops.emptyBackdrop

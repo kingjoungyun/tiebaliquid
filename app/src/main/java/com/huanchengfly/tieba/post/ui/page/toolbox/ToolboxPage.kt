@@ -63,7 +63,6 @@ import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsUiStyle
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCard
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsUiStyle
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.page.destinations.AccountManagePageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.FansListPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.FollowListPageDestination

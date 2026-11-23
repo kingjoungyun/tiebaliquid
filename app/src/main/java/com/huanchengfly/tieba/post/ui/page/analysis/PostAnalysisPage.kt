@@ -48,7 +48,6 @@ import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
@@ -126,7 +125,7 @@ fun PostAnalysisPage(
     ProvideNavigator(navigator = navigator) {
         MyScaffold(
             backgroundColor = if (glassmio) AppTokens.groupedBackground
-            else ExtendedTheme.colors.background,
+            else AppTokens.background,
             topBar = {
                 if (glassmio) {
                     Column(

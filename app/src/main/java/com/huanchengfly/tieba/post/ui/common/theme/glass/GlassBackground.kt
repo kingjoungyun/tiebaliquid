@@ -14,7 +14,6 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.github.panpf.sketch.compose.AsyncImage
 import com.github.panpf.sketch.fetch.newFileUri
 import com.huanchengfly.tieba.post.rememberPreferenceAsMutableState
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.utils.ThemeUtil
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 

@@ -7,7 +7,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCardDefaults
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
 import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported

@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import com.huanchengfly.tieba.post.BuildConfig
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassAppBackground
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassOverlayPage
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassBackdropHost
@@ -102,7 +101,7 @@ fun PrefsScreen(
         LocalPrefsUiStyle provides uiStyle,
     ) {
         // 只在这一支包 GlasmioTheme：开关要读它的明暗令牌（明暗跟随 App 自己的
-        // ExtendedTheme.isNightMode，不是系统）。不包整个 App，避免 M3 主题污染其它页面。
+        // AppTokens.isNightMode，不是系统）。不包整个 App，避免 M3 主题污染其它页面。
         LiquidGlassTheme(accent = AppTokens.primary) {
             when (uiStyle) {
                 PrefsUiStyle.GLASSMIO -> GlasmioPrefsPage(

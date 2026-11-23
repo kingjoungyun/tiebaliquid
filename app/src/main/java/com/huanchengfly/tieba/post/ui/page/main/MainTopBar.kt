@@ -56,7 +56,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.huanchengfly.tieba.post.arch.GlobalEvent
 import com.huanchengfly.tieba.post.arch.emitGlobalEvent
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
@@ -274,7 +273,7 @@ fun MainTopBarHost(
     modifier: Modifier = Modifier,
 ) {
     val slot = state.slots[state.currentKey]
-    val colors = ExtendedTheme.colors
+    val colors = AppTokens
     val glass = glassColors()
     val density = LocalDensity.current
     val glassStart = with(density) { GlassStartDistance.toPx() }

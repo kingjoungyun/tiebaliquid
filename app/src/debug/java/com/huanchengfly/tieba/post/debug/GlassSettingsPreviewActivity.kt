@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.huanchengfly.tieba.post.R
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.utils.ThemeUtil
@@ -52,13 +51,14 @@ import io.github.neoruaa.glasmio.preference.GlasmioPreferenceGroupTitle
 import io.github.neoruaa.glasmio.ui.GlasmioGroupedList
 import io.github.neoruaa.glasmio.ui.GlasmioGroupedTableFooter
 import io.github.neoruaa.glasmio.ui.GlasmioSwitch
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * B 版设置页：**纯 Glasmio 组件 + 纯 Glasmio 参数**，仅用于 A/B 对照。
  *
  * 刻意不引用任何 `com.huanchengfly.tieba.post.ui.common.prefs.*`（PrefsCard / PrefsScreen）
  * 与 `GlassTokens` 里的 FlClash 数字，只借 App 的两样东西：
- * - `TiebaLiteTheme`：拿 `ExtendedTheme.colors.isNightMode` 作为明暗来源（App 不跟随系统）；
+ * - `TiebaLiteTheme`：拿 `AppTokens.isNightMode` 作为明暗来源（App 不跟随系统）；
  * - 资源里的中文文案，保证 A/B 的文本完全一致。
  *
  * 页面结构、行高、内边距、圆角、分隔线、分组间距全部由 Glasmio 自己决定：
@@ -109,7 +109,7 @@ class GlassSettingsPreviewActivity : ComponentActivity() {
 @Composable
 private fun GlassSettingsPreview(window: Window, onBack: () -> Unit) {
     // App 的明暗来自自己的主题（不是 isSystemInDarkTheme()），与生产设置页同源。
-    val isDark = ExtendedTheme.colors.isNightMode
+    val isDark = AppTokens.isNightMode
     SideEffect {
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = !isDark
@@ -117,9 +117,9 @@ private fun GlassSettingsPreview(window: Window, onBack: () -> Unit) {
         }
     }
 
-    // 主题色唯一来源：ExtendedTheme.colors.primary。LiquidGlassTheme 把它注入 Glasmio 的
+    // 主题色唯一来源：AppTokens.primary。LiquidGlassTheme 把它注入 Glasmio 的
     // ColorScheme 与 GlassColors.accent，所以下面所有玻璃控件读到的 accent 都是同一个值。
-    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+    LiquidGlassTheme(accent = AppTokens.primary) {
         val colors = GlasmioTheme.colors
         val accent = colors.accent
         // 只读预览状态：不写 DataStore，不影响生产设置
@@ -243,7 +243,7 @@ private fun GlassSettingsPreview(window: Window, onBack: () -> Unit) {
 
 /**
  * Glasmio 分组行左侧图标：23dp、accent 着色（与 `GlasmioListRow` 的 systemName 槽一致）。
- * accent 来自 `LiquidGlassTheme(accent = ExtendedTheme.colors.primary)`，会跟着 6 个主题色变。
+ * accent 来自 `LiquidGlassTheme(accent = AppTokens.primary)`，会跟着 6 个主题色变。
  * 没有 SF Symbols 字体时，`SfIcon` 会退回 Glasmio 自带的 Material 矢量图。
  */
 @Composable

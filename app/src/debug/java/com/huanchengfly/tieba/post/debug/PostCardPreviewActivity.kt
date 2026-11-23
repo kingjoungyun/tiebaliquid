@@ -50,7 +50,6 @@ import com.huanchengfly.tieba.post.api.models.protos.personalized.DislikeReason
 import com.huanchengfly.tieba.post.api.models.protos.personalized.ThreadPersonalized
 import com.huanchengfly.tieba.post.arch.ImmutableHolder
 import com.huanchengfly.tieba.post.arch.wrapImmutable
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyFontFamily
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
@@ -60,6 +59,7 @@ import com.huanchengfly.tieba.post.ui.page.main.home.PostCard
 import com.huanchengfly.tieba.post.utils.ThemeUtil
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import java.io.File
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * **只读预览页**：用生产组件 [PostCard] 渲染一批静态假帖子，用来验收「推特式」卡片的版式。
@@ -130,7 +130,7 @@ private fun PostCardPreviewPage(
     initialScrollDp: Int,
     likedFirst: Boolean,
 ) {
-    val isDark = ExtendedTheme.colors.isNightMode
+    val isDark = AppTokens.isNightMode
     SideEffect {
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = !isDark
@@ -138,7 +138,7 @@ private fun PostCardPreviewPage(
         }
     }
 
-    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+    LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
         val colors = GlasmioTheme.colors
         val context = LocalContext.current
@@ -212,7 +212,7 @@ private fun PostCardPreviewPage(
  */
 @Composable
 private fun FontAbPage(window: android.view.Window) {
-    val isDark = ExtendedTheme.colors.isNightMode
+    val isDark = AppTokens.isNightMode
     SideEffect {
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = !isDark
@@ -220,7 +220,7 @@ private fun FontAbPage(window: android.view.Window) {
         }
     }
     val sample = "折腾了一下午，终于把龟背竹救活了"
-    LiquidGlassTheme(accent = ExtendedTheme.colors.primary) {
+    LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
         val colors = GlasmioTheme.colors
         Box(

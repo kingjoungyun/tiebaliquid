@@ -54,8 +54,6 @@ import androidx.compose.ui.unit.offset
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEachIndexed
 import com.huanchengfly.tieba.post.R
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedColors
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.White
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassSurface
@@ -369,15 +367,13 @@ fun NavigationRail(
 }
 
 @Composable
-fun BottomNavigationDivider(
-    themeColors: ExtendedColors = ExtendedTheme.colors
-) {
-    if (!themeColors.isNightMode) {
+fun BottomNavigationDivider() {
+    if (!AppTokens.isNightMode) {
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.5.dp)
-                .background(themeColors.divider)
+                .background(AppTokens.divider)
         )
     }
 }
@@ -407,7 +403,7 @@ fun BottomNavigation(
     navigationItems: ImmutableList<NavigationItem>,
     // 签名保持不变：调用方（MainPage）和宽屏 Rail / Drawer 分支都不受影响。
     // 浮动胶囊用的是 glass 令牌，不再需要这个 M2 色板，这里只为兼容保留。
-    themeColors: ExtendedColors = ExtendedTheme.colors,
+    themeColors: AppTokens = AppTokens,
     modifier: Modifier = Modifier,
 ) {
     val glass = glassColors()

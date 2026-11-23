@@ -42,7 +42,6 @@ import com.huanchengfly.tieba.post.arch.emitGlobalEvent
 import com.huanchengfly.tieba.post.arch.onGlobalEvent
 import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.rememberPreferenceAsState
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassAppBackground
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassBackdropHost
@@ -69,6 +68,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 private fun NavigationWrapper(
@@ -172,7 +172,7 @@ fun MainPage(
     } else pageViewModel()
 
     val coroutineScope = rememberCoroutineScope()
-    val themeColors = ExtendedTheme.colors
+    val themeColors = AppTokens
     val navigationItems by remember {
         derivedStateOf {
             listOfNotNull(

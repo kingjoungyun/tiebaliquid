@@ -83,7 +83,6 @@ import com.huanchengfly.tieba.post.components.ClipBoardLink
 import com.huanchengfly.tieba.post.components.ClipBoardLinkDetector
 import com.huanchengfly.tieba.post.components.ClipBoardThreadLink
 import com.huanchengfly.tieba.post.services.NotifyJobService
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassRootHost
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
 import com.huanchengfly.tieba.post.ui.page.NavGraphs

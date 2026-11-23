@@ -4,20 +4,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedColors
 
 /**
  * **AppTokens —— 全 App 唯一的颜色令牌（运行时填充）。**
  *
- * 定位（Stage 6）：`ExtendedColors` 继续负责「从 XML 主题 + 6 色 accent + AMOLED 解析出颜色」
+ * 定位（Stage 6）：XML 主题 继续负责「从 XML 主题 + 6 色 accent + AMOLED 解析出颜色」
  * （它是 attr 机制的产物，不能删），解析完成后**把同一批值灌进这里**；页面统一读
- * `AppTokens.xxx`。两套并存期间值严格一致（同一个 [ExtendedColors] 实例填出来）。
+ * `AppTokens.xxx`。两套并存期间值严格一致（同一个 XML 主题 实例填出来）。
  *
  * 为什么字段是 `mutableStateOf` 而不是常量：主题（亮/暗）、accent（6 色）、AMOLED 都会
  * 在运行中切换。用 snapshot state 才能让读 `AppTokens.xxx` 的 Composable 自动重组；
  * 写死成常量会让换主题/换色失效。
  *
- * 字段与 [ExtendedColors] 1:1（命名保持一致，便于机械替换）；另外提供
+ * 字段与 XML 主题 1:1（命名保持一致，便于机械替换）；另外提供
  * [textPrimary] / [textTertiary] / [separator] 三个别名，对应设计规范里的叫法
  * （分别是 text / textDisabled / divider）。
  *
@@ -114,7 +113,7 @@ object AppTokens {
     /**
      * 破坏性操作色（删除 / 退出账号 / 举报 …）。
      *
-     * **不来自 XML 主题**：[ExtendedColors] 没有对应语义（历史原因，danger 只在个别页面
+     * **不来自 XML 主题**：XML 主题 没有对应语义（历史原因，danger 只在个别页面
      * 硬编码成红色），所以取 [GlassTokenSet] 的规范值（浅 `#FF3B30` / 深 `#FF453A`，
      * iOS 系统红），这样全站危险操作只有一处定义，且与 Glasmio 组件（`GlasmioTheme.colors
      * .destructive`、`AppActionSheet` 的 `destructive` 项）保持同一档颜色。
@@ -123,51 +122,7 @@ object AppTokens {
         private set
 
     /**
-     * 用一次主题解析的结果填充所有 token。
-     *
-     * 调用点只有一个：[com.huanchengfly.tieba.post.ui.common.theme.compose.getThemeColorForTheme]
-     * —— 它本来就是「XML 主题 + accent 覆盖 + AMOLED」的唯一收敛点，在它构造出
-     * [ExtendedColors] 之后调用这里，保证两套值来自同一份计算。
-     *
-     * 注意：参数顺序/字段名与 [ExtendedColors] 一致，将来加字段两边一起加。
-     */
-    fun fill(from: ExtendedColors) {
-        theme = from.theme
-        isNightMode = from.isNightMode
-        primary = from.primary
-        onPrimary = from.onPrimary
-        accent = from.accent
-        onAccent = from.onAccent
-        topBar = from.topBar
-        onTopBar = from.onTopBar
-        onTopBarSecondary = from.onTopBarSecondary
-        onTopBarActive = from.onTopBarActive
-        topBarSurface = from.topBarSurface
-        onTopBarSurface = from.onTopBarSurface
-        bottomBar = from.bottomBar
-        bottomBarSurface = from.bottomBarSurface
-        onBottomBarSurface = from.onBottomBarSurface
-        text = from.text
-        textSecondary = from.textSecondary
-        textDisabled = from.textDisabled
-        background = from.background
-        groupedBackground = if (from.isNightMode) Color.Black else Color(0xFFF2F2F7)
-        chip = from.chip
-        onChip = from.onChip
-        unselected = from.unselected
-        card = from.card
-        floorCard = from.floorCard
-        divider = from.divider
-        shadow = from.shadow
-        indicator = from.indicator
-        windowBackground = from.windowBackground
-        placeholder = from.placeholder
-        // 复用静态 token 集合里的规范值，避免同一档红色散落两处定义。
-        destructive = glassTokenSet(from.isNightMode).destructive
-    }
-
-    /**
-     * **从 XML 主题属性直接解析填充**（commit 1：不再经过 ExtendedColors）。
+     * **从 XML 主题属性直接解析填充**（Stage 6：不再经过中间层）。
      *
      * 字段与属性一一对应（与迁移前 `getThemeColorForTheme` 完全相同的读法）：
      * 主题名走 [com.huanchengfly.tieba.post.utils.ThemeUtil.getCurrentTheme]，

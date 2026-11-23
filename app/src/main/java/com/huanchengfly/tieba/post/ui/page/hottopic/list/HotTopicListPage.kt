@@ -51,7 +51,6 @@ import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.api.models.protos.topicList.NewTopicList
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.arch.pageViewModel
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.OrangeA700
 import com.huanchengfly.tieba.post.ui.common.theme.compose.RedA700
 import com.huanchengfly.tieba.post.ui.common.theme.compose.Shapes

@@ -10,7 +10,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import io.github.neoruaa.glasmio.glass.NavigationGlassMaterial
 import kotlin.math.pow
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
@@ -21,7 +20,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
  * 数值取自 FlClash 的 `prism_ui` 设计系统，但这里是纯 Compose 实现，
  * 不依赖 Flutter / 不引入任何新依赖。
  *
- * 本文件只放**数值与颜色**，不参与现有 `ExtendedTheme`（M2 色板）的构建，
+ * 本文件只放**数值与颜色**，不参与 `AppTokens`（M2 色板）的构建，
  * 以免污染既有主题；取色统一走 [glassColors]。
  */
 object GlassTokens {
@@ -175,7 +174,7 @@ object GlassTokens {
 }
 
 /**
- * 一套玻璃色。纯数据，无 `CompositionLocal`，避免影响既有 `ExtendedTheme`。
+ * 一套玻璃色。纯数据，无 `CompositionLocal`，避免影响既有 `AppTokens`。
  */
 @Immutable
 data class GlassColors(
@@ -207,7 +206,7 @@ data class GlassColors(
  */
 @Composable
 fun glassNavigationTint(): Color {
-    val colors = ExtendedTheme.colors
+    val colors = AppTokens
     return if (colors.isNightMode) {
         colors.card.shiftTone(7f).copy(alpha = 0.62f)
     } else {
@@ -245,7 +244,7 @@ fun Color.shiftTone(delta: Float): Color {
 }
 
 /**
- * 跟随 **App 自己的主题明暗** 取色（即 [ExtendedTheme] 的 `isNightMode`）。
+ * 跟随 **App 自己的主题明暗** 取色（即 [AppTokens.isNightMode]）。
  *
  * 为什么不是 `isSystemInDarkTheme()`：实测这个 App 的明暗由它自己的主题设置决定
  * （默认固定浅色，`cmd uimode night yes` 时页面文字仍是浅色主题的黑字），
