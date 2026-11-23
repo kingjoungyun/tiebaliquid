@@ -51,6 +51,17 @@ compose-destinations、Lottie、uCrop、Matisse 等。完整清单见 `gradle/li
 
 Apple 的 SF Symbols 图标**未被使用**——图标全部来自 Phosphor（MIT）。
 
+## 开发方式说明
+
+本项目由 **kingjoungyun** 主导（需求、取舍、验收、发布），
+**具体实现由 DeepSeek 模型 + DeepSeek Harness 多智能体协作完成**。
+
+- 为了贡献统计清晰，Git 提交署名统一为维护者本人；自 v1.8.4 之后的部分提交带有
+  `Co-authored-by: DeepSeek <noreply@deepseek.com>` 标识
+- AI 生成的代码经过人工验收：界面改动均在真机/模拟器上实际运行确认后才提交，
+  未验证的部分在 README 的「已知限制」中如实说明
+- 本项目没有自行发明玻璃材质参数，渲染能力来自 Glasmio
+
 ## 免责声明
 
 本项目为个人学习与技术研究用途，与百度公司及上述项目的作者无关。
