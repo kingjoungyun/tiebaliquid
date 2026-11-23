@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imeAnimationTarget
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeightIn
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -953,33 +954,39 @@ private fun EmoticonPanel(
             .filter { it.name.isNotEmpty() }
     }
 
-    Column(
-        modifier = modifier
-    ) {
+    // 面板容器：和输入区同一块玻璃（原来是裸的 M2 网格贴在页面底）。
+    // 内部仍是 LazyVerticalGrid + EmoticonManager，插入逻辑（"#(name)"）不变。
+    ReplyGlassInput(modifier = modifier.fillMaxSize()) {
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(48.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp)
+            columns = GridCells.Adaptive(44.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             items(emoticons) { emoticon ->
-                Image(
-                    painter = rememberDrawablePainter(
-                        drawable = EmoticonManager.getEmoticonDrawable(
-                            LocalContext.current,
-                            emoticon.id
-                        )
-                    ),
-                    contentDescription = stringResource(
-                        id = R.string.emoticon,
-                        emoticon.name
-                    ),
-                    contentScale = ContentScale.Fit,
+                Box(
                     modifier = Modifier
-                        .size(48.dp)
-                        .padding(8.dp)
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
                         .clickable { onEmoticonClick(emoticon) },
-                )
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(
+                        painter = rememberDrawablePainter(
+                            drawable = EmoticonManager.getEmoticonDrawable(
+                                LocalContext.current,
+                                emoticon.id
+                            )
+                        ),
+                        contentDescription = stringResource(
+                            id = R.string.emoticon,
+                            emoticon.name
+                        ),
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(30.dp),
+                    )
+                }
             }
         }
     }
@@ -1003,97 +1010,101 @@ private fun ImagePanel(
         onNewImageSelected(it.images)
     }
 
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.Top
-    ) {
-        LazyRow(
-            modifier = Modifier
-                .fillMaxHeight(0.5f),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+    // 图片面板：整块玻璃容器 + 圆角缩略图。选图/删除/原图开关的行为全部不变
+    // （GlobalEvent.StartSelectImages 的 id 过滤、9 张上限、动图判定都照旧）。
+    ReplyGlassInput(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Top
         ) {
-//            item {
-//                Spacer(modifier = Modifier.width(16.dp))
-//            }
-            itemsIndexed(selectedImages) { index, imageUri ->
-                Box {
-                    AsyncImage(
-                        imageUri = imageUri,
-                        contentDescription = stringResource(id = R.string.desc_image),
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(14.dp))
-                    )
-                    // 删除角标：深色半透明圆底 + 白叉，保证在任何图片上都看得见
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(4.dp)
-                            .size(22.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.45f))
-                            .clickable { onRemoveImage(index) },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = PhosphorIcons["x"] ?: Icons.Rounded.Close,
-                            contentDescription = stringResource(id = R.string.desc_remove_image),
-                            tint = Color.White,
-                            modifier = Modifier.size(13.dp)
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(88.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                itemsIndexed(selectedImages) { index, imageUri ->
+                    Box(modifier = Modifier.fillMaxHeight().aspectRatio(1f)) {
+                        AsyncImage(
+                            imageUri = imageUri,
+                            contentDescription = stringResource(id = R.string.desc_image),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(14.dp))
                         )
+                        // 删除角标：深色半透明圆底 + 白叉，保证在任何图片上都看得见
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(4.dp)
+                                .size(22.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.45f))
+                                .clickable { onRemoveImage(index) },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = PhosphorIcons["x"] ?: Icons.Rounded.Close,
+                                contentDescription = stringResource(id = R.string.desc_remove_image),
+                                tint = Color.White,
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
                     }
                 }
-            }
-            if (selectedImages.size < 9) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(AppTokens.chip)
-                            .clickable {
-                                coroutineScope.emitGlobalEvent(
-                                    GlobalEvent.StartSelectImages(
-                                        id,
-                                        9 - selectedImages.size,
-                                        PickMediasRequest.ImageOnly
+                if (selectedImages.size < 9) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(AppTokens.chip)
+                                .clickable {
+                                    coroutineScope.emitGlobalEvent(
+                                        GlobalEvent.StartSelectImages(
+                                            id,
+                                            9 - selectedImages.size,
+                                            PickMediasRequest.ImageOnly
+                                        )
                                     )
-                                )
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = PhosphorIcons["plus"] ?: Icons.Rounded.Add,
-                            contentDescription = stringResource(id = R.string.desc_add_image),
-                            tint = AppTokens.textSecondary,
-                            modifier = Modifier.size(32.dp)
-                        )
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = PhosphorIcons["plus"] ?: Icons.Rounded.Add,
+                                contentDescription = stringResource(id = R.string.desc_add_image),
+                                tint = AppTokens.textSecondary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
                     }
                 }
             }
-        }
-        // 「原图」开关：M2 Checkbox → Glasmio 开关（与设置页同一套 PrefsSwitch，含 API<33 兜底）
-        Row(
-            modifier = Modifier
-                .padding(vertical = 12.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    onIsOriginImageChange(!isOriginImage)
-                },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            PrefsSwitch(checked = isOriginImage, onCheckedChange = onIsOriginImageChange)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = stringResource(id = R.string.origin_image),
-                color = AppTokens.text,
-            )
+            Spacer(modifier = Modifier.height(10.dp))
+            // 「原图」开关：Glasmio 开关（与设置页同一套 PrefsSwitch，含 API<33 兜底）
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        onIsOriginImageChange(!isOriginImage)
+                    }
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                PrefsSwitch(checked = isOriginImage, onCheckedChange = onIsOriginImageChange)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(id = R.string.origin_image),
+                    fontSize = 14.sp,
+                    color = AppTokens.text,
+                )
+            }
         }
     }
 }
