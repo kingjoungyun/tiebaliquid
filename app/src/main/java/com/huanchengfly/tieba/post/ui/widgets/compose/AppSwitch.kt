@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.Color
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
- * **M2 原生 Switch + AppTokens 配色**（掉分叉版 `ui.widgets.compose.Switch` 后的统一入口）。
+ * **M2 原生 Switch + AppTokens 配色**（掉分叉版 `Switch` 后的统一入口）。
  *
  * 只服务「还没迁移到 Glasmio 的旧 M2 页面」：玻璃页一律用 `PrefsSwitch`（Glasmio 开关）。
  * 颜色全部来自运行时 token，因此换主题 / 换 accent 时和 Glasmio 组件保持一致。
