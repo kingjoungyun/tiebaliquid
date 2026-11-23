@@ -52,6 +52,10 @@ class MainSmokeTest {
 
     private fun str(resId: Int): String = context.getString(resId)
 
+    /** 屏幕密度（dp → px）。UiDevice 2.3.0 没有 displayDensity，只能从 Context 的 DisplayMetrics 拿。 */
+    private val displayDensity: Float
+        get() = context.resources.displayMetrics.density
+
     @Before
     fun freshLaunch() {
         device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
@@ -226,7 +230,7 @@ class MainSmokeTest {
         val bounds = card.visibleBounds
         // 点卡片顶部「作者名」那一行：图片/头像/分享/评论都是嵌套的可点击区域，
         // 点它们会进看图页 / 个人页；点卡片本体才会进帖子页。
-        val authorRowY = bounds.top + minOf((24 * device.displayDensity).toInt(), bounds.height() / 5)
+        val authorRowY = bounds.top + minOf((24 * displayDensity).toInt(), bounds.height() / 5)
         device.click(bounds.centerX(), authorRowY)
         await("帖子页打开（底栏出现「${str(R.string.title_see_lz)}」或「${str(R.string.title_asc)}」）") {
             device.hasObject(By.desc(str(R.string.title_see_lz))) ||
@@ -268,12 +272,19 @@ class MainSmokeTest {
         return found ?: failWith(cause = "等待超时：$what")
     }
 
+    /**
+     * 点节点中心；UiObject2.click() 是 void（失败抛异常），所以用 try/catch 兜底，
+     * 兜底路径用节点 bounds 的中心做坐标点击。
+     */
     private fun UiObject2.clickOrTapByBounds() {
-        val clicked = runCatching { click() }.getOrDefault(false)
-        if (!clicked) {
-            val bounds = visibleBounds
-            device.click(bounds.centerX(), bounds.centerY())
+        try {
+            click()
+            return
+        } catch (t: Throwable) {
+            Log.w(TAG, "UiObject2.click() 失败，改用坐标点击: $t")
         }
+        val bounds = visibleBounds
+        device.click(bounds.centerX(), bounds.centerY())
     }
 
     /**
