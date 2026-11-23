@@ -165,6 +165,166 @@ class MainSmokeTest {
         )
     }
 
+    // ------------------------------------------------------------------ 第二批 5 条（深水区）
+
+    @Test
+    fun forumTabOpensList() {
+        // 6. 进吧页能进：dock「进吧」→ 未登录空态（标题 + 去登录按钮）。
+        tapDock(R.string.title_explore)
+
+        awaitObject("进吧页空态「${str(R.string.title_empty_login)}」") {
+            device.findObject(By.text(str(R.string.title_empty_login)))
+        }
+        assertTrue(
+            "进吧页应有「${str(R.string.button_login)}」入口",
+            device.hasObject(By.text(str(R.string.button_login)))
+        )
+        assertTrue(
+            "进吧页应已切走（dock 上重新出现「${str(R.string.title_main)}」）",
+            device.hasObject(By.desc(str(R.string.title_main)))
+        )
+    }
+
+    @Test
+    fun userProfileOpensFromAvatar() {
+        // 7. 信息流点作者头像 → 用户主页（返回钮 + 关注/粉丝统计行）。
+        val avatar = awaitObject("信息流里的作者头像") {
+            device.findObject(By.desc(str(R.string.desc_user_avatar)))
+        }
+        avatar.clickOrTapByBounds()
+
+        awaitObject("用户主页的「${str(R.string.text_stat_fans)}」统计") {
+            device.findObject(By.text(str(R.string.text_stat_fans)))
+        }
+        assertTrue(
+            "用户主页应有返回钮",
+            device.hasObject(By.desc(str(R.string.button_back)))
+        )
+        // 资料区（ID 行）是主页独有的结构；昵称本身是网络内容，不做文字断言。
+        assertTrue(
+            "用户主页应有资料区（ID 行）",
+            device.hasObject(By.text(Pattern.compile("ID: .+")))
+        )
+    }
+
+    @Test
+    fun subPostsOpenAndBack() {
+        // 8. 楼中楼能进能出：帖子页 → 展开楼中楼 →「查看全部 N 条回复」→ 楼中楼页 → 返回。
+        //    信息流里不一定每条帖子都有楼中楼，所以最多试前 3 张卡片；都没有才降级。
+        val openAllPattern = Pattern.compile(
+            str(R.string.open_all_sub_posts).replace(Regex("%[ds]"), ".*")
+        )
+        val subPostsTitle = str(R.string.title_sub_posts_page)
+
+        var opened = false
+        for (index in 0 until SUB_POST_CARD_ATTEMPTS) {
+            openThreadCard(index)
+            if (tryOpenSubPosts(openAllPattern, subPostsTitle)) {
+                opened = true
+                break
+            }
+            // 这张帖子的楼中楼没打开：退回信息流，换下一张
+            device.pressBack()
+            awaitFeedCards()
+        }
+
+        if (opened) {
+            assertTrue(
+                "楼中楼页应有返回钮",
+                device.hasObject(By.desc(str(R.string.button_back)))
+            )
+            device.pressBack()
+            await("返回帖子页（底栏「${str(R.string.title_see_lz)}」回来）") {
+                device.hasObject(By.desc(str(R.string.title_see_lz)))
+            }
+            assertFalse(
+                "返回后不应还停在楼中楼页",
+                device.hasObject(By.text(subPostsTitle))
+            )
+            return
+        }
+
+        // 降级断言（前 3 张卡片都没有楼中楼；单楼层主题帖连「第 N 楼」都没有）：
+        // 只断言「帖子页本身在」—— 顶栏返回钮 + 底栏回复入口，两个都是帖子页独有的静态节点。
+        Log.w(TAG, "subPostsOpenAndBack: 前 $SUB_POST_CARD_ATTEMPTS 张卡片都没有楼中楼入口，降级为「帖子页在」断言")
+        openThreadCard(0)
+        assertTrue(
+            "降级：帖子页应有返回钮",
+            device.hasObject(By.desc(str(R.string.button_back)))
+        )
+        assertTrue(
+            "降级：帖子页应有回复入口（${str(R.string.tip_reply_thread)}）",
+            device.hasObject(By.text(str(R.string.tip_reply_thread))) ||
+                device.hasObject(By.desc(str(R.string.title_see_lz)))
+        )
+    }
+
+    @Test
+    fun settingsPersonalizationRows() {
+        // 9. 我 → 设置 → 个性化：断言三行静态设置项 + 返回钮。
+        tapDock(R.string.title_user)
+        val settingsEntry = awaitObject("我的页「${str(R.string.title_settings)}」入口") {
+            device.findObject(By.text(str(R.string.title_settings)))
+        }
+        settingsEntry.clickOrTapByBounds()
+
+        val personalizationEntry = awaitObject("设置页「${str(R.string.title_settings_custom)}」入口") {
+            device.findObject(By.text(str(R.string.title_settings_custom)))
+        }
+        personalizationEntry.clickOrTapByBounds()
+
+        awaitObject("个性化页「${str(R.string.title_custom_font_size)}」行") {
+            device.findObject(By.text(str(R.string.title_custom_font_size)))
+        }
+        assertTrue(
+            "个性化页应有「${str(R.string.settings_night_mode)}」行",
+            device.hasObject(By.text(str(R.string.settings_night_mode)))
+        )
+        assertTrue(
+            "个性化页应有「${str(R.string.settings_app_icon)}」行",
+            device.hasObject(By.text(str(R.string.settings_app_icon)))
+        )
+        assertTrue(
+            "个性化页应有返回钮",
+            device.hasObject(By.desc(str(R.string.button_back)))
+        )
+    }
+
+    @Test
+    fun nightModeToggleKeepsAppAlive() {
+        // 10. 夜间模式切换不崩：读当前开关状态 → 切到相反态 → 断言进程存活 + 我的页仍在 → 切回原状态。
+        //     切主题可能会重建 Activity，所以每次都重新查节点，不用缓存的 UiObject2。
+        tapDock(R.string.title_user)
+        val toggle = awaitObject("我的页「夜间」开关") { nightSwitch() }
+        val wasChecked = toggle.isChecked
+
+        try {
+            toggle.clickOrTapByBounds()
+            await("夜间开关切到 ${!wasChecked}", 15_000) { nightSwitch()?.isChecked == !wasChecked }
+
+            val pid = device.executeShellCommand("pidof $APP_PACKAGE").trim()
+            assertTrue("切夜间模式后 App 进程应仍存活（pidof 返回空）", pid.isNotEmpty())
+            // 切主题可能触发 Activity 重建：用 await 等「我的」页重新出现，而不是立刻断言。
+            await("切夜间模式后「我的」页重新出现", 10_000) {
+                device.hasObject(By.text(str(R.string.mine_title)))
+            }
+        } finally {
+            // 不管断言是否失败，都尽量切回原状态，避免污染下一次跑批。
+            runCatching {
+                val current = nightSwitch()
+                if (current != null && current.isChecked != wasChecked) {
+                    current.clickOrTapByBounds()
+                    await("夜间开关恢复为 $wasChecked", 10_000) { nightSwitch()?.isChecked == wasChecked }
+                }
+            }.onFailure { Log.w(TAG, "nightModeToggleKeepsAppAlive: 恢复夜间开关失败（需手工切回）: $it") }
+        }
+    }
+
+    // ------------------------------------------------------------------ 第二批的辅助
+
+    /** 我的页的夜间开关：整页唯一的 checkable 节点。 */
+    private fun nightSwitch(): UiObject2? = device.findObjects(By.checkable(true)).firstOrNull()
+
     // ------------------------------------------------------------------ 启动 / 导航
 
     /**
@@ -225,8 +385,12 @@ class MainSmokeTest {
     }
 
     /** 点第一个帖子卡片 → 等到帖子页底栏出现。 */
-    private fun openFirstThread() {
-        val card = awaitFeedCards().first()
+    private fun openFirstThread() = openThreadCard(0)
+
+    /** 点信息流里第 [index] 张卡片（0 = 最上面那张）→ 等到帖子页底栏出现。 */
+    private fun openThreadCard(index: Int) {
+        val cards = awaitFeedCards()
+        val card = cards.getOrNull(index) ?: cards.first()
         val bounds = card.visibleBounds
         // 点卡片顶部「作者名」那一行：图片/头像/分享/评论都是嵌套的可点击区域，
         // 点它们会进看图页 / 个人页；点卡片本体才会进帖子页。
@@ -236,6 +400,31 @@ class MainSmokeTest {
             device.hasObject(By.desc(str(R.string.title_see_lz))) ||
                 device.hasObject(By.desc(str(R.string.title_asc)))
         }
+    }
+
+    /**
+     * 在当前帖子页尝试进入楼中楼：成功返回 true（此时停在楼中楼页），失败返回 false（仍在帖子页）。
+     *
+     * 入口有三种形态，所以三步都容错：① 帖子里直接有「查看全部 N 条回复」；
+     * ② 先点一条楼中楼预览，就地展开出「查看全部 N 条回复」；③ 点预览直接跳到楼中楼页。
+     */
+    private fun tryOpenSubPosts(openAllPattern: Pattern, subPostsTitle: String): Boolean {
+        if (device.hasObject(By.text(subPostsTitle))) return true
+        var openAll = device.findObject(By.text(openAllPattern))
+        if (openAll == null) {
+            val preview = device.findObjects(By.text(Pattern.compile(".+: .+"))).firstOrNull {
+                val bounds = it.visibleBounds
+                bounds.left > 150 && bounds.height() < 120 && bounds.top > 200
+            }
+            preview?.clickOrTapByBounds()
+            if (waitQuietly(5_000) { device.hasObject(By.text(openAllPattern)) }) {
+                openAll = device.findObject(By.text(openAllPattern))
+            }
+        }
+        if (!device.hasObject(By.text(subPostsTitle))) {
+            openAll?.clickOrTapByBounds()
+        }
+        return waitQuietly(6_000) { device.hasObject(By.text(subPostsTitle)) }
     }
 
     // ------------------------------------------------------------------ 通用等待 / 失败现场
@@ -270,6 +459,16 @@ class MainSmokeTest {
             found != null
         }
         return found ?: failWith(cause = "等待超时：$what")
+    }
+
+    /** 不抛异常的轮询等待：用于「可能出现、也可能不出现」的节点（猜路径/降级判断）。 */
+    private fun waitQuietly(timeoutMs: Long, condition: () -> Boolean): Boolean {
+        val deadline = SystemClock.uptimeMillis() + timeoutMs
+        while (SystemClock.uptimeMillis() < deadline) {
+            if (runCatching(condition).getOrDefault(false)) return true
+            SystemClock.sleep(POLL_MS)
+        }
+        return false
     }
 
     /**
@@ -332,7 +531,11 @@ class MainSmokeTest {
         const val TAG = "Smoke"
         const val TIMEOUT_MS = 10_000L
         const val POLL_MS = 200L
-        const val APP_COMPONENT = "com.tieba/com.huanchengfly.tieba.post.MainActivityV2"
+        const val APP_PACKAGE = "com.tieba"
+        const val APP_COMPONENT = "$APP_PACKAGE/com.huanchengfly.tieba.post.MainActivityV2"
+
+        /** 楼中楼用例最多尝试信息流的前 N 张卡片（不是每条帖子都有楼中楼）。 */
+        const val SUB_POST_CARD_ATTEMPTS = 3
 
         /** dock 上四个 tab 的标题资源（顺序 = Page 顺序）。 */
         val DOCK_TABS = intArrayOf(
