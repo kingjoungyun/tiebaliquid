@@ -1,6 +1,5 @@
 package com.huanchengfly.tieba.post.ui.page.user.edit
 
-import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 
 import android.app.Activity
 import android.graphics.Bitmap
@@ -30,6 +29,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Card
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
@@ -104,8 +104,26 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import java.io.File
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
-
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.huanchengfly.tieba.post.ui.common.prefs.GroupHeader
+import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsUiStyle
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCard
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsListItem
+import com.huanchengfly.tieba.post.ui.common.prefs.PrefsUiStyle
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassSurface
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
 @AndroidEntryPoint
 class EditProfileActivity : BaseActivity<Nothing>() {
     private val uCropLauncher =
@@ -267,6 +285,13 @@ class EditProfileActivity : BaseActivity<Nothing>() {
     }
 }
 
+/**
+ * 「编辑资料」字段区：iOS 分组卡（26dp 连续圆角、内建分隔线）+ 玻璃输入胶囊。
+ *
+ * 数据与回调与改造前完全一致（头像上传 / 昵称 / 性别 / 签名 / loading 占位），只换渲染层。
+ * 必须在 `LocalPrefsUiStyle = GLASSMIO` 的树里调用（[GlassEditScaffold] 负责注入）。
+ */
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun EditProfileCard(
     portrait: String,
@@ -274,195 +299,232 @@ fun EditProfileCard(
     nickName: String,
     sex: Int,
     intro: String,
-    //birthdayShowStatus: Boolean,
-    //birthdayTime: Long,
     loading: Boolean,
     onNickNameChange: ((String) -> Unit)? = null,
     onIntroChange: ((String) -> Unit)? = null,
     onUploadPortrait: (() -> Unit)? = null,
     onModifySex: (() -> Unit)? = null,
-    color: Color = AppTokens.background,
 ) {
     val context = LocalContext.current
-    Card(elevation = 0.dp, backgroundColor = color) {
-        Column(
-            modifier = Modifier
-                .padding(dimensionResource(id = R.dimen.card_margin))
-                .fillMaxWidth()
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .align(Alignment.CenterHorizontally)
-                    .placeholder(visible = loading, color = MaterialTheme.colors.surface)
-            ) {
-                AsyncImage(
-                    imageUri = StringUtil.getAvatarUrl(portrait),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize()
-                )
-                IconButton(
+    PrefsCard(header = { GroupHeader(title = "资料") }) {
+        // 头像：右侧 52dp 圆，点击换头像（loading 时是占位块）
+        PrefsListItem(
+            minimalHeight = true,
+            text = { Text(text = stringResource(id = R.string.upload_portrait), fontSize = 15.sp) },
+            trailing = {
+                Box(
                     modifier = Modifier
-                        .background(color = Color(0x77000000))
-                        .fillMaxSize(),
-                    onClick = {
-                        onUploadPortrait?.invoke()
-                    }
+                        .size(52.dp)
+                        .clip(CircleShape)
+                        .clickable(enabled = !loading) { onUploadPortrait?.invoke() },
                 ) {
-                    Icon(
-                        imageVector = PhosphorIcons["camera"] ?: Icons.Rounded.PhotoCamera,
-                        contentDescription = stringResource(id = R.string.upload_portrait),
+                    if (loading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(AppTokens.chip)
+                        )
+                    } else {
+                        AsyncImage(
+                            imageUri = StringUtil.getAvatarUrl(portrait),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    Box(
                         modifier = Modifier
-                            .size(24.dp)
-                            .align(Alignment.Center),
-                        tint = Color.White
-                    )
+                            .matchParentSize()
+                            .background(Color.Black.copy(alpha = 0.32f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = PhosphorIcons["camera"] ?: Icons.Rounded.PhotoCamera,
+                            contentDescription = stringResource(id = R.string.upload_portrait),
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-            ConstraintLayout(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                val (
-                    nameTitle,
-                    nameContent,
-                    nickNameTitle,
-                    nickNameContent,
-                    sexTitle,
-                    sexContent,
-                    introTitle,
-                    introContent,
-                ) = createRefs()
-
-                val titleEndBarrier = createEndBarrier(
-                    nameTitle,
-                    nickNameTitle,
-                    sexTitle,
-                    introTitle,
-                    margin = 24.dp
-                )
-
-                Text(
-                    text = stringResource(id = R.string.title_username),
-                    color = AppTokens.textDisabled,
-                    modifier = Modifier.constrainAs(nameTitle) {
-                        top.linkTo(parent.top)
-                        bottom.linkTo(nameContent.bottom)
-                        start.linkTo(parent.start)
-                    }
-                )
-                Text(
-                    text = name,
-                    color = AppTokens.textDisabled,
-                    modifier = Modifier
-                        .constrainAs(nameContent) {
-                            top.linkTo(nameTitle.top)
-                            bottom.linkTo(nameTitle.bottom)
-                            start.linkTo(titleEndBarrier)
-                            end.linkTo(parent.end)
-                            width = Dimension.fillToConstraints
-                        }
-                        .placeholder(visible = loading, color = MaterialTheme.colors.surface)
-                )
-
-                Text(
-                    text = stringResource(id = R.string.title_nickname),
-                    color = AppTokens.textDisabled,
-                    modifier = Modifier.constrainAs(nickNameTitle) {
-                        top.linkTo(nameTitle.bottom, margin = 16.dp)
-                        start.linkTo(parent.start)
-                    }
-                )
-                Row(
-                    modifier = Modifier
-                        .constrainAs(nickNameContent) {
-                            top.linkTo(nickNameTitle.top)
-                            bottom.linkTo(nickNameTitle.bottom)
-                            start.linkTo(titleEndBarrier)
-                            end.linkTo(parent.end)
-                            width = Dimension.fillToConstraints
-                        }
-                        .placeholder(visible = loading, color = MaterialTheme.colors.surface)
-                ) {
+            },
+        )
+        // 用户名（账号名只读）
+        PrefsListItem(
+            text = { Text(text = stringResource(id = R.string.title_username), fontSize = 15.sp) },
+            trailingValue = name.ifBlank { "—" },
+        )
+        // 昵称
+        PrefsListItem(
+            minimalHeight = true,
+            text = { Text(text = stringResource(id = R.string.title_nickname), fontSize = 15.sp) },
+            trailing = {
+                GlassField(modifier = Modifier.width(176.dp)) {
                     BaseTextField(
                         value = nickName,
                         onValueChange = { onNickNameChange?.invoke(it) },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         maxLines = 1,
                     )
                 }
-
-                Text(
-                    text = stringResource(id = R.string.profile_sex),
-                    color = AppTokens.textDisabled,
-                    modifier = Modifier.constrainAs(sexTitle) {
-                        top.linkTo(nickNameTitle.bottom, margin = 16.dp)
-                        start.linkTo(parent.start)
-                    }
-                )
-                Row(
-                    modifier = Modifier
-                        .constrainAs(sexContent) {
-                            top.linkTo(sexTitle.top)
-                            bottom.linkTo(sexTitle.bottom)
-                            start.linkTo(titleEndBarrier)
-                            end.linkTo(parent.end)
-                            width = Dimension.fillToConstraints
-                        }
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onModifySex?.invoke() }
-                        .placeholder(visible = loading, color = MaterialTheme.colors.surface)
-                ) {
-                    Text(
-                        text = stringResource(
-                            id = when (sex) {
-                                1 -> R.string.profile_sex_male
-                                2 -> R.string.profile_sex_female
-                                else -> R.string.profile_sex_unset
-                            }
-                        ),
-                        color = AppTokens.text,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Icon(
-                        imageVector = ImageVector.vectorResource(id = R.drawable.ic_round_chevron_right),
-                        contentDescription = null,
-                        tint = AppTokens.textSecondary,
-                        modifier = Modifier
-                            .size(16.dp)
-                            .align(Alignment.CenterVertically)
-                    )
+            },
+        )
+        // 性别（点击弹选择器）
+        PrefsListItem(
+            text = { Text(text = stringResource(id = R.string.profile_sex), fontSize = 15.sp) },
+            trailingValue = stringResource(
+                id = when (sex) {
+                    1 -> R.string.profile_sex_male
+                    2 -> R.string.profile_sex_female
+                    else -> R.string.profile_sex_unset
                 }
-
-                Text(
-                    text = stringResource(id = R.string.title_intro),
-                    color = AppTokens.textDisabled,
-                    modifier = Modifier.constrainAs(introTitle) {
-                        top.linkTo(sexTitle.bottom, margin = 16.dp)
-                        start.linkTo(parent.start)
+            ),
+            showChevron = onModifySex != null,
+            onClick = onModifySex?.let { { it() } },
+        )
+        // 签名（多行，500 字上限仍在 CounterTextField 里）
+        PrefsListItem(
+            minimalHeight = true,
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(text = stringResource(id = R.string.title_intro), fontSize = 15.sp)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    GlassField(modifier = Modifier.fillMaxWidth()) {
+                        CounterTextField(
+                            value = intro,
+                            onValueChange = { onIntroChange?.invoke(it) },
+                            maxLength = 500,
+                            countWhitespace = false,
+                            onLengthBeyondRestrict = {
+                                context.toastShort(R.string.toast_intro_length_beyond_restrict)
+                            },
+                            placeholder = {
+                                Text(
+                                    text = stringResource(id = R.string.tip_no_intro),
+                                    color = AppTokens.textSecondary,
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     }
+                }
+            },
+        )
+    }
+}
+
+/**
+ * 玻璃输入框：14dp 圆角。
+ *
+ * 用项目自己的 [LiquidGlassSurface] 适配层：这页是独立 Activity、没有页级 backdrop host，
+ * 它会自动走「伪玻璃」（半透明填充 + 1dp 描边 + 内发光），浅色/深色都与页面底同档；
+ * API<33 也由它内部兜底，不需要另写分支。
+ */
+@Composable
+private fun GlassField(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    LiquidGlassSurface(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        // 卡片本身是白的，玻璃默认 fill 也是白的 → 边界不可见。
+        // 用 chip 色给一个更深的档，输入框才「看得出是个框」。
+        navigationSurfaceColor = AppTokens.chip,
+        innerGlow = true,
+    ) {
+        Box(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+        ) {
+            content()
+        }
+    }
+}
+
+/** 保存：accent 实心胶囊（原来是 Toolbar 右上角的 M2 图标按钮）。 */
+@Composable
+private fun SaveCapsule(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .height(34.dp)
+            .clip(CircleShape)
+            .background(AppTokens.accent)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = PhosphorIcons["check"] ?: Icons.Rounded.Check,
+            contentDescription = null,
+            tint = AppTokens.onAccent,
+            modifier = Modifier.size(14.dp)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = stringResource(id = R.string.button_save_profile),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = AppTokens.onAccent,
+            maxLines = 1,
+        )
+    }
+}
+
+/**
+ * 页面骨架：分组底色 + 悬浮返回 + 34sp 大标题 + 保存胶囊。
+ * 字段区由调用方传入（[EditProfileCard]）。
+ */
+@Composable
+private fun GlassEditScaffold(
+    onBack: () -> Unit,
+    onSave: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppTokens.groupedBackground)
+            .imePadding(),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .height(52.dp)
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                GlassIconButton(
+                    onClick = onBack,
+                    icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = stringResource(id = R.string.button_back),
                 )
-                CounterTextField(
-                    value = intro,
-                    onValueChange = { onIntroChange?.invoke(it) },
-                    maxLength = 500,
-                    countWhitespace = false,
-                    onLengthBeyondRestrict = { context.toastShort(R.string.toast_intro_length_beyond_restrict) },
-                    placeholder = { Text(text = stringResource(id = R.string.tip_no_intro)) },
-                    modifier = Modifier
-                        .constrainAs(introContent) {
-                            top.linkTo(introTitle.top)
-                            start.linkTo(titleEndBarrier)
-                            end.linkTo(parent.end)
-                            width = Dimension.fillToConstraints
-                        }
-                        .placeholder(visible = loading, color = MaterialTheme.colors.surface),
-                )
+                Spacer(modifier = Modifier.weight(1f))
+                SaveCapsule(onClick = onSave)
             }
+            Text(
+                text = stringResource(id = R.string.title_activity_edit_profile),
+                fontSize = 34.sp,
+                lineHeight = 41.sp,
+                fontWeight = FontWeight.Bold,
+                color = AppTokens.text,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            LiquidGlassTheme(accent = AppTokens.primary) {
+                HarmonyTextProvider {
+                    CompositionLocalProvider(LocalPrefsUiStyle provides PrefsUiStyle.GLASSMIO) {
+                        Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                            content()
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
@@ -478,147 +540,86 @@ fun PageEditProfile(
         initial = false
     )
     if (!isLoading) {
+        // 加载完成后才读一次完整状态：`remember` 的初值捕获的是「已到达的字段」，
+        // 提前 collect 会把空值固化、后续输入覆盖不到（与改造前语义一致）。
         val uiState by viewModel.uiState.collectAsState()
         var sex by remember { mutableIntStateOf(uiState.sex) }
         val birthdayTime by remember { mutableLongStateOf(uiState.birthdayTime) }
         val birthdayShowStatus by remember { mutableStateOf(uiState.birthdayShowStatus) }
         var intro by remember { mutableStateOf(uiState.intro) }
         var nickName by remember { mutableStateOf(uiState.nickName) }
-        Scaffold(
-            topBar = {
-                Toolbar(
-                    title = stringResource(id = R.string.title_activity_edit_profile),
-                    navigationIcon = { BackNavigationIcon { onBackPressed() } },
-                    actions = {
-                        ActionItem(
-                            icon = ImageVector.vectorResource(id = R.drawable.ic_round_save_24),
-                            contentDescription = stringResource(id = R.string.button_save_profile)
-                        ) {
-                            if (sex != uiState.sex ||
-                                birthdayTime != uiState.birthdayTime ||
-                                birthdayShowStatus != uiState.birthdayShowStatus ||
-                                intro != uiState.intro ||
-                                nickName != uiState.nickName
-                            ) {
-                                if (nickName.isNotEmpty()) {
-                                    viewModel.send(
-                                        EditProfileIntent.Submit(
-                                            sex,
-                                            birthdayTime,
-                                            birthdayShowStatus,
-                                            intro ?: "",
-                                            nickName
-                                        )
-                                    )
-                                }
-                            } else {
-                                viewModel.send(EditProfileIntent.SubmitWithoutChange)
-                            }
-                        }
-                    }
-                )
-            },
-        ) { contentPadding ->
-            Column(
-                modifier = Modifier
-                    .padding(contentPadding)
-                    .padding(horizontal = dimensionResource(id = R.dimen.card_margin))
-                    .imePadding()
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+        val dialogState = rememberDialogState()
+
+        // 保存逻辑与改造前逐字一致：没改 → SubmitWithoutChange；改了但昵称为空 → 不发
+        val onSave: () -> Unit = {
+            if (sex != uiState.sex ||
+                birthdayTime != uiState.birthdayTime ||
+                birthdayShowStatus != uiState.birthdayShowStatus ||
+                intro != uiState.intro ||
+                nickName != uiState.nickName
             ) {
-                val dialogState = rememberDialogState()
-                Dialog(
-                    dialogState = dialogState,
-                    title = { Text(text = stringResource(id = R.string.title_modify_sex)) },
-                    buttons = {
-                        DialogNegativeButton(text = stringResource(id = R.string.button_cancel))
-                    }
-                ) {
-                    ListSinglePicker(
-                        itemTitles = persistentListOf(
-                            stringResource(id = R.string.profile_sex_male),
-                            stringResource(id = R.string.profile_sex_female)
-                        ),
-                        itemValues = persistentListOf(1, 2),
-                        selectedPosition = if (sex == 1) 0 else if (sex == 2) 1 else -1,
-                        onItemSelected = { _, _, value, _ ->
-                            sex = value
-                            dismiss()
-                        }
+                if (nickName.isNotEmpty()) {
+                    viewModel.send(
+                        EditProfileIntent.Submit(
+                            sex,
+                            birthdayTime,
+                            birthdayShowStatus,
+                            intro ?: "",
+                            nickName
+                        )
                     )
                 }
-                Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.card_margin)))
-                EditProfileCard(
-                    portrait = uiState.portrait,
-                    name = uiState.name,
-                    nickName = nickName,
-                    sex = sex,
-                    intro = intro ?: "",
-                    loading = uiState.isLoading,
-                    onNickNameChange = { nickName = it },
-                    onIntroChange = { intro = it },
-                    onUploadPortrait = { viewModel.send(EditProfileIntent.UploadPortraitStart) },
-                    onModifySex = { dialogState.show = true }
-                )
-                Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.card_margin)))
+            } else {
+                viewModel.send(EditProfileIntent.SubmitWithoutChange)
             }
+        }
+
+        GlassEditScaffold(onBack = onBackPressed, onSave = onSave) {
+            EditProfileCard(
+                portrait = uiState.portrait,
+                name = uiState.name,
+                nickName = nickName,
+                sex = sex,
+                intro = intro ?: "",
+                loading = false,
+                onNickNameChange = { nickName = it },
+                onIntroChange = { intro = it },
+                onUploadPortrait = { viewModel.send(EditProfileIntent.UploadPortraitStart) },
+                onModifySex = { dialogState.show = true }
+            )
+        }
+
+        // 性别选择器：仍走全站统一弹窗外壳（AnyPopDialog + 玻璃壳）
+        Dialog(
+            dialogState = dialogState,
+            title = { Text(text = stringResource(id = R.string.title_modify_sex)) },
+            buttons = {
+                DialogNegativeButton(text = stringResource(id = R.string.button_cancel))
+            }
+        ) {
+            ListSinglePicker(
+                itemTitles = persistentListOf(
+                    stringResource(id = R.string.profile_sex_male),
+                    stringResource(id = R.string.profile_sex_female)
+                ),
+                itemValues = persistentListOf(1, 2),
+                selectedPosition = if (sex == 1) 0 else if (sex == 2) 1 else -1,
+                onItemSelected = { _, _, value, _ ->
+                    sex = value
+                    dismiss()
+                }
+            )
         }
     } else {
-        Scaffold(
-            topBar = {
-                Toolbar(
-                    title = stringResource(id = R.string.title_activity_edit_profile),
-                    navigationIcon = { BackNavigationIcon { onBackPressed() } }
-                )
-            },
-        ) { contentPadding ->
-            Column(
-                modifier = Modifier
-                    .padding(contentPadding)
-                    .padding(horizontal = dimensionResource(id = R.dimen.card_margin))
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.card_margin)))
-                EditProfileCard(
-                    portrait = "",
-                    name = "",
-                    nickName = "",
-                    sex = 0,
-                    intro = "",
-                    loading = true
-                )
-                Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.card_margin)))
-            }
+        GlassEditScaffold(onBack = onBackPressed, onSave = {}) {
+            EditProfileCard(
+                portrait = "",
+                name = "",
+                nickName = "",
+                sex = 0,
+                intro = "",
+                loading = true
+            )
         }
     }
-}
-
-@Preview
-@Composable
-fun EditProfileCardPreview() {
-    EditProfileCard(
-        portrait = "",
-        name = "test",
-        nickName = "test",
-        sex = 1,
-        intro = "test",
-        loading = false,
-        color = Color.White
-    )
-}
-
-@Preview
-@Composable
-fun EditProfileCardLoadingPreview() {
-    EditProfileCard(
-        portrait = "",
-        name = "",
-        nickName = "",
-        sex = 0,
-        intro = "",
-        loading = true,
-        color = Color.White
-    )
 }
