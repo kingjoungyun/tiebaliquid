@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_new_background">#FF8DD7FA</color>
-    <color name="ic_launcher_new_invert_background">#FFFFFFFF</color>
     <color name="ic_launcher_background">#FF2E60B0</color>
 
-    <color name="ic_launcher_new_themed_background">#FF8DD7FA</color>
     <color name="ic_launcher_new_themed_foreground_1">#FFA7C5F0</color>
     <color name="ic_launcher_new_themed_foreground_2">#FF538ACE</color>
 
@@ -15,8 +12,6 @@
     <color name="color_place_holder">#FFF0F0F0</color>
     <color name="color_place_holder_night">#99000000</color>
     <color name="color_shadow">#FEE9E9E9</color>
-
-    <color name="color_switch_track_bg">#C4C4C4</color>
 
     <color name="color_swipe_refresh_bg">#FFF</color>
 
@@ -258,10 +253,6 @@
     <color name="color_divider">#FFF7FBFE</color>
 
     <color name="colorSplashBg">#ffffff</color>
-    <color name="icon_blue">#FF3373EE</color>
-    <color name="icon_purple">#FF8E6DCA</color>
     <color name="black_trans">#50000000</color>
-    <color name="user_center_action_btn_color">#40FFFFFF</color>
-    <color name="user_center_header_mask">#90000000</color>
     <color name="default_color_on_accent">#FFFFFFFF</color>
 </resources>
