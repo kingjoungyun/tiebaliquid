@@ -24,7 +24,6 @@ import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Switch
-import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
@@ -58,6 +57,7 @@ import com.huanchengfly.tieba.post.ui.common.prefs.PrefsBackButtonOverlay
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsGlasmioDefaults
 import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyFontFamily
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.prefs.widgets.PrefsSwitch
 
 /**
  * 主题色预设（iOS 系统色）。App 的主题色只有这 6 个可选值。
@@ -234,14 +234,9 @@ fun AppThemePage(
                             fontSize = 13.sp,
                         )
                     }
-                    Switch(
+                    PrefsSwitch(
                         checked = isDark,
                         onCheckedChange = { ThemeUtil.switchNightMode() },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = effectiveAccent,
-                            uncheckedThumbColor = Color.White,
-                        ),
                     )
                 }
             }

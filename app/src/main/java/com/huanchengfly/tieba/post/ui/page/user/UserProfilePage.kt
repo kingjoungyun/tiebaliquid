@@ -136,7 +136,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.ProvideContentColor
 import com.huanchengfly.tieba.post.ui.widgets.compose.PullToRefreshLayout
 import com.huanchengfly.tieba.post.ui.widgets.compose.ScrollableTabRow
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
-import com.huanchengfly.tieba.post.ui.widgets.compose.Switch
+import com.huanchengfly.tieba.post.ui.common.prefs.widgets.PrefsSwitch
 import com.huanchengfly.tieba.post.ui.widgets.compose.Toolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.UserHeader
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
@@ -335,7 +335,7 @@ fun PermissionSettingDialogM2(
                     currentBean = currentBean.copy(follow = if (next) 1 else 0)
                 }
             ) {
-                Switch(
+                PrefsSwitch(
                     checked = followChecked,
                     onCheckedChange = { isChecked ->
                         currentBean = currentBean.copy(follow = if (isChecked) 1 else 0)
@@ -363,7 +363,7 @@ fun PermissionSettingDialogM2(
                     currentBean = currentBean.copy(interact = if (next) 1 else 0)
                 }
             ) {
-                Switch(
+                PrefsSwitch(
                     checked = interactChecked,
                     onCheckedChange = { isChecked ->
                         currentBean = currentBean.copy(interact = if (isChecked) 1 else 0)
@@ -390,7 +390,7 @@ fun PermissionSettingDialogM2(
                     currentBean = currentBean.copy(chat = if (next) 1 else 0)
                 }
             ) {
-                Switch(
+                PrefsSwitch(
                     checked = chatChecked,
                     onCheckedChange = { isChecked ->
                         currentBean = currentBean.copy(chat = if (isChecked) 1 else 0)

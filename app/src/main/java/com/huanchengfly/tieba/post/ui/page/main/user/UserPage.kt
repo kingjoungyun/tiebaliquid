@@ -68,7 +68,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.ConfirmDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.HorizontalDivider
 import com.huanchengfly.tieba.post.ui.widgets.compose.ListMenuItem
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
-import com.huanchengfly.tieba.post.ui.widgets.compose.Switch
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppSwitch
 import com.huanchengfly.tieba.post.ui.widgets.compose.VerticalDivider
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import com.huanchengfly.tieba.post.utils.CuidUtils
@@ -415,7 +415,7 @@ private fun LegacyUserPage(viewModel: UserViewModel) {
                         fontSize = 12.sp,
                     )
                     Spacer(modifier = Modifier.width(16.dp))
-                    Switch(
+                    AppSwitch(
                         checked = ThemeUtil.isNightMode(ThemeUtil.themeState.value),
                         onCheckedChange = {
                             if (context.appPreferences.followSystemNight) {

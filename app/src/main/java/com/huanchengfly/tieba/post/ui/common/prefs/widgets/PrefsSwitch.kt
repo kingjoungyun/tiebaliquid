@@ -10,7 +10,7 @@ import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCardDefaults
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
 import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
-import com.huanchengfly.tieba.post.ui.widgets.compose.Switch
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppSwitch
 import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
 import io.github.neoruaa.glasmio.ui.GlasmioSwitch
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
@@ -65,7 +65,7 @@ fun PrefsSwitch(
     } else {
         // 兜底：API < 33 时 Glasmio 的 shader 起不来，退回 App 自己的开关（本工程 minSdk=33，
         // 这条分支目前只用于极端情况，保持行为一致而不是崩掉）
-        Switch(
+        AppSwitch(
             checked = checked,
             onCheckedChange = { onCheckedChange(it) },
             enabled = enabled,
