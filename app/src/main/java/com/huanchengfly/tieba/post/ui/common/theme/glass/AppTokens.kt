@@ -167,7 +167,11 @@ object AppTokens {
         indicator = attr(com.huanchengfly.tieba.post.R.attr.colorIndicator)
         windowBackground = attr(com.huanchengfly.tieba.post.R.attr.colorWindowBackground)
         placeholder = attr(com.huanchengfly.tieba.post.R.attr.colorPlaceholder)
-        destructive = accent
+        // 破坏性操作色：不跟随 accent（否则删除/退出会显示成主题色）
+        destructive = if (isNightMode) Color(0xFFFF453A) else Color(0xFFFF3B30)
+        // 分组卡列表页的页面底：设计规范固定值，不来自 XML attr
+        // （漏掉这行会让所有分组页露出窗口底色，浅色下表现为整体偏灰）
+        groupedBackground = if (isNightMode) Color.Black else Color(0xFFF2F2F7)
 
         // A2：深色统一纯黑（半透明主题有背景图，跳过）
         if (isNightMode && !com.huanchengfly.tieba.post.utils.ThemeUtil.isTranslucentTheme(nowTheme)) {
