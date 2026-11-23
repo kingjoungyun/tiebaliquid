@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 液滴主体：曲线收尖 + 极淡的竖向渐变 -->
+    <path
+        android:pathData="M54,31.5 C54.9,31.5 55.7,31.9 56.2,32.6 C60.8,39.4 75.4,53.6 75.9,63.6 A22.1,22.1 0 1,1 32.1,63.6 C32.6,53.6 47.2,39.4 51.8,32.6 C52.3,31.9 53.1,31.5 54,31.5 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="54"
+                android:startY="31"
+                android:endX="54"
+                android:endY="86"
+                android:startColor="#FFFFFF"
+                android:endColor="#F5F8FF" />
+        </aapt:attr>
+    </path>
+    <!-- 高光：两层椭圆，外层淡、内层亮 -->
+    <path
+        android:pathData="M46.5,58.4 m-5.7,0 a5.7,8.0 0 1,0 11.4,0 a5.7,8.0 0 1,0 -11.4,0"
+        android:fillColor="#5AF2F6FF" />
+    <path
+        android:pathData="M46.5,58.4 m-3.8,0 a3.8,5.7 0 1,0 7.6,0 a3.8,5.7 0 1,0 -7.6,0"
+        android:fillColor="#96FFFFFF" />
+</vector>

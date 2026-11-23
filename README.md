@@ -85,6 +85,43 @@ keystore.key.alias=******
 keystore.key.password=******
 ```
 
+## 测试（主干冒烟护栏）
+
+目标不是覆盖率，是**主干被改坏时立刻发现**。5 条 instrumented 冒烟用例跑在真机 / 模拟器上，
+全部用 **UiAutomator** 驱动：不注入、不替换 `Application`，Hilt 依赖图保持生产态，
+也不需要 `@HiltAndroidTest` / 自定义 runner。
+
+| # | 用例 | 断言点 |
+| --- | --- | --- |
+| 1 | `coldStartShowsFeed` | 全新启动后 dock 就绪；信息流至少 1 个「宽度 ≥ 60% 屏宽、高度 ≥ 200px、落在顶栏与 dock 之间」的可点击卡片 |
+| 2 | `tapPostOpensThread` | 点第一个卡片 → 帖子页底栏出现「只看楼主」/「正序」，且顶栏有返回钮 |
+| 3 | `settingsReachableFromProfile` | 「我」→「设置」→ `账号管理`、`安全模式（只读）`、`外观与通用` 三个分组 + 返回钮 |
+| 4 | `dockSwitchesAllFourTabs` | 首页→进吧→消息→我→首页，每次都等到该页唯一标志节点；回首页后其它页标题必须消失 |
+| 5 | `backFromThreadReturnsToFeed` | 进帖子 → 系统返回 → 信息流卡片回来、帖子页底栏消失、dock 可见 |
+
+用例在 `app/src/androidTest/java/com/huanchengfly/tieba/post/smoke/MainSmokeTest.kt`，
+每条都从「清空任务栈重新拉起 Activity」开始，互不依赖顺序；断言只用结构 / 页面级节点，
+不依赖网络返回的具体帖子文字；也不需要登录态。
+
+跑法（在**工作区根目录**执行，脚本会自己 source `scripts/env.ps1`）：
+
+```powershell
+.\scripts\run-smoke.ps1                      # 构建 test APK → connectedDebugAndroidTest → 汇总
+.\scripts\run-smoke.ps1 -SkipBuild           # 只重跑测试
+.\scripts\run-smoke.ps1 -Serial emulator-5554
+```
+
+等价的纯 gradle 命令（在 `sources/TiebaApp` 下）：
+
+```powershell
+Invoke-AppBuild -Tasks @(':app:connectedDebugAndroidTest')
+```
+
+失败时脚本把 `screen.png` / `hierarchy.xml` / `logcat.txt` / 测试自己写的现场 / gradle 日志
+落到 `shots/smoke/<时间戳>/` 并打印路径；测试内部超时也会先把截图和语义树写进
+`/sdcard/Android/data/com.tieba/files/smoke-failures/`。
+选型理由（为什么不用 Compose UI Test）与已知不稳定点见工作区的 `SMOKE.md`。
+
 ## 已知限制
 
 - **minSdk 33**：液态玻璃依赖 Android 13 的 `RuntimeShader`，Android 12 及以下无法安装

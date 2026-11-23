@@ -288,7 +288,12 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.androidx.test.espresso.core)
-    androidTestRuntimeOnly(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.runner)
+    // 主干冒烟护栏（app/src/androidTest/java/.../smoke/MainSmokeTest.kt）。
+    // 选 UiAutomator 而不是 Compose UI Test：测试进程就是被测 App 的进程，UiAutomator 不注入、
+    // 不换 Application，Hilt 图保持生产态；同时不依赖 Compose 的 idling resource（本工程有
+    // 液态玻璃 backdrop / 镜头弹簧 / Lottie，容易永远"不空闲"）。理由与取舍见 SMOKE.md。
+    androidTestImplementation(libs.androidx.test.uiautomator)
 
     //Glide
     implementation(libs.glide.core)
