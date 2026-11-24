@@ -54,8 +54,12 @@ import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.models.database.Block
 import com.huanchengfly.tieba.post.models.database.Block.Companion.getKeywords
 import com.huanchengfly.tieba.post.ui.page.main.BottomNavigationDivider
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponent
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassPromptDialog
+import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
+import com.huanchengfly.tieba.post.ui.widgets.compose.DialogScope
 import com.huanchengfly.tieba.post.ui.widgets.compose.LongClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
@@ -86,21 +90,21 @@ fun BlockKeywordPage(
             val dialogState = rememberDialogState()
             var isRegex by remember { mutableStateOf(false) } // 记录是否为正则
     
-            PromptDialog(
-                onConfirm = {
-                    viewModel.send(
-                        BlockListUiIntent.Add(
-                            category = Block.CATEGORY_BLACK_LIST,
-                            type = Block.TYPE_KEYWORD,
-                            keywords = if (isRegex) listOf(it) else it.split(" "), // 避免正则中的空格导致正则失效
-                            isRegex = isRegex
-                        )
+            val onConfirmKeyword: (String) -> Unit = {
+                viewModel.send(
+                    BlockListUiIntent.Add(
+                        category = Block.CATEGORY_BLACK_LIST,
+                        type = Block.TYPE_KEYWORD,
+                        keywords = if (isRegex) listOf(it) else it.split(" "), // 避免正则中的空格导致正则失效
+                        isRegex = isRegex
                     )
-                    isRegex = false // 重置
-                },
-                dialogState = dialogState,
-                title = { Text(text = stringResource(id = R.string.title_add_keyword)) }
-            ) {
+                )
+                isRegex = false // 重置
+            }
+            val promptTitle: @Composable (DialogScope.() -> Unit) = {
+                Text(text = stringResource(id = R.string.title_add_keyword))
+            }
+            val promptContent: @Composable (DialogScope.() -> Unit) = {
                 Column {
                     Text(text = stringResource(id = R.string.tip_add_keyword))
                     Spacer(modifier = Modifier.height(8.dp))
@@ -112,6 +116,24 @@ fun BlockKeywordPage(
                         Text(text = "作为正则表达式")
                     }
                 }
+            }
+            // T2 试点：添加屏蔽词的输入弹窗换成组件层 GlassPromptDialog
+            // （玻璃卡片 + GlassTextField + 取消/确定胶囊按钮）。
+            // 回滚：`settings put global tieba_glass_prompt 0` → 原来的 M2 PromptDialog。
+            if (useGlassComponent(GlassComponent.PromptDialog)) {
+                GlassPromptDialog(
+                    onConfirm = onConfirmKeyword,
+                    dialogState = dialogState,
+                    title = promptTitle,
+                    content = promptContent,
+                )
+            } else {
+                PromptDialog(
+                    onConfirm = onConfirmKeyword,
+                    dialogState = dialogState,
+                    title = promptTitle,
+                    content = promptContent,
+                )
             }
     
             val context = LocalContext.current
