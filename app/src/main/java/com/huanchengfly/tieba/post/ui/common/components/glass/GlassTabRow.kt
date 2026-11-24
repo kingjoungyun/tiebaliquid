@@ -54,6 +54,18 @@ private val GlassTabThumbInset = 2.dp
 private val GlassTabThumbShadow = Color.Black.copy(alpha = 0.10f)
 
 /**
+ * 轨道描边：单个 token 撑不起「灰色轨道」的边界 —— 浅色下 chip 是 #F8F8F8、页面底 #F2F2F7，
+ * 只差一点点；所以再补 0.5dp 的分隔线色描边，深色下则是 chip(#1E1E1E) 本身就有边界。
+ */
+@Composable
+private fun glassTabTrackStroke(): Color = AppTokens.divider.copy(alpha = 0.45f)
+
+/** 滑块描边：深色下用 1px 白高光把「很深的 card」从轨道里拉出来；浅色下不描边。 */
+@Composable
+private fun glassTabThumbStroke(): Color =
+    if (AppTokens.isNightMode) Color.White.copy(alpha = 0.14f) else Color.Transparent
+
+/**
  * iOS 分段控件风格的 TabRow（T2）。
  *
  * 结构：**灰色轨道 + 白色滑块**。
@@ -102,11 +114,14 @@ fun GlassTabRow(
             .onSizeChanged { rowWidthPx = it.width }
             .selectableGroup(),
     ) {
-        GlassComponentSurface(
+        GlassSurface(
             modifier = Modifier.fillMaxSize(),
             shape = shape,
-            tint = AppTokens.chip,
-            innerGlow = false,
+            fill = AppTokens.chip,
+            strokeColor = glassTabTrackStroke(),
+            shadowElevation = 0.dp,
+            shadowOffsetY = 0.dp,
+            strokeWidth = 0.5.dp,
         ) {}
 
         if (thumbWidthPx > 0) {
@@ -117,7 +132,7 @@ fun GlassTabRow(
                     .height(GlassTabRowHeight - GlassTabThumbInset * 2),
                 shape = RoundedCornerShape((GlassTabRowHeight - GlassTabThumbInset * 2) / 2),
                 fill = AppTokens.card,
-                strokeColor = Color.Transparent,
+                strokeColor = glassTabThumbStroke(),
                 shadowColor = GlassTabThumbShadow,
                 shadowElevation = 6.dp,
                 shadowOffsetY = 1.dp,
@@ -229,11 +244,14 @@ fun GlassScrollableTabRow(
                 .horizontalScroll(scrollState),
         ) {
             Box(modifier = Modifier.height(GlassTabRowHeight)) {
-                GlassComponentSurface(
+                GlassSurface(
                     modifier = Modifier.matchParentSize(),
                     shape = shape,
-                    tint = AppTokens.chip,
-                    innerGlow = false,
+                    fill = AppTokens.chip,
+                    strokeColor = glassTabTrackStroke(),
+                    shadowElevation = 0.dp,
+                    shadowOffsetY = 0.dp,
+                    strokeWidth = 0.5.dp,
                 ) {}
                 if (thumbWidthPx > 0) {
                     GlassSurface(
@@ -243,7 +261,7 @@ fun GlassScrollableTabRow(
                             .height(GlassTabRowHeight - GlassTabThumbInset * 2),
                         shape = RoundedCornerShape((GlassTabRowHeight - GlassTabThumbInset * 2) / 2),
                         fill = AppTokens.card,
-                        strokeColor = Color.Transparent,
+                        strokeColor = glassTabThumbStroke(),
                         shadowColor = GlassTabThumbShadow,
                         shadowElevation = 6.dp,
                         shadowOffsetY = 1.dp,

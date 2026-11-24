@@ -98,21 +98,26 @@ fun GlassDialogCard(
             dismissOnClickOutside = cancelableOnTouchOutside,
         ),
     ) {
-        GlassComponentSurface(
+        // 卡片尺寸由内容（Column）决定：玻璃壳放在 matchParentSize 层，不参与测量。
+        // 否则 glass 表面会被外层（弹窗 Column / AnyPopDialog）撑成一屏高（踩过）。
+        Box(
             modifier = modifier
                 .wrapContentHeight()
                 .animateContentSize()
                 .fillMaxWidth()
                 .padding(16.dp),
-            shape = shape,
-            tint = AppTokens.windowBackground,
-            hostFill = AppTokens.windowBackground,
-            innerGlow = true,
         ) {
+            GlassComponentSurface(
+                modifier = Modifier.matchParentSize(),
+                shape = shape,
+                tint = AppTokens.windowBackground,
+                hostFill = AppTokens.windowBackground,
+                innerGlow = true,
+            ) {}
             // 可读性底：玻璃下面垫一层 windowBackground 的高不透明度实底
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .matchParentSize()
                     .background(
                         color = AppTokens.windowBackground.copy(
                             alpha = if (AppTokens.isNightMode) 0.86f else 0.85f

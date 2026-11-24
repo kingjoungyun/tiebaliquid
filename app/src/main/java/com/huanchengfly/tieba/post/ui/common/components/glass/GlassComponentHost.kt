@@ -1,6 +1,5 @@
 package com.huanchengfly.tieba.post.ui.common.components.glass
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -86,19 +85,19 @@ fun GlassComponentSurface(
         )
         return
     }
-    Box(modifier) {
-        GlassComponentHost(
-            fill = hostFill,
+    // 自带 host：host 拿调用方的尺寸 modifier，表面**不再**matchParentSize ——
+    // 后者会让「只有 matchParentSize 子项」的盒子退化成铺满可用空间，
+    // 弹窗里表现为卡片被拉满一屏（踩过）。表面按内容尺寸测量，host 跟着内容走。
+    GlassComponentHost(
+        fill = hostFill,
+        shape = shape,
+        modifier = modifier,
+    ) {
+        LiquidGlassSurface(
             shape = shape,
-            modifier = Modifier.matchParentSize(),
-        ) {
-            LiquidGlassSurface(
-                modifier = Modifier.matchParentSize(),
-                shape = shape,
-                navigationSurfaceColor = tint,
-                innerGlow = innerGlow,
-                content = content,
-            )
-        }
+            navigationSurfaceColor = tint,
+            innerGlow = innerGlow,
+            content = content,
+        )
     }
 }
