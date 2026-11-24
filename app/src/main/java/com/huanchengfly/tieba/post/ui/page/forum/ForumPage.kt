@@ -107,6 +107,7 @@ import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumDetailPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumSearchPostPageDestination
+import com.huanchengfly.tieba.post.ui.page.destinations.HotTopicListPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ReplyPageDestination
 import com.huanchengfly.tieba.post.ui.page.forum.generaltablist.GeneralTabListPage
 import com.huanchengfly.tieba.post.ui.page.forum.generaltablist.GeneralTabListUiEvent
@@ -590,8 +591,19 @@ fun ForumPage(
 
     // 吧页的风格开关（GLASMIO / LEGACY）。两条分支共用下面这一整套页面逻辑，只换外壳。
     val glassmio = ForumPageUi.DefaultStyle == ForumPageUiStyle.GLASMIO
-    // 顶栏与悬浮条共用的「更多」菜单内容（分享 / 发送到桌面 / 取消关注）
+    // 顶栏与悬浮条共用的「更多」菜单内容（热榜 / 分享 / 发送到桌面 / 取消关注）
     val forumMenuContent: @Composable MenuScope.() -> Unit = {
+        // 热榜的入口：HotTopicListPage 一直带 @Destination，但全仓没有导航到它的地方，
+        // 链路（热榜 → 话题详情）整条不可达。这里按 docs/specs/ux-duplicates.md 的结论
+        // 「如果产品仍要热榜，改为在『进吧』加入口」补入口，而不是让页面继续当死链。
+        DropdownMenuItem(
+            onClick = {
+                navigator.navigate(HotTopicListPageDestination())
+                dismiss()
+            }
+        ) {
+            Text(text = stringResource(id = R.string.title_hot))
+        }
         DropdownMenuItem(
             onClick = {
                 shareForum(context, forumName)
