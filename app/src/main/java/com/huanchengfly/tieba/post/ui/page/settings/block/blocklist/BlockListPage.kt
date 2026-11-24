@@ -49,8 +49,8 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
 import com.huanchengfly.tieba.post.ui.widgets.compose.LongClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
-import com.huanchengfly.tieba.post.ui.widgets.compose.PromptDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassPromptDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreen
 import com.ramcosta.composedestinations.annotation.Destination
@@ -69,7 +69,7 @@ fun BlockListPage(
         GlassPageHost(modifier = Modifier.fillMaxSize()) {
             val dialogState = rememberDialogState()
     
-            PromptDialog(
+            GlassPromptDialog(
                 onConfirm = {
                     val input = it.trim()
                     if (input.isNotEmpty()) {

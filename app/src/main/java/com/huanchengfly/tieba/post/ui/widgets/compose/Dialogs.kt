@@ -114,51 +114,6 @@ fun DialogScope.DialogNegativeButton(
 }
 
 @Composable
-fun TimePickerDialog(
-    title: @Composable (DialogScope.() -> Unit),
-    currentTime: String,
-    onConfirm: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    dialogState: DialogState = rememberDialogState(),
-    onValueChange: ((String) -> Unit)? = null,
-    onCancel: (() -> Unit)? = null,
-    is24TimeFormat: Boolean = true,
-    confirmText: String = stringResource(id = R.string.button_sure_default),
-    cancelText: String = stringResource(id = R.string.button_cancel),
-    content: @Composable (DialogScope.() -> Unit) = {},
-) {
-    var timeVal by remember { mutableStateOf(currentTime) }
-    Dialog(
-        modifier = modifier,
-        dialogState = dialogState,
-        onDismiss = onCancel,
-        title = title,
-        buttons = {
-            DialogPositiveButton(text = confirmText, onClick = { onConfirm.invoke(timeVal) })
-            DialogNegativeButton(text = cancelText, onClick = onCancel)
-        },
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-            ProvideTextStyle(value = MaterialTheme.typography.body1) {
-                ProvideContentColor(color = AppTokens.text) {
-                    content()
-                }
-            }
-            TimePicker(
-                currentTime = timeVal,
-                onTimeChanged = {
-                    timeVal = it
-                    onValueChange?.invoke(it)
-                },
-                is24TimeFormat = is24TimeFormat,
-                modifier = Modifier.height(150.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-}
-
-@Composable
 fun AlertDialog(
     dialogState: DialogState,
     modifier: Modifier = Modifier,
@@ -238,83 +193,6 @@ fun ConfirmDialog(
             ProvideTextStyle(value = MaterialTheme.typography.body1) {
                 ProvideContentColor(color = AppTokens.text) {
                     content()
-                }
-            }
-        }
-    }
-}
-
-/**
- * 带输入框的对话框
- *
- * @param onValueChange 输入框内容变化时的回调，返回true表示允许变化，false表示不允许变化
- */
-@Composable
-fun PromptDialog(
-    onConfirm: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    dialogState: DialogState = rememberDialogState(),
-    initialValue: String = "",
-    onValueChange: (newVal: String, oldVal: String) -> Boolean = { _, _ -> true },
-    onCancel: (() -> Unit)? = null,
-    confirmText: String = stringResource(id = R.string.button_sure_default),
-    cancelText: String = stringResource(id = R.string.button_cancel),
-    title: @Composable (DialogScope.() -> Unit)? = null,
-    content: @Composable (DialogScope.() -> Unit) = {},
-) {
-    var textVal by remember { mutableStateOf(initialValue) }
-    // 每次显示时重置输入框内容
-    LaunchedEffect(dialogState.show) {
-        textVal = initialValue
-    }
-    Dialog(
-        modifier = modifier,
-        dialogState = dialogState,
-        onDismiss = onCancel,
-        title = title,
-        buttons = {
-            DialogPositiveButton(text = confirmText, onClick = { onConfirm.invoke(textVal) })
-            DialogNegativeButton(text = cancelText, onClick = onCancel)
-        },
-    ) {
-        val focusRequester = remember { FocusRequester() }
-        val softwareKeyboardController = LocalSoftwareKeyboardController.current
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            ProvideTextStyle(value = MaterialTheme.typography.body1) {
-                ProvideContentColor(color = AppTokens.text) {
-                    content()
-                }
-            }
-            OutlinedTextField(
-                value = textVal,
-                onValueChange = {
-                    if (onValueChange.invoke(it, textVal)) textVal = it
-                },
-                maxLines = 1,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(
-                    onDone = { softwareKeyboardController?.hide() }
-                ),
-                modifier = Modifier
-                    .focusRequester(focusRequester)
-                    .fillMaxWidth(),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    cursorColor = AppTokens.primary,
-                    focusedBorderColor = AppTokens.primary,
-                    focusedLabelColor = AppTokens.primary
-                )
-            )
-            LaunchedEffect(focusRequester) {
-                focusRequester.requestFocus()
-                launch {
-                    delay(300)
-                    softwareKeyboardController?.show()
                 }
             }
         }

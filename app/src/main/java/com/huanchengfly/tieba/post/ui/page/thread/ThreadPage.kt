@@ -173,7 +173,6 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.MyBackHandler
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.OriginThreadCard
-import com.huanchengfly.tieba.post.ui.widgets.compose.PromptDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.ui.widgets.compose.TextWithMinWidth
 import com.huanchengfly.tieba.post.ui.widgets.compose.TipScreen
@@ -210,6 +209,7 @@ import kotlinx.serialization.Serializable
 import kotlin.concurrent.thread
 import kotlin.math.max
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassPromptDialog
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 
 private fun getDescText(
@@ -957,7 +957,7 @@ fun ThreadPage(
     }
 
     val jumpToPageDialogState = rememberDialogState()
-    PromptDialog(
+    GlassPromptDialog(
         onConfirm = {
             viewModel.send(
                 ThreadUiIntent.Load(

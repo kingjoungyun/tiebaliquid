@@ -26,7 +26,6 @@ import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTimePickerDia
 import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
 import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsDataStore
 import com.huanchengfly.tieba.post.ui.widgets.compose.DialogScope
-import com.huanchengfly.tieba.post.ui.widgets.compose.TimePickerDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -70,7 +69,6 @@ fun TimePickerPerf(
     val scope = rememberCoroutineScope()
     // T2 试点：时间选择弹窗走组件层的玻璃卡片（滚轮逻辑不变）。
     // 回滚：settings put global tieba_glass_timepicker 0 → 原来的 M2 TimePickerDialog。
-    val useGlassTimePicker = useGlassComponent(GlassComponent.TimePicker)
 
     val datastore = LocalPrefsDataStore.current
     val prefs by remember { datastore.data }.collectAsState(initial = null)
@@ -146,26 +144,14 @@ fun TimePickerPerf(
         val dialogModifier = Modifier.onGloballyPositioned {
             dialogSize = it.size.toSize()
         }
-        if (useGlassTimePicker) {
-            GlassTimePickerDialog(
-                title = dialogTitleSlot,
-                currentTime = timeVal,
-                onConfirm = onConfirmTime,
-                modifier = dialogModifier,
-                dialogState = dialogState,
-                onValueChange = onTimeChange,
-                content = dialogContent,
-            )
-        } else {
-            TimePickerDialog(
-                title = dialogTitleSlot,
-                currentTime = timeVal,
-                onConfirm = onConfirmTime,
-                modifier = dialogModifier,
-                dialogState = dialogState,
-                onValueChange = onTimeChange,
-                content = dialogContent,
-            )
-        }
+        GlassTimePickerDialog(
+            title = dialogTitleSlot,
+            currentTime = timeVal,
+            onConfirm = onConfirmTime,
+            modifier = dialogModifier,
+            dialogState = dialogState,
+            onValueChange = onTimeChange,
+            content = dialogContent,
+        )
     }
 }

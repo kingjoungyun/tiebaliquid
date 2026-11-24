@@ -54,16 +54,13 @@ import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.models.database.Block
 import com.huanchengfly.tieba.post.models.database.Block.Companion.getKeywords
 import com.huanchengfly.tieba.post.ui.page.main.BottomNavigationDivider
-import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponent
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassPromptDialog
-import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
 import com.huanchengfly.tieba.post.ui.widgets.compose.DialogScope
 import com.huanchengfly.tieba.post.ui.widgets.compose.LongClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
-import com.huanchengfly.tieba.post.ui.widgets.compose.PromptDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreen
@@ -117,24 +114,15 @@ fun BlockKeywordPage(
                     }
                 }
             }
-            // T2 试点：添加屏蔽词的输入弹窗换成组件层 GlassPromptDialog
-            // （玻璃卡片 + GlassTextField + 取消/确定胶囊按钮）。
-            // 回滚：`settings put global tieba_glass_prompt 0` → 原来的 M2 PromptDialog。
-            if (useGlassComponent(GlassComponent.PromptDialog)) {
-                GlassPromptDialog(
-                    onConfirm = onConfirmKeyword,
-                    dialogState = dialogState,
-                    title = promptTitle,
-                    content = promptContent,
-                )
-            } else {
-                PromptDialog(
-                    onConfirm = onConfirmKeyword,
-                    dialogState = dialogState,
-                    title = promptTitle,
-                    content = promptContent,
-                )
-            }
+            // T3：添加屏蔽词的输入弹窗走组件层 GlassPromptDialog
+            // （玻璃卡片 + GlassTextField + 取消/确定胶囊按钮）；旧 M2 PromptDialog 已删。
+
+            GlassPromptDialog(
+                onConfirm = onConfirmKeyword,
+                dialogState = dialogState,
+                title = promptTitle,
+                content = promptContent,
+            )
     
             val context = LocalContext.current
             val blackList by viewModel.uiState.collectPartialAsState(

@@ -25,7 +25,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsDataStore
 import com.huanchengfly.tieba.post.ui.common.prefs.ifNotNullThen
-import com.huanchengfly.tieba.post.ui.widgets.compose.PromptDialog
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassPromptDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -128,7 +128,7 @@ fun EditTextPref(
             textVal = value
         }
 
-        PromptDialog(
+        GlassPromptDialog(
             onConfirm = {
                 textVal = it
                 onValueChange(it)
