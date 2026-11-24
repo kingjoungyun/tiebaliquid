@@ -4,6 +4,7 @@ import androidx.compose.material.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.text.TextStyle
 
 /**
@@ -26,13 +27,25 @@ val harmonyTextStyle: TextStyle
     get() = LocalTextStyle.current.copy(fontFamily = HarmonyFontFamily)
 
 /**
+ * 这棵子树是否被 [HarmonyTextProvider] 包着（= 玻璃页）。
+ *
+ * 用途：有些地方（富文本正文 `PbContentRender`）会显式 `ProvideTextStyle(typography.body1)`
+ * 把 `LocalTextStyle` 重置成系统字体表，**丢掉**注入的鸿蒙字族。那些地方能靠这个标记
+ * 判断「本页要不要鸿蒙」，而 LEGACY 分支（没有 Provider）保持原样。
+ */
+val LocalHarmonyTextActive = staticCompositionLocalOf { false }
+
+/**
  * 把 [harmonyTextStyle] 注入这棵子树（只影响 M2 的 `Text`）。
  *
  * 用在 Glasmio 化的业务页：信息流（`FeedPageSkin`）、吧页（`ForumPageSkin`）等。
  */
 @Composable
 fun HarmonyTextProvider(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalTextStyle provides harmonyTextStyle) {
+    CompositionLocalProvider(
+        LocalTextStyle provides harmonyTextStyle,
+        LocalHarmonyTextActive provides true,
+    ) {
         content()
     }
 }

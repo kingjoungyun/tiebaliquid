@@ -59,6 +59,8 @@ import com.huanchengfly.tieba.post.utils.EmoticonUtil.emoticonString
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.huanchengfly.tieba.post.utils.launchUrl
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyFontFamily
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalHarmonyTextActive
 
 /**
  * 帖子页专用的图片圆角覆盖（B 阶段楼层视觉：主楼/楼层图片 12dp）。
@@ -94,10 +96,23 @@ data class TextContentRender(
 
     @Composable
     override fun Render() {
+        // 富文本正文：字号 / 行高仍用 M2 的 body1（15sp + 它的行高），**字体族改用鸿蒙**。
+        //
+        // 为什么不能直接读 LocalTextStyle：楼层/正文外面套着
+        // `ProvideTextStyle(MaterialTheme.typography.body1)`（见 ThreadPage 的楼层行），
+        // 那一步把注入进 LocalTextStyle 的鸿蒙字族**重置掉了**，所以这里改用
+        // `LocalHarmonyTextActive`（由 HarmonyTextProvider 置真）判断「本页是不是玻璃页」。
+        // LEGACY 分支没有 Provider → 保持原来的系统字体，观感不变。
+        val bodyStyle = MaterialTheme.typography.body1
+        val family = if (LocalHarmonyTextActive.current) {
+            HarmonyFontFamily
+        } else {
+            bodyStyle.fontFamily
+        }
         PbContentText(
             text = text,
             fontSize = 15.sp,
-            style = MaterialTheme.typography.body1,
+            style = bodyStyle.copy(fontFamily = family),
             lineSpacing = 0.8.sp
         )
     }
