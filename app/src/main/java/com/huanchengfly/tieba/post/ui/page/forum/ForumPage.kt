@@ -55,6 +55,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -127,11 +128,9 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassBackdropHost
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassOverlayPage
 import com.huanchengfly.tieba.post.ui.common.theme.glass.useOverlayTopBarHost
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
-import com.huanchengfly.tieba.post.ui.widgets.compose.PagerTabIndicator
 import com.huanchengfly.tieba.post.ui.widgets.compose.PullToRefreshLayout
-import com.huanchengfly.tieba.post.ui.widgets.compose.ScrollableTabRow
+import androidx.compose.material.ScrollableTabRow
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
-import com.huanchengfly.tieba.post.ui.widgets.compose.TabClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.Toolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import com.huanchengfly.tieba.post.ui.widgets.compose.picker.ListSinglePicker
@@ -156,6 +155,11 @@ import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponent
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassScrollableTabRow
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabLabel
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabMenu
+import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
 
 
 private val LoadDistance = 70.dp
@@ -976,6 +980,12 @@ fun ForumPage(
                                     }
                                 }
 
+                                // T3：吧内分类 tab —— Glass 分段控件优先，回滚走下面 M2 官方 ScrollableTabRow
+                                val forumTabLabels = buildList {
+                                    add(stringResource(id = R.string.tab_forum_latest))
+                                    add(stringResource(id = R.string.tab_forum_good))
+                                    generalTabs.forEach { add(it.tabName) }
+                                }
                                 val tabTextStyle = if (glassmio) {
                                     MaterialTheme.typography.body1.copy(
                                         fontWeight = FontWeight.SemiBold,
@@ -995,133 +1005,152 @@ fun ForumPage(
                                 val tabUnselectedColor =
                                     if (glassmio) GlasmioTheme.colors.secondaryContent
                                     else AppTokens.textSecondary
+                                // tab 0 的排序（回复时间 / 发帖时间）与各分类 tab 的排序下标
+                                var currentSortType by remember {
+                                    mutableIntStateOf(getSortType(context, forumName))
+                                }
+                                val generalTabSortIndexes = remember {
+                                    mutableStateMapOf<Int, Int>()
+                                }
 
-                                ScrollableTabRow(
-                                    selectedTabIndex = currentPage,
-                                    indicator = { tabPositions ->
-                                        PagerTabIndicator(
-                                            pagerState = pagerState,
-                                            tabPositions = tabPositions
-                                        )
-                                    },
-                                    divider = {},
-                                    backgroundColor = Color.Transparent,
-                                    contentColor = tabSelectedColor,
-                                    edgePadding = if (glassmio) 12.dp else 0.dp,
-                                    modifier = Modifier
-                                        .wrapContentWidth(align = Alignment.Start)
-                                        .align(Alignment.Start)
-                                ) {
-                                    var currentSortType by remember {
-                                        mutableIntStateOf(
-                                            getSortType(
-                                                context,
-                                                forumName
-                                            )
-                                        )
-                                    }
-                                    TabClickMenu(
-                                        selected = currentPage == 0,
-                                        onClick = {
+                                if (useGlassComponent(GlassComponent.TabRow)) {
+                                    GlassScrollableTabRow(
+                                        selectedTabIndex = currentPage,
+                                        onTabSelected = { index ->
                                             coroutineScope.launch {
-                                                pagerState.animateScrollToPage(0)
+                                                pagerState.animateScrollToPage(index)
                                             }
                                         },
-                                        text = {
-                                            Text(
-                                                text = stringResource(id = R.string.tab_forum_latest),
-                                                style = tabTextStyle
-                                            )
-                                        },
-                                        menuContent = {
-                                            ListSinglePicker(
-                                                itemTitles = persistentListOf(
-                                                    stringResource(id = R.string.title_sort_by_reply),
-                                                    stringResource(id = R.string.title_sort_by_send)
-                                                ),
-                                                itemValues = persistentListOf(0, 1),
-                                                selectedPosition = currentSortType,
-                                                onItemSelected = { _, _, value, changed ->
-                                                    if (changed) {
-                                                        currentSortType = value
-                                                        coroutineScope.launch {
-                                                            setSortType(context, forumName, value)
-                                                            emitGlobalEvent(
-                                                                ForumThreadListUiEvent.Refresh(
-                                                                    currentPage == 1,
-                                                                    value
-                                                                )
-                                                            )
-                                                        }
-                                                    }
-                                                    dismiss()
-                                                }
-                                            )
-                                        },
-                                        selectedContentColor = tabSelectedColor,
-                                        unselectedContentColor = tabUnselectedColor
-                                    )
-                                    Tab(
-                                        selected = currentPage == 1,
-                                        onClick = {
-                                            coroutineScope.launch {
-                                                pagerState.animateScrollToPage(1)
-                                            }
-                                        },
-                                        selectedContentColor = tabSelectedColor,
-                                        unselectedContentColor = tabUnselectedColor
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier
-                                                .height(48.dp)
-                                                .padding(horizontal = 16.dp)
-                                        ) {
-                                            Text(
-                                                text = stringResource(id = R.string.tab_forum_good),
-                                                style = tabTextStyle
-                                            )
-                                        }
-                                    }
-                                    generalTabs.forEach { tab ->
-                                        val tabIndex = 2 + generalTabs.indexOf(tab)
-                                        var currentSortIndex by remember(tab.tabId) {
-                                            mutableIntStateOf(0)
-                                        }
-                                        if (tab.sort_menu.isNotEmpty()) {
-                                            TabClickMenu(
-                                                selected = currentPage == tabIndex,
-                                                onClick = {
-                                                    coroutineScope.launch {
-                                                        pagerState.animateScrollToPage(tabIndex)
-                                                    }
-                                                },
-                                                text = {
-                                                    Text(
-                                                        text = tab.tabName,
-                                                        style = tabTextStyle
+                                        tabCount = forumTabLabels.size,
+                                        modifier = Modifier
+                                            .wrapContentWidth(align = Alignment.Start)
+                                            .align(Alignment.Start)
+                                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                                        tabMenu = GlassTabMenu(
+                                            hasMenu = { index ->
+                                                index == 0 || (
+                                                    index >= 2 &&
+                                                        generalTabs.getOrNull(index - 2)
+                                                            ?.sort_menu?.isNotEmpty() == true
                                                     )
-                                                },
-                                                menuContent = {
+                                            },
+                                        ) { index ->
+                                            when {
+                                                index == 0 -> ListSinglePicker(
+                                                    itemTitles = persistentListOf(
+                                                        stringResource(id = R.string.title_sort_by_reply),
+                                                        stringResource(id = R.string.title_sort_by_send)
+                                                    ),
+                                                    itemValues = persistentListOf(0, 1),
+                                                    selectedPosition = currentSortType,
+                                                    onItemSelected = { _, _, value, changed ->
+                                                        if (changed) {
+                                                            currentSortType = value
+                                                            coroutineScope.launch {
+                                                                setSortType(context, forumName, value)
+                                                                emitGlobalEvent(
+                                                                    ForumThreadListUiEvent.Refresh(
+                                                                        currentPage == 1,
+                                                                        value
+                                                                    )
+                                                                )
+                                                            }
+                                                        }
+                                                        dismiss()
+                                                    }
+                                                )
+
+                                                else -> {
+                                                    val tab = generalTabs[index - 2]
+                                                    val currentSortIndex =
+                                                        generalTabSortIndexes[tab.tabId] ?: 0
                                                     ListSinglePicker(
-                                                        itemTitles = tab.sort_menu.map { it.text }.toImmutableList(),
-                                                        itemValues = tab.sort_menu.map { it.source_id }.toImmutableList(),
+                                                        itemTitles = tab.sort_menu.map { it.text }
+                                                            .toImmutableList(),
+                                                        itemValues = tab.sort_menu.map { it.source_id }
+                                                            .toImmutableList(),
                                                         selectedPosition = currentSortIndex,
                                                         onItemSelected = { position, _, value, changed ->
                                                             if (changed) {
-                                                                currentSortIndex = position
+                                                                generalTabSortIndexes[tab.tabId] =
+                                                                    position
                                                                 coroutineScope.launch {
-                                                                    emitGlobalEvent(GeneralTabListUiEvent.Refresh(sortType = value))
+                                                                    emitGlobalEvent(
+                                                                        GeneralTabListUiEvent.Refresh(
+                                                                            sortType = value
+                                                                        )
+                                                                    )
                                                                 }
                                                             }
                                                             dismiss()
                                                         }
                                                     )
-                                                },
-                                                selectedContentColor = tabSelectedColor,
-                                                unselectedContentColor = tabUnselectedColor
-                                            )
-                                        } else {
+                                                }
+                                            }
+                                        },
+                                    ) { index, selected ->
+                                        GlassTabLabel(
+                                            text = forumTabLabels[index],
+                                            selected = selected
+                                        )
+                                    }
+                                } else {
+                                    ScrollableTabRow(
+                                        selectedTabIndex = currentPage,
+                                        divider = {},
+                                        backgroundColor = Color.Transparent,
+                                        contentColor = tabSelectedColor,
+                                        edgePadding = if (glassmio) 12.dp else 0.dp,
+                                        modifier = Modifier
+                                            .wrapContentWidth(align = Alignment.Start)
+                                            .align(Alignment.Start)
+                                    ) {
+                                        Tab(
+                                            selected = currentPage == 0,
+                                            onClick = {
+                                                coroutineScope.launch {
+                                                    pagerState.animateScrollToPage(0)
+                                                }
+                                            },
+                                            selectedContentColor = tabSelectedColor,
+                                            unselectedContentColor = tabUnselectedColor
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier
+                                                    .height(48.dp)
+                                                    .padding(horizontal = 16.dp)
+                                            ) {
+                                                Text(
+                                                    text = stringResource(id = R.string.tab_forum_latest),
+                                                    style = tabTextStyle
+                                                )
+                                            }
+                                        }
+                                        Tab(
+                                            selected = currentPage == 1,
+                                            onClick = {
+                                                coroutineScope.launch {
+                                                    pagerState.animateScrollToPage(1)
+                                                }
+                                            },
+                                            selectedContentColor = tabSelectedColor,
+                                            unselectedContentColor = tabUnselectedColor
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier
+                                                    .height(48.dp)
+                                                    .padding(horizontal = 16.dp)
+                                            ) {
+                                                Text(
+                                                    text = stringResource(id = R.string.tab_forum_good),
+                                                    style = tabTextStyle
+                                                )
+                                            }
+                                        }
+                                        generalTabs.forEach { tab ->
+                                            val tabIndex = 2 + generalTabs.indexOf(tab)
                                             Tab(
                                                 selected = currentPage == tabIndex,
                                                 onClick = {
@@ -1138,10 +1167,7 @@ fun ForumPage(
                                                         .height(48.dp)
                                                         .padding(horizontal = 16.dp)
                                                 ) {
-                                                    Text(
-                                                        text = tab.tabName,
-                                                        style = tabTextStyle
-                                                    )
+                                                    Text(text = tab.tabName, style = tabTextStyle)
                                                 }
                                             }
                                         }

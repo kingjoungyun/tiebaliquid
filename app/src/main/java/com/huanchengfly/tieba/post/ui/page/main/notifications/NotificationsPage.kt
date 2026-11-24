@@ -46,8 +46,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.ActionItem
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoadHorizontalPager
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
-import com.huanchengfly.tieba.post.ui.widgets.compose.PagerTabIndicator
-import com.huanchengfly.tieba.post.ui.widgets.compose.TabRow
+import androidx.compose.material.TabRow
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.Toolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.accountNavIconIfCompact
@@ -58,6 +57,9 @@ import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.ui.GlasmioIconButton
 import kotlinx.coroutines.launch
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponent
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabRow
+import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
 
 @OptIn(ExperimentalFoundationApi::class)
 @Destination(
@@ -174,6 +176,8 @@ private fun NotificationsHeader(
     onSearch: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
+    // T3：TabRow 组件级回滚开关
+    val useGlassTabRow = useGlassComponent(GlassComponent.TabRow)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -211,35 +215,45 @@ private fun NotificationsHeader(
             color = AppTokens.text,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
         )
-        TabRow(
-            selectedTabIndex = pagerState.currentPage,
-            indicator = { tabPositions ->
-                PagerTabIndicator(pagerState = pagerState, tabPositions = tabPositions)
-            },
-            divider = {},
-            backgroundColor = Color.Transparent,
-            contentColor = AppTokens.primary,
-        ) {
-            pages.forEachIndexed { index, pair ->
-                Tab(
-                    text = {
-                        Text(
-                            text = pair.first,
-                            fontSize = 15.sp,
-                            fontWeight = if (pagerState.currentPage == index) {
-                                FontWeight.SemiBold
-                            } else {
-                                FontWeight.Normal
-                            },
-                        )
-                    },
-                    selected = pagerState.currentPage == index,
-                    onClick = {
-                        coroutineScope.launch { pagerState.animateScrollToPage(index) }
-                    },
-                    selectedContentColor = AppTokens.onTopBar,
-                    unselectedContentColor = AppTokens.onTopBarSecondary,
-                )
+        if (useGlassTabRow) {
+            // T3：iOS 分段控件风格（灰色轨道 + 白色滑块）。回滚见下面的 else 分支。
+            GlassTabRow(
+                tabs = pages.map { it.first },
+                selectedTabIndex = pagerState.currentPage,
+                onTabSelected = { index ->
+                    coroutineScope.launch { pagerState.animateScrollToPage(index) }
+                },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+        } else {
+            // 回滚：M2 官方 TabRow（原来的 M2 分叉实现已随 Tabs.kt 删除）
+            TabRow(
+                selectedTabIndex = pagerState.currentPage,
+                divider = {},
+                backgroundColor = Color.Transparent,
+                contentColor = AppTokens.primary,
+            ) {
+                pages.forEachIndexed { index, pair ->
+                    Tab(
+                        text = {
+                            Text(
+                                text = pair.first,
+                                fontSize = 15.sp,
+                                fontWeight = if (pagerState.currentPage == index) {
+                                    FontWeight.SemiBold
+                                } else {
+                                    FontWeight.Normal
+                                },
+                            )
+                        },
+                        selected = pagerState.currentPage == index,
+                        onClick = {
+                            coroutineScope.launch { pagerState.animateScrollToPage(index) }
+                        },
+                        selectedContentColor = AppTokens.onTopBar,
+                        unselectedContentColor = AppTokens.onTopBarSecondary,
+                    )
+                }
             }
         }
     }

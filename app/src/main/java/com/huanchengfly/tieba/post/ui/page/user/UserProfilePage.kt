@@ -131,10 +131,9 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoadHorizontalPager
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.NetworkImage
-import com.huanchengfly.tieba.post.ui.widgets.compose.PagerTabIndicator
 import com.huanchengfly.tieba.post.ui.widgets.compose.ProvideContentColor
 import com.huanchengfly.tieba.post.ui.widgets.compose.PullToRefreshLayout
-import com.huanchengfly.tieba.post.ui.widgets.compose.ScrollableTabRow
+import androidx.compose.material.ScrollableTabRow
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.PrefsSwitch
 import com.huanchengfly.tieba.post.ui.widgets.compose.Toolbar
@@ -166,6 +165,10 @@ import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponent
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassScrollableTabRow
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabLabel
+import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
 
 @ExperimentalMaterialApi
 @Destination
@@ -1028,14 +1031,24 @@ private fun UserProfileTabRow(
         letterSpacing = 0.sp
     )
 
+    // T3：Glass 分段控件优先；回滚走 M2 官方 ScrollableTabRow（原来的分叉实现已删）
+    if (useGlassComponent(GlassComponent.TabRow)) {
+        GlassScrollableTabRow(
+            selectedTabIndex = pagerState.currentPage,
+            onTabSelected = { index ->
+                coroutineScope.launch { pagerState.animateScrollToPage(index) }
+            },
+            tabCount = pages.size,
+            modifier = modifier
+                .wrapContentWidth(align = Alignment.Start)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+        ) { index, selected ->
+            GlassTabLabel(text = pages[index].title(user), selected = selected)
+        }
+        return
+    }
     ScrollableTabRow(
         selectedTabIndex = pagerState.currentPage,
-        indicator = { tabPositions ->
-            PagerTabIndicator(
-                pagerState = pagerState,
-                tabPositions = tabPositions
-            )
-        },
         divider = {},
         backgroundColor = Color.Transparent,
         contentColor = AppTokens.primary,

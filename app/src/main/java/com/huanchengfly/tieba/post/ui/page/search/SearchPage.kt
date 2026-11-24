@@ -94,10 +94,8 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.Container
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoadHorizontalPager
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyBackHandler
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
-import com.huanchengfly.tieba.post.ui.widgets.compose.PagerTabIndicator
 import com.huanchengfly.tieba.post.ui.widgets.compose.SearchBox
-import com.huanchengfly.tieba.post.ui.widgets.compose.TabClickMenu
-import com.huanchengfly.tieba.post.ui.widgets.compose.TabRow
+import androidx.compose.material.TabRow
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import com.huanchengfly.tieba.post.ui.widgets.compose.TopAppBarContainer
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
@@ -114,6 +112,10 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponent
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabMenu
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabRow
+import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
 
 @Immutable
 data class SearchPageItem(
@@ -427,55 +429,58 @@ private fun ColumnScope.SearchTabRow(
     pages: ImmutableList<SearchPageItem>,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    TabRow(
-        selectedTabIndex = pagerState.currentPage,
-        indicator = { tabPositions ->
-            PagerTabIndicator(
-                pagerState = pagerState,
-                tabPositions = tabPositions
-            )
-        },
-        divider = {},
-        backgroundColor = Color.Transparent,
-        contentColor = AppTokens.onTopBar,
-        modifier = Modifier
-            .align(Alignment.CenterHorizontally)
-            .width(76.dp * pages.size),
-    ) {
-        pages.fastForEachIndexed { index, item ->
-            val tabTextStyle = MaterialTheme.typography.button.copy(
-                fontSize = 15.sp,
-                letterSpacing = 0.sp,
-                fontWeight = if (pagerState.currentPage == index) FontWeight.SemiBold
-                else FontWeight.Normal,
-            )
-
-            if (item.supportSort) {
-                TabClickMenu(
-                    selected = pagerState.currentPage == index,
-                    onClick = {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(index)
-                        }
-                    },
-                    text = {
-                        ProvideTextStyle(value = tabTextStyle) {
-                            item.text(pagerState.currentPage == index)
-                        }
-                    },
-                    menuContent = {
-                        ListSinglePicker(
-                            itemTitles = item.sortTypes.keys.toImmutableList(),
-                            itemValues = item.sortTypes.values.toImmutableList(),
-                            selectedPosition = item.sortTypes.values.indexOf(item.selectedSortType()),
-                            onItemSelected = { _, _, value, changed ->
-                                if (changed) item.onSelectedSortTypeChange(value)
-                                dismiss()
-                            }
-                        )
+    // T3：TabRow 组件级回滚开关（false → 下面的 M2 官方 TabRow）
+    val useGlassTabRow = useGlassComponent(GlassComponent.TabRow)
+    if (useGlassTabRow) {
+        GlassTabRow(
+            selectedTabIndex = pagerState.currentPage,
+            onTabSelected = { index ->
+                coroutineScope.launch { pagerState.animateScrollToPage(index) }
+            },
+            tabCount = pages.size,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            // 「点已选中的 tab → 排序菜单」，与原 TabClickMenu 语义一致
+            tabMenu = GlassTabMenu(hasMenu = { pages[it].supportSort }) { index ->
+                val item = pages[index]
+                ListSinglePicker(
+                    itemTitles = item.sortTypes.keys.toImmutableList(),
+                    itemValues = item.sortTypes.values.toImmutableList(),
+                    selectedPosition = item.sortTypes.values.indexOf(item.selectedSortType()),
+                    onItemSelected = { _, _, value, changed ->
+                        if (changed) item.onSelectedSortTypeChange(value)
+                        dismiss()
                     }
                 )
-            } else {
+            },
+        ) { index, selected ->
+            // 保留页面自己的 tab 文案（含选中态字重），只统一颜色
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.material.LocalContentColor provides
+                    if (selected) AppTokens.primary else AppTokens.textSecondary
+            ) {
+                pages[index].text(selected)
+            }
+        }
+    } else {
+        // 回滚：M2 官方 TabRow（原来的 M2 分叉实现已随 Tabs.kt 删除）
+        TabRow(
+            selectedTabIndex = pagerState.currentPage,
+            divider = {},
+            backgroundColor = Color.Transparent,
+            contentColor = AppTokens.onTopBar,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .width(76.dp * pages.size),
+        ) {
+            pages.fastForEachIndexed { index, item ->
+                val tabTextStyle = MaterialTheme.typography.button.copy(
+                    fontSize = 15.sp,
+                    letterSpacing = 0.sp,
+                    fontWeight = if (pagerState.currentPage == index) FontWeight.SemiBold
+                    else FontWeight.Normal,
+                )
                 Tab(
                     text = {
                         ProvideTextStyle(value = tabTextStyle) {

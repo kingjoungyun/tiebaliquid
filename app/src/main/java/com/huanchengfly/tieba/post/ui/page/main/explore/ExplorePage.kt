@@ -48,8 +48,7 @@ import com.huanchengfly.tieba.post.ui.page.main.explore.personalized.Personalize
 import com.huanchengfly.tieba.post.ui.page.searchuser.SearchUserTabPage
 import com.huanchengfly.tieba.post.ui.widgets.compose.ActionItem
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoadHorizontalPager
-import com.huanchengfly.tieba.post.ui.widgets.compose.PagerTabIndicator
-import com.huanchengfly.tieba.post.ui.widgets.compose.TabRow
+import androidx.compose.material.TabRow
 import com.huanchengfly.tieba.post.ui.widgets.compose.toolboxAccountNavIconIfCompact
 import com.huanchengfly.tieba.post.utils.AccountUtil.LocalAccount
 import io.github.neoruaa.glasmio.glass.GlassSurface
@@ -75,14 +74,9 @@ private fun ExplorePageTab(
 ) {
     val coroutineScope = rememberCoroutineScope()
 
+    // LEGACY 回滚分支：用 M2 官方 TabRow（原来的 M2 分叉 Tabs.kt 已删）
     TabRow(
         selectedTabIndex = pagerState.currentPage,
-        indicator = { tabPositions ->
-            PagerTabIndicator(
-                pagerState = pagerState,
-                tabPositions = tabPositions
-            )
-        },
         divider = {},
         backgroundColor = Color.Transparent,
         contentColor = AppTokens.onTopBar,

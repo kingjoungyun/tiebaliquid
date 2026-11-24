@@ -51,8 +51,7 @@ import com.huanchengfly.tieba.post.ui.page.history.list.HistoryListUiEvent
 import com.huanchengfly.tieba.post.ui.page.history.list.HistoryListUiStyle
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
-import com.huanchengfly.tieba.post.ui.widgets.compose.PagerTabIndicator
-import com.huanchengfly.tieba.post.ui.widgets.compose.TabRow
+import androidx.compose.material.TabRow
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.utils.HistoryUtil
 import io.github.neoruaa.glasmio.core.GlasmioTheme
@@ -157,14 +156,9 @@ fun HistoryPage(
                                 ),
                             )
                         } else {
+                        // 回滚：M2 官方 TabRow（原来的 M2 分叉实现已随 Tabs.kt 删除）
                         TabRow(
                             selectedTabIndex = pagerState.currentPage,
-                            indicator = { tabPositions ->
-                                PagerTabIndicator(
-                                    pagerState = pagerState,
-                                    tabPositions = tabPositions
-                                )
-                            },
                             divider = {},
                             backgroundColor = Color.Transparent,
                             contentColor = AppTokens.primary,
