@@ -52,6 +52,9 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponent
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTextField
+import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassLargeTitle
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
@@ -268,6 +271,50 @@ fun PostAnalysisPage(
  */
 @Composable
 private fun AnalysisSearchField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // T2 试点：搜索框换成组件层的 GlassTextField（自带纯色 host + 真玻璃；
+    // API<33 自动退伪玻璃）。回滚：`settings put global tieba_glass_textfield 0`。
+    if (useGlassComponent(GlassComponent.TextField)) {
+        GlassTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = modifier,
+            placeholder = stringResource(id = R.string.hint_analysis_keyword),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            leadingIcon = {
+                Icon(
+                    imageVector = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
+                    contentDescription = null,
+                    tint = AppTokens.textSecondary,
+                    modifier = Modifier.size(18.dp),
+                )
+            },
+            trailingIcon = if (value.isNotEmpty()) {
+                {
+                    Icon(
+                        imageVector = PhosphorIcons["x"] ?: Icons.Rounded.Close,
+                        contentDescription = null,
+                        tint = AppTokens.textSecondary,
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clickable { onValueChange("") },
+                    )
+                }
+            } else {
+                null
+            },
+        )
+        return
+    }
+    LegacyAnalysisSearchField(value = value, onValueChange = onValueChange, modifier = modifier)
+}
+
+/** 迁移前的胶囊搜索框（回滚用，原样保留）。 */
+@Composable
+private fun LegacyAnalysisSearchField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
