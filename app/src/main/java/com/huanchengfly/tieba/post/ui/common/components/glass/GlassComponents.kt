@@ -14,16 +14,17 @@ import com.huanchengfly.tieba.post.BuildConfig
  *
  * 调试包可以用 `Settings.Global` 覆盖，**同一个 APK 免重装**做 A/B：
  * ```
- * adb shell settings put global tieba_glass_tabrow 0      # 关掉 TabRow → 回 M2 TabRow
+ * adb shell settings put global tieba_glass_tabrow 0      # 关掉 TabRow → 回 M2 官方 TabRow
  * adb shell settings put global tieba_glass_tabrow -1     # 恢复默认
+ *
+ * T3 之后只剩 TabRow / TextField 两个键：PromptDialog 与 TimePickerDialog 的旧定义已删除，
+ * 没有「二选一」的第二个实现，回滚按 commit revert（见简报）。
  * ```
  * release 恒为默认值（true），不会因为别人随手改了个 global 设置就换掉观感。
  */
 enum class GlassComponent(val settingsKey: String) {
     TabRow("tieba_glass_tabrow"),
     TextField("tieba_glass_textfield"),
-    TimePicker("tieba_glass_timepicker"),
-    PromptDialog("tieba_glass_prompt"),
 }
 
 /** 当前是否启用某个 Glass 组件（见 [GlassComponent] 的调试覆盖说明）。 */
