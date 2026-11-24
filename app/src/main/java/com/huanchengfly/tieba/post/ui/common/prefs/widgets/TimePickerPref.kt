@@ -21,7 +21,11 @@ import androidx.compose.ui.unit.toSize
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.huanchengfly.tieba.post.getString
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponent
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTimePickerDialog
+import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
 import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsDataStore
+import com.huanchengfly.tieba.post.ui.widgets.compose.DialogScope
 import com.huanchengfly.tieba.post.ui.widgets.compose.TimePickerDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import kotlinx.coroutines.flow.collectLatest
@@ -64,6 +68,9 @@ fun TimePickerPerf(
     val dialogState = rememberDialogState()
     val selectionKey = stringPreferencesKey(key)
     val scope = rememberCoroutineScope()
+    // T2 试点：时间选择弹窗走组件层的玻璃卡片（滚轮逻辑不变）。
+    // 回滚：settings put global tieba_glass_timepicker 0 → 原来的 M2 TimePickerDialog。
+    val useGlassTimePicker = useGlassComponent(GlassComponent.TimePicker)
 
     val datastore = LocalPrefsDataStore.current
     val prefs by remember { datastore.data }.collectAsState(initial = null)
@@ -117,30 +124,48 @@ fun TimePickerPerf(
             timeVal = value
         }
 
-        TimePickerDialog(
-            title = {
-                if (dialogTitle != null) {
-                    Text(text = dialogTitle)
-                }
-            },
-            currentTime = timeVal,
-            onConfirm = {
-                timeVal = it
-                onValueChange(it)
-                edit()
-            },
-            modifier = Modifier.onGloballyPositioned {
-                dialogSize = it.size.toSize()
-            },
-            dialogState = dialogState,
-            onValueChange = {
-                timeVal = it.toString()
-                onValueChange(it.toString())
-            },
-        ) {
+        val dialogTitleSlot: @Composable (DialogScope.() -> Unit) = {
+            if (dialogTitle != null) {
+                Text(text = dialogTitle)
+            }
+        }
+        val dialogContent: @Composable (DialogScope.() -> Unit) = {
             if (dialogMessage != null) {
                 Text(text = dialogMessage)
             }
+        }
+        val onConfirmTime: (String) -> Unit = {
+            timeVal = it
+            onValueChange(it)
+            edit()
+        }
+        val onTimeChange: (String) -> Unit = {
+            timeVal = it.toString()
+            onValueChange(it.toString())
+        }
+        val dialogModifier = Modifier.onGloballyPositioned {
+            dialogSize = it.size.toSize()
+        }
+        if (useGlassTimePicker) {
+            GlassTimePickerDialog(
+                title = dialogTitleSlot,
+                currentTime = timeVal,
+                onConfirm = onConfirmTime,
+                modifier = dialogModifier,
+                dialogState = dialogState,
+                onValueChange = onTimeChange,
+                content = dialogContent,
+            )
+        } else {
+            TimePickerDialog(
+                title = dialogTitleSlot,
+                currentTime = timeVal,
+                onConfirm = onConfirmTime,
+                modifier = dialogModifier,
+                dialogState = dialogState,
+                onValueChange = onTimeChange,
+                content = dialogContent,
+            )
         }
     }
 }
