@@ -117,7 +117,6 @@ import com.huanchengfly.tieba.post.ui.page.reply.ReplyPanelType.IMAGE
 import com.huanchengfly.tieba.post.ui.page.reply.ReplyPanelType.NONE
 import com.huanchengfly.tieba.post.ui.utils.imeNestedScroll
 import com.huanchengfly.tieba.post.ui.widgets.compose.BaseDialog
-import com.huanchengfly.tieba.post.ui.widgets.compose.BaseTextField
 import com.huanchengfly.tieba.post.ui.widgets.compose.Dialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.DialogNegativeButton
 import com.huanchengfly.tieba.post.ui.widgets.compose.DialogPositiveButton
@@ -148,6 +147,7 @@ import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import java.util.UUID
 import kotlin.math.max
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTextField
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 data class ReplyArgs(
@@ -527,11 +527,14 @@ internal fun ReplyPageContent(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 6.dp),
             ) {
-                BaseTextField(
+                // T3：标题输入换成组件层 GlassTextField（无壳，壳仍是 ReplyGlassInput）
+                GlassTextField(
                     value = threadTitle,
                     onValueChange = { if (it.length <= 31) threadTitle = it },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
+                    maxLines = 1,
+                    chrome = false,
+                    contentPadding = PaddingValues(0.dp),
                     textStyle = LocalTextStyle.current.copy(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -540,7 +543,7 @@ internal fun ReplyPageContent(
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences,
                     ),
-                    placeholder = {
+                    placeholderContent = {
                         Text(
                             text = stringResource(id = R.string.hint_thread_title),
                             style = LocalTextStyle.current.copy(fontSize = 16.sp),

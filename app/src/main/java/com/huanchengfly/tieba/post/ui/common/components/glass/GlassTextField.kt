@@ -3,7 +3,9 @@ package com.huanchengfly.tieba.post.ui.common.components.glass
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -58,9 +60,22 @@ private val GlassTextFieldCornerMulti = 16.dp
  * 不用 M2 的 `TextField`：它自带下划线/填充色/内置 padding，玻璃化需要把
  * 颜色、描边、hint 全部重写一遍，反而比裸 `BasicTextField` 更绕。
  *
+ * ## `chrome = false`（T3 新增）
+ *
+ * 只出「输入本体」（文字 / placeholder / 光标 / IME / 计数），**不画自己的玻璃壳**，
+ * 用于嵌进调用方已经有的壳里：
+ * - `SearchBox`（外壳是 Surface/玻璃 + 前置/后置图标 + 清除/提交按钮）；
+ * - `EditProfileActivity` 的 `GlassField`（昵称/签名行的壳）；
+ * - `ReplyPage` 的 `ReplyGlassInput`（回帖编辑器，壳里还要放图片面板联动）。
+ *
+ * 这样这些地方能继续用自己的外壳与布局，同时把「输入」的逻辑收在同一个组件里，
+ * 不必再维护一份 M2 `BaseTextField` 分叉。
+ *
  * @param maxLength 非空时限制输入长度并在右下角显示计数
  * @param showCounter 多行时是否显示计数（未给 [maxLength] 时显示纯字数）
  * @param hostFill 自带采样 host 的底色（组件所在页面的底色）
+ * @param chrome 是否自带玻璃壳；false 时只有输入本体，壳与内边距由调用方给
+ * @param contentPadding `chrome = false` 时输入本体的内边距
  */
 @Composable
 fun GlassTextField(
@@ -68,6 +83,7 @@ fun GlassTextField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String? = null,
+    placeholderContent: (@Composable () -> Unit)? = null,
     enabled: Boolean = true,
     readOnly: Boolean = false,
     maxLines: Int = 1,
@@ -77,6 +93,7 @@ fun GlassTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     maxLength: Int? = null,
     showCounter: Boolean = maxLines > 1,
+    counterText: ((String) -> String)? = null,
     leadingIcon: (@Composable () -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null,
     textStyle: TextStyle = TextStyle(fontSize = 15.sp),
@@ -84,6 +101,8 @@ fun GlassTextField(
     hostFill: Color = AppTokens.groupedBackground,
     focusRequester: FocusRequester? = null,
     interactionSource: MutableInteractionSource? = null,
+    chrome: Boolean = true,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
 ) {
     val singleLine = maxLines == 1
     val corner = shape ?: RoundedCornerShape(
@@ -92,8 +111,130 @@ fun GlassTextField(
     val resolvedTextStyle = textStyle.copy(
         color = if (enabled) AppTokens.text else AppTokens.textDisabled,
     )
-    val contentColor = if (enabled) AppTokens.text else AppTokens.textDisabled
     var focused by remember { mutableStateOf(false) }
+    val fieldModifier = Modifier
+        .fillMaxWidth()
+        .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
+        .onFocusChanged { focused = it.isFocused }
+
+    val inner: @Composable () -> Unit = {
+        if (singleLine) {
+            Row(
+                modifier = if (chrome) {
+                    Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 14.dp)
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(contentPadding)
+                },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (leadingIcon != null) {
+                    Box(modifier = Modifier.padding(end = 8.dp)) { leadingIcon() }
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    if (value.isEmpty()) {
+                        if (placeholderContent != null) {
+                            placeholderContent()
+                        } else if (placeholder != null) {
+                            Text(
+                                text = placeholder,
+                                style = resolvedTextStyle.copy(color = AppTokens.textSecondary),
+                                maxLines = 1,
+                            )
+                        }
+                    }
+                    BasicTextField(
+                        value = value,
+                        onValueChange = {
+                            onValueChange(maxLength?.let(it::take) ?: it)
+                        },
+                        modifier = fieldModifier,
+                        enabled = enabled,
+                        readOnly = readOnly,
+                        singleLine = true,
+                        textStyle = resolvedTextStyle,
+                        cursorBrush = SolidColor(AppTokens.primary),
+                        keyboardOptions = keyboardOptions,
+                        keyboardActions = keyboardActions,
+                        visualTransformation = visualTransformation,
+                        interactionSource = interactionSource,
+                    )
+                }
+                if (trailingIcon != null) {
+                    Box(modifier = Modifier.padding(start = 8.dp)) { trailingIcon() }
+                }
+            }
+        } else {
+            Column(
+                modifier = if (chrome) {
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 12.dp)
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(contentPadding)
+                },
+            ) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    if (value.isEmpty()) {
+                        if (placeholderContent != null) {
+                            placeholderContent()
+                        } else if (placeholder != null) {
+                            Text(
+                                text = placeholder,
+                                style = resolvedTextStyle.copy(color = AppTokens.textSecondary),
+                            )
+                        }
+                    }
+                    BasicTextField(
+                        value = value,
+                        onValueChange = {
+                            onValueChange(maxLength?.let(it::take) ?: it)
+                        },
+                        modifier = fieldModifier,
+                        enabled = enabled,
+                        readOnly = readOnly,
+                        maxLines = maxLines,
+                        minLines = minLines,
+                        textStyle = resolvedTextStyle,
+                        cursorBrush = SolidColor(AppTokens.primary),
+                        keyboardOptions = keyboardOptions,
+                        keyboardActions = keyboardActions,
+                        visualTransformation = visualTransformation,
+                        interactionSource = interactionSource,
+                    )
+                }
+                if (showCounter) {
+                    Text(
+                        text = if (maxLength != null) "${value.length}/$maxLength"
+                        else "${value.length}",
+                        fontSize = 11.sp,
+                        color = AppTokens.textSecondary,
+                        maxLines = 1,
+                        modifier = Modifier
+                            .align(Alignment.End)
+                            .padding(top = 4.dp),
+                    )
+                }
+            }
+        }
+    }
+
+    if (!chrome) {
+        // 无壳：壳由调用方提供（搜索框 / 设置行 / 回帖编辑器）。
+        // 单行时在调用方给的槽位里垂直居中（SearchBox 传的是 fillMaxHeight）。
+        Column(
+            modifier = modifier,
+            verticalArrangement = if (singleLine) Arrangement.Center else Arrangement.Top,
+        ) {
+            inner()
+        }
+        return
+    }
 
     Column(modifier = modifier.fillMaxWidth()) {
         GlassComponentSurface(
@@ -108,100 +249,7 @@ fun GlassTextField(
             hostFill = hostFill,
             innerGlow = true,
         ) {
-            val fieldModifier = Modifier
-                .fillMaxWidth()
-                .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
-                .onFocusChanged { focused = it.isFocused }
-
-            val inner: @Composable () -> Unit = {
-                if (singleLine) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (leadingIcon != null) {
-                            Box(modifier = Modifier.padding(end = 8.dp)) { leadingIcon() }
-                        }
-                        Box(modifier = Modifier.weight(1f)) {
-                            if (value.isEmpty() && placeholder != null) {
-                                Text(
-                                    text = placeholder,
-                                    style = resolvedTextStyle.copy(color = AppTokens.textSecondary),
-                                    maxLines = 1,
-                                )
-                            }
-                            BasicTextField(
-                                value = value,
-                                onValueChange = {
-                                    onValueChange(maxLength?.let(it::take) ?: it)
-                                },
-                                modifier = fieldModifier,
-                                enabled = enabled,
-                                readOnly = readOnly,
-                                singleLine = true,
-                                textStyle = resolvedTextStyle,
-                                cursorBrush = SolidColor(AppTokens.primary),
-                                keyboardOptions = keyboardOptions,
-                                keyboardActions = keyboardActions,
-                                visualTransformation = visualTransformation,
-                                interactionSource = interactionSource,
-                            )
-                        }
-                        if (trailingIcon != null) {
-                            Box(modifier = Modifier.padding(start = 8.dp)) { trailingIcon() }
-                        }
-                    }
-                } else {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                    ) {
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            if (value.isEmpty() && placeholder != null) {
-                                Text(
-                                    text = placeholder,
-                                    style = resolvedTextStyle.copy(color = AppTokens.textSecondary),
-                                )
-                            }
-                            BasicTextField(
-                                value = value,
-                                onValueChange = {
-                                    onValueChange(maxLength?.let(it::take) ?: it)
-                                },
-                                modifier = fieldModifier,
-                                enabled = enabled,
-                                readOnly = readOnly,
-                                maxLines = maxLines,
-                                minLines = minLines,
-                                textStyle = resolvedTextStyle,
-                                cursorBrush = SolidColor(AppTokens.primary),
-                                keyboardOptions = keyboardOptions,
-                                keyboardActions = keyboardActions,
-                                visualTransformation = visualTransformation,
-                                interactionSource = interactionSource,
-                            )
-                        }
-                        if (showCounter) {
-                            Text(
-                                text = if (maxLength != null) "${value.length}/$maxLength"
-                                else "${value.length}",
-                                fontSize = 11.sp,
-                                color = AppTokens.textSecondary,
-                                maxLines = 1,
-                                modifier = Modifier
-                                    .align(Alignment.End)
-                                    .padding(top = 4.dp),
-                            )
-                        }
-                    }
-                }
-            }
-
             inner()
-
             if (focused) {
                 Box(
                     modifier = Modifier

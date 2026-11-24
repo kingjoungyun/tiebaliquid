@@ -8,6 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -68,6 +70,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlin.math.min
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTextField
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
@@ -434,12 +437,17 @@ fun SearchBox(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             prependIcon()
-            BaseTextField(
+            // T3：内层输入换成组件层的 GlassTextField（无壳形态）——
+            // 外壳（Surface / 玻璃底 + 前后图标 + 清除/提交）仍由 SearchBox 自己画，
+            // 所以这里只要「输入本体」，避免双层壳。
+            GlassTextField(
                 value = keyword,
                 onValueChange = {
                     onKeywordChange(it)
                 },
-                singleLine = true,
+                maxLines = 1,
+                chrome = false,
+                contentPadding = PaddingValues(0.dp),
                 keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Search,
                 ),
@@ -448,14 +456,15 @@ fun SearchBox(
                         onKeywordSubmit(keyword)
                     }
                 ),
-                placeholder = placeholder,
+                placeholderContent = placeholder,
+                textStyle = LocalTextStyle.current,
                 modifier = Modifier
                     .fillMaxHeight()
                     .weight(1f)
-                    .focusRequester(focusRequester)
                     .onFocusEvent {
                         isFocused = it.isFocused
-                    }
+                    },
+                focusRequester = focusRequester,
             )
             appendIcon()
             AnimatedVisibility(visible = isKeywordNotEmpty && isFocused) {

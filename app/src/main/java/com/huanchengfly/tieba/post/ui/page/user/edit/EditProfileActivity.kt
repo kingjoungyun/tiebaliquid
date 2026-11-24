@@ -18,6 +18,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,6 +32,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
@@ -74,12 +76,11 @@ import com.huanchengfly.tieba.post.activities.BaseActivity
 import com.huanchengfly.tieba.post.arch.collectIn
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.toastShort
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTextField
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
 import com.huanchengfly.tieba.post.ui.common.theme.utils.ThemeUtils
 import com.huanchengfly.tieba.post.ui.widgets.compose.ActionItem
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
-import com.huanchengfly.tieba.post.ui.widgets.compose.BaseTextField
-import com.huanchengfly.tieba.post.ui.widgets.compose.CounterTextField
 import com.huanchengfly.tieba.post.ui.widgets.compose.Dialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.DialogNegativeButton
 import com.huanchengfly.tieba.post.ui.widgets.compose.Toolbar
@@ -357,12 +358,15 @@ fun EditProfileCard(
             text = { Text(text = stringResource(id = R.string.title_nickname), fontSize = 15.sp) },
             trailing = {
                 GlassField(modifier = Modifier.width(176.dp)) {
-                    BaseTextField(
+                    // T3：昵称用组件层 GlassTextField 的单行形态（无壳，壳还是这行的 GlassField）
+                    GlassTextField(
                         value = nickName,
                         onValueChange = { onNickNameChange?.invoke(it) },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
                         maxLines = 1,
+                        chrome = false,
+                        contentPadding = PaddingValues(0.dp),
+                        textStyle = LocalTextStyle.current,
                     )
                 }
             },
@@ -388,21 +392,31 @@ fun EditProfileCard(
                     Text(text = stringResource(id = R.string.title_intro), fontSize = 15.sp)
                     Spacer(modifier = Modifier.height(6.dp))
                     GlassField(modifier = Modifier.fillMaxWidth()) {
-                        CounterTextField(
+                        // T3：签名用组件层 GlassTextField 的多行形态（无壳 + 自带计数槽）。
+                        // 500 字上限仍按「不计空白」计数，超限给同一个 toast（原 CounterTextField 的行为）。
+                        GlassTextField(
                             value = intro,
-                            onValueChange = { onIntroChange?.invoke(it) },
-                            maxLength = 500,
-                            countWhitespace = false,
-                            onLengthBeyondRestrict = {
-                                context.toastShort(R.string.toast_intro_length_beyond_restrict)
+                            onValueChange = { newVal ->
+                                val count = newVal.count { c -> !c.isWhitespace() }
+                                if (count <= 500) {
+                                    onIntroChange?.invoke(newVal)
+                                } else {
+                                    context.toastShort(R.string.toast_intro_length_beyond_restrict)
+                                }
                             },
-                            placeholder = {
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = Int.MAX_VALUE,
+                            chrome = false,
+                            contentPadding = PaddingValues(0.dp),
+                            showCounter = true,
+                            counterText = { "${it.count { c -> !c.isWhitespace() }}/500" },
+                            placeholderContent = {
                                 Text(
                                     text = stringResource(id = R.string.tip_no_intro),
                                     color = AppTokens.textSecondary,
                                 )
                             },
-                            modifier = Modifier.fillMaxWidth(),
+                            textStyle = LocalTextStyle.current,
                         )
                     }
                 }
