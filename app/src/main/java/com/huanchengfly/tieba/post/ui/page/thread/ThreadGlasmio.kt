@@ -4,8 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,8 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -22,7 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Comment
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
@@ -30,21 +25,12 @@ import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -53,6 +39,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.R
+import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassBackdropHost
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
@@ -67,11 +55,12 @@ import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.core.IosTypography
 import io.github.neoruaa.glasmio.glass.GlassSurface
 import io.github.neoruaa.glasmio.ui.GlasmioIconButton
-import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
-import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
  * 帖子详情页的 Glasmio 外壳（`ThreadPageUiStyle.GLASMIO`）。
+ *
+ * T1 之后帖子页本身已经改用统一的 `GlassPage`；这个薄壳仍被「热榜」页
+ * （`HotTopicListPage`，属于长尾 11 页，留给 T5）使用，所以保留。
  *
  * 顶栏/底栏都在 overlay 层：玻璃控件能采到页面真实内容。
  * 材质直接使用 Glasmio 组件默认值，不再叠加 tint / rim / innerGlow 等自定义参数：
@@ -130,114 +119,89 @@ val ThreadBottomBarInset = 80.dp
 
 private val ThreadTopActionSize = 44.dp
 
+/**
+ * 吧名胶囊 —— [com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage] 顶栏的 `center` 槽。
+ *
+ * 原来写在 `ThreadGlassTopBar` 里，参数（44dp 高、胶囊 shape、13sp SemiBold、左右 13dp、
+ * 最大 220dp）一个没动，只是搬到了骨架的槽位上。
+ */
 @Composable
-fun ThreadGlassTopBar(
+fun ThreadForumCapsule(
     forumName: String,
-    scrimAlpha: Float,
-    onBack: () -> Unit,
-    onForumClick: () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = GlasmioTheme.colors
+    val shape = RoundedCornerShape(ThreadTopActionSize / 2)
+    GlassSurface(
+        modifier = modifier
+            .height(ThreadTopActionSize)
+            .widthIn(max = 220.dp)
+            .wrapContentWidth(),
+        shape = shape,
+        onClick = onClick,
+    ) {
+        Text(
+            text = forumName,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = colors.content,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .padding(horizontal = 13.dp)
+                .semantics { contentDescription = forumName },
+        )
+    }
+}
+
+/**
+ * ⋯ 锚点菜单 —— [com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage] 顶栏的 `actions` 槽。
+ *
+ * 仍是 **锚点式菜单**：触发器交给 Glasmio，菜单从这颗按钮「长出来」（source transfer）。
+ * 骨架只提供槽位与 overlay 层，`AnchorMenu` / `rememberMenuState` 的接法与迁移前完全一致，
+ * 所以「菜单从触发器形变」的效果不受影响。
+ */
+@Composable
+fun ThreadTopBarMenu(
     menuContent: @Composable MenuScope.() -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = GlasmioTheme.colors
     val moreDescription = stringResource(id = R.string.btn_more)
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val scrimHeight = statusBarTop + 88.dp
-    val scrimBrush = Brush.verticalGradient(
-        0f to colors.groupedBackground.copy(alpha = 0.82f),
-        0.58f to colors.groupedBackground.copy(alpha = 0.48f),
-        1f to Color.Transparent,
-    )
     val menuState = rememberMenuState()
     val menuScope = remember(menuState) { MenuScope(menuState) }
-    var menuTriggerBounds by remember { mutableStateOf<Rect?>(null) }
 
-    Box(modifier = modifier.fillMaxWidth()) {
-        if (scrimAlpha > 0.01f) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(scrimHeight)
-                    .background(scrimBrush)
-                    .alpha(scrimAlpha)
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .height(ThreadTopBarHeight)
-                .padding(horizontal = 8.dp)
-        ) {
-            GlasmioIconButton(
-                onClick = onBack,
-                modifier = Modifier.align(Alignment.CenterStart),
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(id = R.string.button_back),
-                    tint = colors.content,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-
-            val forumShape = RoundedCornerShape(ThreadTopActionSize / 2)
-            GlassSurface(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .height(ThreadTopActionSize)
-                    .widthIn(max = 220.dp)
-                    .wrapContentWidth(),
-                shape = forumShape,
-                onClick = onForumClick,
-            ) {
-                Text(
-                    text = forumName,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colors.content,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .padding(horizontal = 13.dp)
-                        .semantics { contentDescription = forumName },
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .semantics { contentDescription = moreDescription },
-            ) {
-                // B：锚点式菜单 —— 触发器交给 Glasmio，菜单从这颗按钮「长出来」（source transfer）。
-                AnchorMenu(
-                    expanded = menuState.expanded,
-                    onExpandedChange = { opened ->
-                        if (opened) menuState.expanded = true else menuScope.dismiss()
-                    },
-                    menuWidth = 330.dp,
-                    anchor = { onClick ->
-                        GlasmioIconButton(onClick = onClick) {
-                            Icon(
-                                imageVector = (PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreVert),
-                                contentDescription = null,
-                                tint = colors.content,
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                    },
-                ) {
-                    ProvideContentColor(color = colors.content) {
-                        menuScope.menuContent()
-                    }
+    Box(
+        modifier = modifier
+            .semantics { contentDescription = moreDescription },
+    ) {
+        AnchorMenu(
+            expanded = menuState.expanded,
+            onExpandedChange = { opened ->
+                if (opened) menuState.expanded = true else menuScope.dismiss()
+            },
+            menuWidth = 330.dp,
+            anchor = { onClick ->
+                GlasmioIconButton(onClick = onClick) {
+                    Icon(
+                        imageVector = (PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreVert),
+                        contentDescription = null,
+                        tint = colors.content,
+                        modifier = Modifier.size(20.dp),
+                    )
                 }
+            },
+        ) {
+            ProvideContentColor(color = colors.content) {
+                menuScope.menuContent()
             }
         }
     }
 }
 
 /**
- * 底栏：两个 GlassSurface 默认胶囊。这个 composable 只在 `ThreadPageSkin` 的 overlay 槽里调用，
+ * 底栏：两个 GlassSurface 默认胶囊。这个 composable 只在 `GlassPage` 的 bottomBar 槽里调用，
  * 所以玻璃采到的是页面真实内容。
  */
 @Composable

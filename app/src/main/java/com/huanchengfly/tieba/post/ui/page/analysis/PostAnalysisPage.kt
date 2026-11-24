@@ -12,19 +12,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
-import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -39,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
@@ -48,7 +45,6 @@ import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
-import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
@@ -57,7 +53,8 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
-import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassLargeTitle
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
@@ -123,43 +120,118 @@ fun PostAnalysisPage(
 
     val glassmio = AnalysisUi.DefaultStyle == AnalysisUiStyle.GLASMIO
     ProvideNavigator(navigator = navigator) {
-        MyScaffold(
-            backgroundColor = if (glassmio) AppTokens.groupedBackground
-            else AppTokens.background,
-            topBar = {
-                if (glassmio) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(AppTokens.groupedBackground)
-                            .statusBarsPadding(),
-                    ) {
-                        Row(
+        // 列表内容抽成 lambda：玻璃分支（GlassPage）和回滚分支（MyScaffold）共用同一份。
+        val analysisContent: LazyListScope.() -> Unit = {
+            item {
+                AnalysisSearchField(
+                    value = keyword,
+                    onValueChange = { keyword = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                )
+            }
+
+            if (keyword.isNotBlank()) {
+                item {
+                    Text(
+                        text = stringResource(id = R.string.label_analysis_hit, matched.size),
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        style = MaterialTheme.typography.body2,
+                        color = AppTokens.text,
+                    )
+                }
+                // 列表可能很长，只展示前 100 条命中，避免一次性铺开卡 UI。
+                items(items = matched.take(100)) { post ->
+                    PostHitRow(post = post) {
+                        navigator.navigate(ThreadPageDestination(threadId = post.threadId))
+                    }
+                }
+            } else {
+                when {
+                    isLoading -> item {
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(52.dp)
-                                .padding(horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                                .padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            GlassIconButton(
-                                onClick = { navigator.navigateUp() },
-                                icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = stringResource(id = R.string.button_back),
-                                navigationSurfaceColor = AppTokens.groupedBackground,
-                            )
+                            CircularProgressIndicator()
                         }
+                    }
+
+                    errorText != null -> item {
                         Text(
-                            text = stringResource(id = R.string.title_post_analysis),
-                            style = LocalTextStyle.current.copy(
-                                fontSize = 34.sp,
-                                lineHeight = 40.sp,
-                                fontWeight = FontWeight.Bold,
-                            ),
-                            color = AppTokens.text,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                            text = errorText.orEmpty(),
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colors.error,
                         )
                     }
-                } else {
+
+                    result != null -> {
+                        val r = result ?: PostAnalysisResult()
+                        item { OverviewSection(result = r) }
+                        item {
+                            AnalysisSection(title = stringResource(id = R.string.title_analysis_month)) {
+                                BarChart(
+                                    buckets = r.monthBuckets,
+                                    axisLabel = "${r.monthBuckets.firstOrNull()?.key.orEmpty()} → " +
+                                        r.monthBuckets.lastOrNull()?.key.orEmpty(),
+                                )
+                            }
+                        }
+                        item {
+                            AnalysisSection(title = stringResource(id = R.string.title_analysis_hour)) {
+                                BarChart(buckets = r.hourBuckets, axisLabel = "0 时 → 23 时")
+                            }
+                        }
+                        item {
+                            AnalysisSection(title = stringResource(id = R.string.title_analysis_forum_top)) {
+                                RankList(buckets = r.forumBuckets)
+                            }
+                        }
+                        item {
+                            AnalysisSection(title = stringResource(id = R.string.title_analysis_words)) {
+                                WordCloud(words = r.wordBuckets)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (glassmio) {
+            // T1：外壳交给统一的 GlassPage。大标题仍在返回钮下方、不随列表滚动（与迁移前一致），
+            // 所以它放在内容的 Column 里，而不是列表首项里。
+            GlassPage(
+                title = stringResource(id = R.string.title_post_analysis),
+                onBack = { navigator.navigateUp() },
+            ) { padding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = padding.calculateTopPadding()),
+                ) {
+                    GlassLargeTitle(
+                        title = stringResource(id = R.string.title_post_analysis),
+                        color = AppTokens.text,
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                        maxLines = 1,
+                    )
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(vertical = 12.dp),
+                    ) {
+                        analysisContent()
+                    }
+                }
+            }
+        } else {
+            MyScaffold(
+                backgroundColor = AppTokens.background,
+                topBar = {
                     TitleCentredToolbar(
                         title = {
                             Text(
@@ -171,91 +243,16 @@ fun PostAnalysisPage(
                             BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
                         },
                     )
-                }
-            },
-        ) { contentPaddings ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPaddings),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(vertical = 12.dp),
-            ) {
-                item {
-                    AnalysisSearchField(
-                        value = keyword,
-                        onValueChange = { keyword = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                    )
-                }
-
-                if (keyword.isNotBlank()) {
-                    item {
-                        Text(
-                            text = stringResource(id = R.string.label_analysis_hit, matched.size),
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            style = MaterialTheme.typography.body2,
-                            color = AppTokens.text,
-                        )
-                    }
-                    // 列表可能很长，只展示前 100 条命中，避免一次性铺开卡 UI。
-                    items(items = matched.take(100)) { post ->
-                        PostHitRow(post = post) {
-                            navigator.navigate(ThreadPageDestination(threadId = post.threadId))
-                        }
-                    }
-                } else {
-                    when {
-                        isLoading -> item {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(32.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        }
-
-                        errorText != null -> item {
-                            Text(
-                                text = errorText.orEmpty(),
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                color = MaterialTheme.colors.error,
-                            )
-                        }
-
-                        result != null -> {
-                            val r = result ?: PostAnalysisResult()
-                            item { OverviewSection(result = r) }
-                            item {
-                                AnalysisSection(title = stringResource(id = R.string.title_analysis_month)) {
-                                    BarChart(
-                                        buckets = r.monthBuckets,
-                                        axisLabel = "${r.monthBuckets.firstOrNull()?.key.orEmpty()} → " +
-                                            r.monthBuckets.lastOrNull()?.key.orEmpty(),
-                                    )
-                                }
-                            }
-                            item {
-                                AnalysisSection(title = stringResource(id = R.string.title_analysis_hour)) {
-                                    BarChart(buckets = r.hourBuckets, axisLabel = "0 时 → 23 时")
-                                }
-                            }
-                            item {
-                                AnalysisSection(title = stringResource(id = R.string.title_analysis_forum_top)) {
-                                    RankList(buckets = r.forumBuckets)
-                                }
-                            }
-                            item {
-                                AnalysisSection(title = stringResource(id = R.string.title_analysis_words)) {
-                                    WordCloud(words = r.wordBuckets)
-                                }
-                            }
-                        }
-                    }
+                },
+            ) { contentPaddings ->
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(contentPaddings),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(vertical = 12.dp),
+                ) {
+                    analysisContent()
                 }
             }
         }

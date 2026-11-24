@@ -210,6 +210,7 @@ import kotlinx.serialization.Serializable
 import kotlin.concurrent.thread
 import kotlin.math.max
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 
 private fun getDescText(
     time: Long?,
@@ -1573,21 +1574,27 @@ fun ThreadPage(
     }
 
     ProvideNavigator(navigator = navigator) {
-        ThreadPageSkin(
+        // T1：页面外壳交给统一的 GlassPage。
+        // 吧名胶囊 / ⋯ 菜单走 center / actions 槽，overlay 双层结构与 AnchorMenu 接法原样保留，
+        // 所以「菜单从触发器形变」和玻璃圆钮的采样来源都没有变化。
+        GlassPage(
+            title = threadForumName,
+            onBack = { navigator.navigateUp() },
             enabled = glassmio,
-            topBar = {
-                ThreadGlassTopBar(
+            scrimAlpha = topScrimAlpha,
+            center = {
+                ThreadForumCapsule(
                     forumName = threadForumName,
-                    scrimAlpha = topScrimAlpha,
-                    onBack = { navigator.navigateUp() },
-                    onForumClick = {
+                    onClick = {
                         val forumName = curForumName
                         if (forumName != null) navigator.navigate(
                             ForumPageDestination(forumName)
                         )
                     },
-                    menuContent = { threadMenuContent { dismiss() } },
                 )
+            },
+            actions = {
+                ThreadTopBarMenu(menuContent = { threadMenuContent { dismiss() } })
             },
             bottomBar = {
                 ThreadGlassBottomBar(
@@ -1603,7 +1610,7 @@ fun ThreadPage(
                     isDesc = curSortType == ThreadSortType.SORT_TYPE_DESC,
                 )
             },
-        ) {
+        ) { _ ->
             StateScreen(
                 modifier = Modifier.fillMaxSize(),
                 isEmpty = isEmpty,
@@ -1636,7 +1643,7 @@ fun ThreadPage(
                     scaffoldState = scaffoldState,
                     backgroundColor = if (glassmio) Color.Transparent else MaterialTheme.colors.background,
                     topBar = {
-                        // GLASMIO 的顶栏是 overlay（见 ThreadPageSkin 的 topBar 槽），
+                        // GLASMIO 的顶栏是 overlay（见 GlassPage 的顶栏/center 槽），
                         // Scaffold 这里不再占高度，内容才能从顶栏下穿过。
                         if (!glassmio) {
                             TopBar(
@@ -1654,7 +1661,7 @@ fun ThreadPage(
                         }
                     },
                 bottomBar = {
-                    // GLASMIO 的底栏在 ThreadPageSkin 的 overlay 槽里（能采真实内容）；
+                    // GLASMIO 的底栏在 GlassPage 的 overlay 槽里（能采真实内容）；
                     // 这里只给 LEGACY 保留旧的 Scaffold 底栏。
                     if (!glassmio) {
                         BottomBar(

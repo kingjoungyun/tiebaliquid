@@ -5,10 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,11 +18,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
-import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.Article
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.CollectionsBookmark
@@ -87,10 +81,9 @@ import com.huanchengfly.tieba.post.utils.appPreferences
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
-import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassLargeTitle
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 import com.huanchengfly.tieba.post.ui.common.theme.glass.SquircleShape
-import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageSkin
-import com.huanchengfly.tieba.post.ui.page.thread.ThreadTopBarHeight
 
 /**
  * 「我的贴吧」聚合页。
@@ -237,48 +230,30 @@ fun ToolboxPage(
 
     val glassmio = ToolboxUi.DefaultStyle == ToolboxUiStyle.GLASMIO
     if (glassmio) {
-        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-        ThreadPageSkin(
-            enabled = true,
-            topBar = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .height(ThreadTopBarHeight)
-                        .padding(horizontal = 8.dp)
-                ) {
-                    GlassIconButton(
-                        onClick = { navigator.navigateUp() },
-                        icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = stringResource(id = R.string.button_back),
-                        modifier = Modifier.align(Alignment.CenterStart),
-                    )
-                }
-            },
-            bottomBar = {},
-        ) {
+        // T1：页面外壳交给统一的 GlassPage（overlay 双层 host + 悬浮返回钮 + 大标题 + 内容 padding）。
+        GlassPage(
+            title = "工具箱",
+            onBack = { navigator.navigateUp() },
+        ) { padding ->
             CompositionLocalProvider(LocalPrefsUiStyle provides PrefsUiStyle.GLASSMIO) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 16.dp),
                     contentPadding = PaddingValues(
-                        top = statusBarTop + ThreadTopBarHeight,
+                        top = padding.calculateTopPadding(),
                         bottom = 24.dp,
                     ),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     item {
-                        Text(
-                            text = "工具箱",
-                            style = LocalTextStyle.current.copy(
-                                fontSize = 34.sp,
-                                lineHeight = 40.sp,
-                                fontWeight = FontWeight.Bold,
-                            ),
+                        // 大标题交给骨架的 GlassLargeTitle（34sp/40sp/w700 + 鸿蒙字族）。
+                        // 横向留白由 LazyColumn 的 16dp 提供，所以这里只给纵向 8dp。
+                        GlassLargeTitle(
+                            title = "工具箱",
                             color = AppTokens.text,
-                            modifier = Modifier.padding(vertical = 8.dp),
+                            contentPadding = PaddingValues(vertical = 8.dp),
+                            maxLines = 1,
                         )
                     }
                     item {

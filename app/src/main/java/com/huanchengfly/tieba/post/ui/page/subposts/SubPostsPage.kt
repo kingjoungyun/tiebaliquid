@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeightIn
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -40,7 +39,6 @@ import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.OpenInBrowser
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -51,11 +49,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
@@ -75,10 +71,11 @@ import com.huanchengfly.tieba.post.ui.common.theme.compose.threadBottomBar
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.thread.ThreadBottomBarInset
-import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageSkin
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassLargeTitle
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
+import com.huanchengfly.tieba.post.ui.common.theme.glass.rememberGlassTitleCollapse
 import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageUi
 import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageUiStyle
-import com.huanchengfly.tieba.post.ui.page.thread.ThreadTopBarHeight
 import com.huanchengfly.tieba.post.ui.page.destinations.CopyTextDialogPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
@@ -116,6 +113,7 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.spec.DestinationStyleBottomSheet
 import io.github.neoruaa.glasmio.core.GlasmioTheme
+import io.github.neoruaa.glasmio.ui.GlasmioIconButton
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -323,18 +321,10 @@ internal fun SubPostsContent(
     }
 
     val glassmio = ThreadPageUi.DefaultStyle == ThreadPageUiStyle.GLASMIO
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val topInset = statusBarTop + ThreadTopBarHeight
     val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val bottomInset = if (glassmio) ThreadBottomBarInset + navigationBarBottom else 0.dp
     var largeTitleHeightPx by remember { mutableIntStateOf(0) }
-    val isLargeTitleCollapsed by remember {
-        derivedStateOf {
-            val offset = lazyListState.firstVisibleItemScrollOffset
-            lazyListState.firstVisibleItemIndex > 0 ||
-                (largeTitleHeightPx > 0 && offset >= largeTitleHeightPx)
-        }
-    }
+    val isLargeTitleCollapsed = rememberGlassTitleCollapse(lazyListState, largeTitleHeightPx)
     val topScrimAlpha by animateFloatAsState(
         targetValue = if (isLargeTitleCollapsed) 1f else 0f,
         animationSpec = tween(180),
@@ -345,16 +335,18 @@ internal fun SubPostsContent(
         stringResource(id = R.string.title_sub_posts, it.get { floor })
     }
 
-    ThreadPageSkin(
+    // T1：外壳交给统一的 GlassPage（overlay 双层 host + 悬浮返回钮 + 紧凑胶囊标题 + scrim）。
+    GlassPage(
+        title = largeTitle,
+        onBack = onNavigateUp,
         enabled = glassmio,
-        topBar = {
-            SubPostsGlassTopBar(
-                title = largeTitle,
-                collapsed = isLargeTitleCollapsed,
-                scrimAlpha = topScrimAlpha,
-                onBack = onNavigateUp,
-                onOpenOrigin = if (isSheet) null else {
-                    {
+        collapsed = isLargeTitleCollapsed,
+        scrimAlpha = topScrimAlpha,
+        actions = {
+            if (!isSheet) {
+                //「打开原帖」仍在顶栏右侧：沿用原来的 Glasmio 圆钮（材质与迁移前一致）。
+                GlasmioIconButton(
+                    onClick = {
                         navigator.navigate(
                             ThreadPageDestination(
                                 forumId = forum?.get { id } ?: forumId,
@@ -362,9 +354,16 @@ internal fun SubPostsContent(
                                 postId = post?.get { id } ?: postId
                             )
                         )
-                    }
-                },
-            )
+                    },
+                ) {
+                    Icon(
+                        imageVector = PhosphorIcons["arrow-square-out"] ?: Icons.Rounded.OpenInBrowser,
+                        contentDescription = stringResource(id = R.string.btn_open_origin_thread),
+                        tint = GlasmioTheme.colors.content,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
         },
         bottomBar = {
             SubPostsGlassBottomBar(
@@ -384,7 +383,7 @@ internal fun SubPostsContent(
                 }
             )
         },
-    ) {
+    ) { padding ->
     StateScreen(
         modifier = Modifier.fillMaxSize(),
         isEmpty = subPosts.isEmpty(),
@@ -531,7 +530,7 @@ internal fun SubPostsContent(
                 MyLazyColumn(
                     state = lazyListState,
                     contentPadding = PaddingValues(
-                        top = if (glassmio) topInset else 0.dp,
+                        top = if (glassmio) padding.calculateTopPadding() else 0.dp,
                         bottom = bottomInset,
                     ),
                 ) {
@@ -539,9 +538,9 @@ internal fun SubPostsContent(
                         post?.let {
                             Column {
                                 if (glassmio) {
-                                    SubPostsLargeTitle(
+                                    GlassLargeTitle(
                                         title = largeTitle,
-                                        smallTitle = smallTitle,
+                                        subtitle = smallTitle,
                                         onHeightChanged = { largeTitleHeightPx = it },
                                     )
                                 }
