@@ -38,6 +38,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.arch.emitGlobalEvent
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponent
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabRow
+import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
 import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
@@ -76,6 +79,8 @@ fun HistoryPage(
 
     val context = LocalContext.current
     val glassmio = HistoryListUi.DefaultStyle == HistoryListUiStyle.GLASMIO
+    // T2：TabRow 的组件级回滚开关（见 GlassComponent 的说明）
+    val useGlassTabRow = useGlassComponent(GlassComponent.TabRow)
 
     LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
@@ -129,6 +134,29 @@ fun HistoryPage(
                             color = AppTokens.text,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                         )
+                        if (useGlassTabRow) {
+                            // T2 试点：iOS 分段控件风格（灰色轨道 + 白色滑块）。
+                            // 回滚：`adb shell settings put global tieba_glass_tabrow 0`，或用下面那个
+                            // `else` 分支里的 M2 TabRow（代码原样保留）。
+                            GlassTabRow(
+                                tabs = listOf(
+                                    stringResource(id = R.string.title_history_thread),
+                                    stringResource(id = R.string.title_history_forum),
+                                ),
+                                selectedTabIndex = pagerState.currentPage,
+                                onTabSelected = { index ->
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(index)
+                                    }
+                                },
+                                modifier = Modifier.padding(
+                                    start = 16.dp,
+                                    end = 16.dp,
+                                    top = 4.dp,
+                                    bottom = 8.dp,
+                                ),
+                            )
+                        } else {
                         TabRow(
                             selectedTabIndex = pagerState.currentPage,
                             indicator = { tabPositions ->
@@ -170,6 +198,7 @@ fun HistoryPage(
                                     unselectedContentColor = AppTokens.onTopBarSecondary,
                                 )
                             }
+                        }
                         }
                     }
                 }

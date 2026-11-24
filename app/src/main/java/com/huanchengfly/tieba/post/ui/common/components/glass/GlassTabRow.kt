@@ -1,0 +1,355 @@
+package com.huanchengfly.tieba.post.ui.common.components.glass
+
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassSurface
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+
+/** 分段控件（track）的高度。 */
+val GlassTabRowHeight: Dp = 36.dp
+
+/** 滑块相对 track 的内缩。 */
+private val GlassTabThumbInset = 2.dp
+
+private val GlassTabThumbShadow = Color.Black.copy(alpha = 0.10f)
+
+/**
+ * iOS 分段控件风格的 TabRow（T2）。
+ *
+ * 结构：**灰色轨道 + 白色滑块**。
+ * - 轨道：胶囊形，玻璃材质 tint 成 `AppTokens.chip`（`GlassComponentSurface` → 在任何页面
+ *   都能拿到真玻璃；API < 33 自动退化成 chip 纯色 + 描边，布局不变）；
+ * - 滑块：`AppTokens.card` + 轻微阴影（复用 App 的伪玻璃 [GlassSurface]，它就是
+ *   「半透明填充 + 描边 + 自绘阴影」，正好是 iOS 滑块的样子），位置随选中项平移动画 220ms；
+ * - 文字：15sp，选中 w600 + `AppTokens.primary`，未选中 `AppTokens.textSecondary`。
+ *
+ * 不绑定 pager：调用方给 `selectedTabIndex` + `onTabSelected(index)`，自己决定是否
+ * `pagerState.animateScrollToPage(...)`。这样 History / 搜索 / 消息 / 用户主页这些
+ * 现在各自拼 M2 `TabRow` + `PagerTabIndicator` 的地方都能直接换。
+ *
+ * @param tabCount tab 数量（2–3 个时用本函数；4+ 用 [GlassScrollableTabRow]）
+ * @param label tab 内容（默认用 [GlassTabLabel] 画文字）
+ */
+@Composable
+fun GlassTabRow(
+    selectedTabIndex: Int,
+    onTabSelected: (Int) -> Unit,
+    tabCount: Int,
+    modifier: Modifier = Modifier,
+    label: @Composable (index: Int, selected: Boolean) -> Unit = { index, selected ->
+        GlassTabLabel(text = index.toString(), selected = selected)
+    },
+) {
+    if (tabCount <= 0) return
+    val shape = RoundedCornerShape(GlassTabRowHeight / 2)
+    val density = LocalDensity.current
+    val insetPx = with(density) { GlassTabThumbInset.toPx() }
+    var rowWidthPx by remember { mutableIntStateOf(0) }
+
+    val segmentWidthPx = if (rowWidthPx > 0) rowWidthPx / tabCount else 0
+    val thumbWidthPx = (segmentWidthPx - insetPx * 2).coerceAtLeast(0f)
+    val targetOffsetPx = insetPx + selectedTabIndex.coerceIn(0, tabCount - 1) * segmentWidthPx
+    val animatedOffsetPx by animateDpAsState(
+        targetValue = with(density) { targetOffsetPx.toDp() },
+        animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+        label = "glassTabThumbOffset",
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(GlassTabRowHeight)
+            .onSizeChanged { rowWidthPx = it.width }
+            .selectableGroup(),
+    ) {
+        GlassComponentSurface(
+            modifier = Modifier.fillMaxSize(),
+            shape = shape,
+            tint = AppTokens.chip,
+            innerGlow = false,
+        ) {}
+
+        if (thumbWidthPx > 0) {
+            GlassSurface(
+                modifier = Modifier
+                    .offset(x = animatedOffsetPx, y = GlassTabThumbInset)
+                    .width(with(density) { thumbWidthPx.toDp() })
+                    .height(GlassTabRowHeight - GlassTabThumbInset * 2),
+                shape = RoundedCornerShape((GlassTabRowHeight - GlassTabThumbInset * 2) / 2),
+                fill = AppTokens.card,
+                strokeColor = Color.Transparent,
+                shadowColor = GlassTabThumbShadow,
+                shadowElevation = 6.dp,
+                shadowOffsetY = 1.dp,
+                strokeWidth = 0.dp,
+            ) {}
+        }
+
+        Row(modifier = Modifier.fillMaxSize()) {
+            repeat(tabCount) { index ->
+                val selected = index == selectedTabIndex
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .selectable(
+                            selected = selected,
+                            role = Role.Tab,
+                            onClick = { if (!selected) onTabSelected(index) },
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    label(index, selected)
+                }
+            }
+        }
+    }
+}
+
+/** 纯文字分段控件的便捷重载。 */
+@Composable
+fun GlassTabRow(
+    tabs: List<String>,
+    selectedTabIndex: Int,
+    onTabSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    GlassTabRow(
+        selectedTabIndex = selectedTabIndex,
+        onTabSelected = onTabSelected,
+        tabCount = tabs.size,
+        modifier = modifier,
+    ) { index, selected ->
+        GlassTabLabel(text = tabs[index], selected = selected)
+    }
+}
+
+/**
+ * 可滚动的分段控件（4+ tab）。
+ *
+ * 轨道跟着内容一起横向滚动（内容宽度 = 所有 tab 宽度之和），滑块位置由各 tab 的实测宽度
+ * 累加得到；选中项变化时自动把它滚到视口中间。tabs 少于 3 个时建议用 [GlassTabRow]
+ * （等分、宽度铺满）。
+ */
+@Composable
+fun GlassScrollableTabRow(
+    selectedTabIndex: Int,
+    onTabSelected: (Int) -> Unit,
+    tabCount: Int,
+    modifier: Modifier = Modifier,
+    label: @Composable (index: Int, selected: Boolean) -> Unit = { index, selected ->
+        GlassTabLabel(text = index.toString(), selected = selected)
+    },
+) {
+    if (tabCount <= 0) return
+    val shape = RoundedCornerShape(GlassTabRowHeight / 2)
+    val density = LocalDensity.current
+    val insetPx = with(density) { GlassTabThumbInset.toPx() }
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+
+    val tabWidths = remember(tabCount) {
+        mutableStateListOf<Int>().apply { repeat(tabCount) { add(0) } }
+    }
+    var viewportWidthPx by remember { mutableIntStateOf(0) }
+
+    val selected = selectedTabIndex.coerceIn(0, tabCount - 1)
+    val tabsBeforePx = (0 until selected).sumOf { tabWidths[it] }
+    val thumbOffsetPx = insetPx + tabsBeforePx
+    val thumbWidthPx = (tabWidths[selected] - insetPx * 2).coerceAtLeast(0f)
+
+    val animatedOffset by animateDpAsState(
+        targetValue = with(density) { thumbOffsetPx.toDp() },
+        animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+        label = "glassScrollableTabThumbOffset",
+    )
+    val animatedWidth by animateDpAsState(
+        targetValue = with(density) { thumbWidthPx.toDp() },
+        animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+        label = "glassScrollableTabThumbWidth",
+    )
+
+    // 选中项变化时，把它滚到视口中间（内容不足一屏时 scrollState 自己会夹住）
+    LaunchedEffect(selected, tabWidths.toList(), viewportWidthPx) {
+        if (viewportWidthPx <= 0 || tabWidths[selected] <= 0) return@LaunchedEffect
+        val target = (tabsBeforePx - (viewportWidthPx - tabWidths[selected]) / 2)
+            .coerceIn(0, scrollState.maxValue)
+        coroutineScope.launch { scrollState.animateScrollTo(target) }
+    }
+
+    Box(
+        modifier = modifier
+            .height(GlassTabRowHeight)
+            .onSizeChanged { viewportWidthPx = it.width }
+            .clip(shape),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxHeight()
+                .horizontalScroll(scrollState),
+        ) {
+            Box(modifier = Modifier.height(GlassTabRowHeight)) {
+                GlassComponentSurface(
+                    modifier = Modifier.matchParentSize(),
+                    shape = shape,
+                    tint = AppTokens.chip,
+                    innerGlow = false,
+                ) {}
+                if (thumbWidthPx > 0) {
+                    GlassSurface(
+                        modifier = Modifier
+                            .offset(x = animatedOffset, y = GlassTabThumbInset)
+                            .width(animatedWidth)
+                            .height(GlassTabRowHeight - GlassTabThumbInset * 2),
+                        shape = RoundedCornerShape((GlassTabRowHeight - GlassTabThumbInset * 2) / 2),
+                        fill = AppTokens.card,
+                        strokeColor = Color.Transparent,
+                        shadowColor = GlassTabThumbShadow,
+                        shadowElevation = 6.dp,
+                        shadowOffsetY = 1.dp,
+                        strokeWidth = 0.dp,
+                    ) {}
+                }
+                Row(modifier = Modifier.fillMaxHeight()) {
+                    repeat(tabCount) { index ->
+                        val isSelected = index == selected
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .selectable(
+                                    selected = isSelected,
+                                    role = Role.Tab,
+                                    onClick = { if (!isSelected) onTabSelected(index) },
+                                )
+                                .onSizeChanged { tabWidths[index] = it.width }
+                                .padding(horizontal = 18.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            label(index, isSelected)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** 纯文字可滚动分段控件的便捷重载。 */
+@Composable
+fun GlassScrollableTabRow(
+    tabs: List<String>,
+    selectedTabIndex: Int,
+    onTabSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    GlassScrollableTabRow(
+        selectedTabIndex = selectedTabIndex,
+        onTabSelected = onTabSelected,
+        tabCount = tabs.size,
+        modifier = modifier,
+    ) { index, selected ->
+        GlassTabLabel(text = tabs[index], selected = selected)
+    }
+}
+
+/** 分段控件的默认文字：15sp，选中 w600 + accent，未选中次级色。 */
+@Composable
+fun GlassTabLabel(
+    text: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        modifier = modifier,
+        fontSize = 15.sp,
+        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+        color = if (selected) AppTokens.primary else AppTokens.textSecondary,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
+}
+
+/**
+ * 带计数的文字 tab（消息页那类「回复我的 3」）。
+ *
+ * 计数用 accent 胶囊显示在文字右侧，选中时与文字同色。
+ */
+@Composable
+fun GlassTabLabel(
+    text: String,
+    selected: Boolean,
+    count: Int?,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        GlassTabLabel(text = text, selected = selected)
+        if (count != null && count > 0) {
+            Box(
+                modifier = Modifier
+                    .padding(start = 5.dp)
+                    .clip(RoundedCornerShape(100))
+                    .background(
+                        if (selected) AppTokens.primary.copy(alpha = 0.16f)
+                        else AppTokens.chip
+                    )
+                    .padding(horizontal = 5.dp, vertical = 1.dp),
+            ) {
+                Text(
+                    text = if (count > 99) "99+" else count.toString(),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (selected) AppTokens.primary else AppTokens.textSecondary,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+/** 让 [GlassTabLabel] 的取值在线性布局里稳定（避免调用点写 `roundToInt`）。 */
+internal fun Dp.pxRounded(density: Float): Int = (value * density).roundToInt()
