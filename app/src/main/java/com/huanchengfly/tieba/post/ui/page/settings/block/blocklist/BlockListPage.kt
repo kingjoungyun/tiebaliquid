@@ -43,7 +43,6 @@ import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.models.database.Block
 import com.huanchengfly.tieba.post.models.database.Block.Companion.getKeywords
 import com.huanchengfly.tieba.post.ui.page.main.BottomNavigationDivider
-import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
 import com.huanchengfly.tieba.post.ui.widgets.compose.LongClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassPromptDialog
@@ -61,7 +60,9 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import com.kyant.capsule.ContinuousRoundedRectangle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.SnackbarHost
-import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material.SnackbarHostState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassSnackbarHost
 
 @Destination
 @Composable
@@ -110,18 +111,18 @@ fun BlockListPage(
             )
             val items = remember(blackList) { blackList.filter { it.type == Block.TYPE_USER } }
     
-            // 去掉 MyScaffold 后 `LocalSnackbarHostState` 没有提供者了（它的默认实现会抛
-            // "no scaffold here!"），所以这里自己造一个 state，并在 floating 槽里挂 SnackbarHost。
-            val snackbarHostState = rememberScaffoldState().snackbarHostState
+            // 骨架现在自带 snackbarHost 槽（见 GlassPage）：页面自己造 state，
+            // 由骨架放在 overlay 底部，玻璃胶囊样式。
+            val snackbarHostState = remember { SnackbarHostState() }
+            // 列表 state 提到页面层，给 largeTitle 的自动折叠用（滚动时标题收起、胶囊出现）
+            val listState = rememberLazyListState()
             GlassPage(
                 title = stringResource(id = R.string.title_black_list),
                 largeTitle = stringResource(id = R.string.title_black_list),
+                largeTitleScrollState = listState,
                 onBack = { navigator.navigateUp() },
-                floating = {
-                    SnackbarHost(
-                        hostState = snackbarHostState,
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                    )
+                snackbarHost = {
+                    GlassSnackbarHost(hostState = snackbarHostState)
                 },
                 bottomBar = {
                     // 底部动作条：玻璃胶囊 + 图标 + 文案（原来是 M2 的一条底栏）
@@ -203,6 +204,7 @@ fun BlockListPage(
                 ) {
                     val clipboardManager = LocalClipboardManager.current
                     MyLazyColumn(
+                        state = listState,
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(vertical = 6.dp),
                     ) {

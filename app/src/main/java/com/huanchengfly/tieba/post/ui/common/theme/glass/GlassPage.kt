@@ -98,6 +98,7 @@ import io.github.neoruaa.glasmio.glass.GlassSurface
  * @param center 顶栏中央的自定义内容（帖子页的吧名胶囊等）；为空时走紧凑胶囊标题
  * @param bottomBar 可选底栏（帖子页 / 楼中楼用）
  * @param floating 可选悬浮层（可对齐到 overlay 的任意位置）
+ * @param snackbarHost 可选 snackbar 宿主槽（配合 [GlassSnackbarHost]）
  * @param content 页面内容；`padding` = 状态栏 + 顶栏高度
  */
 @Composable
@@ -118,6 +119,13 @@ fun GlassPage(
     largeTitleScrollState: LazyListState? = null,
     /** 大标题自己的内边距（默认横向 16dp + 纵向 6dp，与手写版一致）。 */
     largeTitlePadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+    /**
+     * 底部 snackbar 宿主槽（T5 批次 3）。
+     *
+     * 骨架原来没有 snackbar host：页面一旦不套 `MyScaffold`，读 `LocalSnackbarHostState`
+     * 就会抛 `no scaffold here!`。传这个槽 + [GlassSnackbarHost] 就能在玻璃层级里弹提示。
+     */
+    snackbarHost: (@Composable BoxScope.() -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     if (!enabled) {
@@ -187,8 +195,10 @@ fun GlassPage(
                 center = center,
                 actions = actions,
             )
-            if (bottomBar != null) {
-                Box(modifier = Modifier.align(Alignment.BottomCenter)) { bottomBar() }
+            // 底栏与 snackbar 叠在同一个 Column 里：snackbar 在底栏之上，不会盖住按钮
+            Column(modifier = Modifier.align(Alignment.BottomCenter)) {
+                if (snackbarHost != null) { Box { snackbarHost() } }
+                if (bottomBar != null) { bottomBar() }
             }
             floating()
         }
@@ -218,8 +228,9 @@ fun GlassPage(
                             center = center,
                             actions = actions,
                         )
-                        if (bottomBar != null) {
-                            Box(modifier = Modifier.align(Alignment.BottomCenter)) { bottomBar() }
+                        Column(modifier = Modifier.align(Alignment.BottomCenter)) {
+                            if (snackbarHost != null) { Box { snackbarHost() } }
+                            if (bottomBar != null) { bottomBar() }
                         }
                         floating()
                     }
