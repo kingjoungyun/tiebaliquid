@@ -27,6 +27,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,20 +43,17 @@ import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.arch.wrapImmutable
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
-import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
-import com.huanchengfly.tieba.post.ui.widgets.compose.Chip
-import com.huanchengfly.tieba.post.ui.widgets.compose.Container
 import com.huanchengfly.tieba.post.ui.widgets.compose.ErrorScreen
 import com.huanchengfly.tieba.post.ui.widgets.compose.HorizontalDivider
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
-import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
-import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreen
 import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.huanchengfly.tieba.post.ui.common.components.GlassListCard
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import io.github.neoruaa.glasmio.core.GlasmioTheme
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 
 @Destination
 @Composable
@@ -100,27 +99,18 @@ fun ForumDetailPage(
         },
         modifier = Modifier.fillMaxSize(),
     ) {
-        MyScaffold(
-            topBar = {
-                TitleCentredToolbar(
-                    title = {
-                        Text(text = stringResource(id = R.string.title_forum_info))
-                    },
-                    navigationIcon = {
-                        BackNavigationIcon {
-                            navigator.navigateUp()
-                        }
-                    }
-                )
-            }
+        GlassPage(
+            title = stringResource(id = R.string.title_forum_info),
+            largeTitle = stringResource(id = R.string.title_forum_info),
+            onBack = { navigator.navigateUp() },
         ) { paddingValues ->
-            Container(modifier = Modifier.padding(paddingValues)) {
-                forumInfo?.let {
-                    ForumDetailContent(
-                        forumInfo = it,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+            forumInfo?.let {
+                ForumDetailContent(
+                    forumInfo = it,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = paddingValues.calculateTopPadding()),
+                )
             }
         }
     }
@@ -138,47 +128,71 @@ private fun ForumDetailContent(
         modifier = modifier
             .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Avatar(
-                data = forumInfo.get { avatar },
-                size = Sizes.Medium,
-                contentDescription = null,
-            )
-            Text(
-                text = stringResource(id = R.string.title_forum, forumInfo.get { forum_name }),
-                style = MaterialTheme.typography.h6
-            )
-        }
-        Row(
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(color = AppTokens.chip)
-                .padding(vertical = 20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            StatCardItem(
-                statNum = forumInfo.get { member_count },
-                statText = stringResource(id = R.string.text_stat_follow)
-            )
-            HorizontalDivider(color = Color(if (AppTokens.isNightMode) 0xFF808080 else 0xFFDEDEDE))
-            StatCardItem(
-                statNum = forumInfo.get { thread_count },
-                statText = stringResource(id = R.string.text_stat_threads)
-            )
-        }
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Chip(text = stringResource(id = R.string.title_forum_intro))
-            Column {
-                Text(text = forumInfo.get { slogan }, style = MaterialTheme.typography.body1)
-                Text(text = intro, style = MaterialTheme.typography.body1)
+        // ---- 信息卡：吧头像 + 吧名 + 关注/帖子数 ----
+        GlassListCard(modifier = Modifier.padding(top = 4.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Avatar(
+                    data = forumInfo.get { avatar },
+                    size = 44.dp,
+                    contentDescription = null,
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = forumInfo.get { forum_name },
+                        fontSize = 20.sp,
+                        lineHeight = 26.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = AppTokens.text,
+                        maxLines = 2,
+                    )
+                    val slogan = forumInfo.get { slogan }
+                    if (slogan.isNotBlank()) {
+                        Text(
+                            text = slogan,
+                            fontSize = 13.sp,
+                            color = AppTokens.textSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
             }
+            Spacer(modifier = Modifier.height(14.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                StatCardItem(
+                    statNum = forumInfo.get { member_count },
+                    statText = stringResource(id = R.string.text_stat_follow)
+                )
+                HorizontalDivider(
+                    color = GlasmioTheme.colors.subtleStroke,
+                    modifier = Modifier.height(28.dp),
+                )
+                StatCardItem(
+                    statNum = forumInfo.get { thread_count },
+                    statText = stringResource(id = R.string.text_stat_threads)
+                )
+            }
+        }
+        // ---- 简介卡 ----
+        GlassListCard {
+            Text(
+                text = stringResource(id = R.string.title_forum_intro),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = AppTokens.textSecondary,
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = intro,
+                fontSize = 15.sp,
+                lineHeight = 22.sp,
+                color = AppTokens.text,
+            )
         }
     }
 }
