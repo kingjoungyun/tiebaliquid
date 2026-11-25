@@ -21,7 +21,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
  *
  * 内容复用 [UserPostPage]，`isThread = true` 为主题帖，`false` 为回帖。
  *
- * T5：骨架从 `MyScaffold + TitleCentredToolbar` 换成 [GlassPage]（折叠大标题 + 悬浮返回按钮），
+ * T5：骨架从 `MyScaffold` + M2 顶栏换成 [GlassPage]（大标题 + 悬浮返回按钮），
  * 列表本身没动 —— 里面的卡片已经是 `PostCard`（T3.5 统一过）。
  */
 @Destination

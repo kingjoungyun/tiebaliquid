@@ -59,7 +59,7 @@ object CopyTextDialogStyle : DestinationStyle.Dialog {
 /**
  * 复制文本弹窗（长按楼层/帖子 → 复制）。
  *
- * T5：去掉 M2 `TitleCentredToolbar`，改成：
+ * T5：去掉旧的 M2 顶栏，改成：
  * - 一张玻璃卡（同圆角/内边距），标题 + 关闭按钮在一行，副标题在下；
  * - 正文用 `GlassTextField` 的**只读无壳**形态 —— 它内部是 `BasicTextField(readOnly = true)`，
  *   自带文本选择与「全选/复制」系统菜单，比原来的 `SelectionContainer` + `Text` 更可靠；
