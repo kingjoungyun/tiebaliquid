@@ -69,11 +69,8 @@ import com.huanchengfly.tieba.post.ui.page.destinations.UserPostListPageDestinat
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.AvatarPlaceholder
-import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
-import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.utils.AccountUtil
 import com.huanchengfly.tieba.post.utils.StringUtil
 import com.huanchengfly.tieba.post.utils.TiebaUtil
@@ -81,7 +78,6 @@ import com.huanchengfly.tieba.post.utils.appPreferences
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
-import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassLargeTitle
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 import com.huanchengfly.tieba.post.ui.common.theme.glass.SquircleShape
 
@@ -228,11 +224,10 @@ fun ToolboxPage(
         },
     )
 
-    val glassmio = ToolboxUi.DefaultStyle == ToolboxUiStyle.GLASMIO
-    if (glassmio) {
         // T1：页面外壳交给统一的 GlassPage（overlay 双层 host + 悬浮返回钮 + 大标题 + 内容 padding）。
         GlassPage(
             title = "工具箱",
+            largeTitle = "工具箱",
             onBack = { navigator.navigateUp() },
         ) { padding ->
             CompositionLocalProvider(LocalPrefsUiStyle provides PrefsUiStyle.GLASSMIO) {
@@ -246,16 +241,6 @@ fun ToolboxPage(
                     ),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    item {
-                        // 大标题交给骨架的 GlassLargeTitle（34sp/40sp/w700 + 鸿蒙字族）。
-                        // 横向留白由 LazyColumn 的 16dp 提供，所以这里只给纵向 8dp。
-                        GlassLargeTitle(
-                            title = "工具箱",
-                            color = AppTokens.text,
-                            contentPadding = PaddingValues(vertical = 8.dp),
-                            maxLines = 1,
-                        )
-                    }
                     item {
                         ToolboxProfileCard(
                             user = user?.getOrNull(),
@@ -295,60 +280,7 @@ fun ToolboxPage(
                 }
             }
         }
-        return
-    }
 
-    MyScaffold(
-        topBar = {
-            TitleCentredToolbar(
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.title_toolbox_center),
-                        style = MaterialTheme.typography.h6,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
-                }
-            )
-        }
-    ) { contentPaddings ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPaddings)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            item {
-                ToolboxProfileCard(
-                    user = user?.getOrNull(),
-                    fallbackAccount = account,
-                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
-                    onClick = {
-                        requireLogin {
-                            navigator.navigate(UserProfilePageDestination(selfUid))
-                        }
-                    },
-                )
-            }
-
-            item { ToolboxGroupTitle(stringResource(id = R.string.title_toolbox_group_social)) }
-            items(items = socialEntries) { ToolboxEntryRow(entry = it) }
-
-            item { ToolboxGroupTitle(stringResource(id = R.string.title_toolbox_group_content)) }
-            items(items = contentEntries) { ToolboxEntryRow(entry = it) }
-
-            item { ToolboxGroupTitle(stringResource(id = R.string.title_toolbox_group_forum)) }
-            items(items = forumEntries) { ToolboxEntryRow(entry = it) }
-
-            item { ToolboxGroupTitle(stringResource(id = R.string.title_toolbox_group_app)) }
-            items(items = appEntries) { ToolboxEntryRow(entry = it) }
-
-            item { Spacer(modifier = Modifier.height(24.dp)) }
-        }
-    }
 }
 
 private class ToolboxEntry(
