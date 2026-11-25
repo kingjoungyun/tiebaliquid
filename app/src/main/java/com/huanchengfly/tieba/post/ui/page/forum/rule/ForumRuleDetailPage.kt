@@ -36,7 +36,6 @@ import com.huanchengfly.tieba.post.arch.getOrNull
 import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponentSurface
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
-import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassLargeTitle
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
@@ -111,6 +110,7 @@ fun ForumRuleDetailPage(
         ) {
             GlassPage(
                 title = stringResource(id = R.string.title_forum_rule),
+                largeTitle = stringResource(id = R.string.title_forum_rule),
                 onBack = { navigator.navigateUp() },
             ) { padding ->
                 Column(
@@ -120,16 +120,11 @@ fun ForumRuleDetailPage(
                         .padding(
                             start = 16.dp,
                             end = 16.dp,
-                            top = padding.calculateTopPadding() + 8.dp,
+                            top = padding.calculateTopPadding(),
                             bottom = 24.dp,
                         ),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    // GlassPage 只负责折叠后的小胶囊标题；未折叠时的大标题由页面画（与楼中楼/工具箱同一套）。
-                    GlassLargeTitle(
-                        title = stringResource(id = R.string.title_forum_rule),
-                        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 6.dp),
-                    )
                     // ---- 头部卡：标题 + 作者 + 发布时间 ----
                     RuleCard {
                         Text(

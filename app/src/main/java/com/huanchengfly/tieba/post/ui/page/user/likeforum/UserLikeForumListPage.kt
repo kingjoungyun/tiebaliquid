@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.R
-import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassLargeTitle
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.ramcosta.composedestinations.annotation.Destination
@@ -35,6 +34,7 @@ fun UserLikeForumListPage(
     ProvideNavigator(navigator = navigator) {
         GlassPage(
             title = stringResource(id = R.string.title_toolbox_like_forum),
+            largeTitle = stringResource(id = R.string.title_toolbox_like_forum),
             onBack = { navigator.navigateUp() },
         ) { padding ->
             Column(
@@ -42,10 +42,6 @@ fun UserLikeForumListPage(
                     .fillMaxSize()
                     .padding(top = padding.calculateTopPadding())
             ) {
-                GlassLargeTitle(
-                    title = stringResource(id = R.string.title_toolbox_like_forum),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-                )
                 Box(modifier = Modifier.weight(1f)) {
                     UserLikeForumPage(
                         uid = uid,

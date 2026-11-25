@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.R
-import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassLargeTitle
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.ramcosta.composedestinations.annotation.Destination
@@ -39,6 +38,9 @@ fun UserPostListPage(
             title = stringResource(
                 id = if (isThread) R.string.title_toolbox_threads else R.string.title_toolbox_posts
             ),
+            largeTitle = stringResource(
+                id = if (isThread) R.string.title_toolbox_threads else R.string.title_toolbox_posts
+            ),
             onBack = { navigator.navigateUp() },
         ) { padding ->
             Column(
@@ -46,12 +48,6 @@ fun UserPostListPage(
                     .fillMaxSize()
                     .padding(top = padding.calculateTopPadding())
             ) {
-                GlassLargeTitle(
-                    title = stringResource(
-                        id = if (isThread) R.string.title_toolbox_threads else R.string.title_toolbox_posts
-                    ),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-                )
                 Box(modifier = Modifier.weight(1f)) {
                     UserPostPage(
                     uid = uid,

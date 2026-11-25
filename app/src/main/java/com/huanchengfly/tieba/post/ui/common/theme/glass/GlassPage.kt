@@ -73,8 +73,17 @@ import io.github.neoruaa.glasmio.glass.GlassSurface
  * - **顶栏右侧按钮槽**、**可选底栏**、**可选悬浮层**。
  * - **content 的 `PaddingValues`**：状态栏 + 顶栏高度（52dp），内容从顶栏下穿过。
  *
- * 不负责的（页面自己的事）：大标题在列表里的位置（用 [GlassLargeTitle] 放进第一个 item）、
- * 折叠判定的阈值（用 [rememberGlassTitleCollapse] 或自己的 derivedStateOf）。
+ * ## 大标题（[largeTitle]，T5 批次 1 后补）
+ *
+ * 三种形态，`largeTitle = null` 时行为与以前**完全一致**（现有页面零影响）：
+ * 1. `largeTitle != null` + `largeTitleScrollState == null` → **常显**：标题固定在顶栏下方，
+ *    内容在一个占满剩余高度的 Box 里滚动（给 `Column + verticalScroll` / 内嵌列表的页面用）；
+ * 2. `largeTitle != null` + `largeTitleScrollState != null` → **自动折叠**：内部用
+ *    [rememberGlassTitleCollapse] 判定，滚过大标题就把它淡出、让顶栏胶囊标题淡入；
+ * 3. `largeTitle == null` → 不画大标题（原来的行为）。
+ *
+ * 大标题**不掺进调用方的列表**（不要求列表首项），所以页面迁移时不用再手写
+ * `GlassLargeTitle` + 折叠判定那段样板；[content] 拿到的仍是「状态栏 + 顶栏」的 padding。
  * 长尾 11 页在 T5 迁移，本轮不动。
  *
  * 回滚：`enabled = false` 时只渲染 `content(PaddingValues.Zero)`（等价于旧 `ThreadPageSkin`
@@ -103,6 +112,12 @@ fun GlassPage(
     center: (@Composable () -> Unit)? = null,
     bottomBar: (@Composable (() -> Unit))? = null,
     floating: @Composable BoxScope.() -> Unit = {},
+    /** 34sp 大标题；null 时行为与旧版完全一致。见类注释的「大标题」三种形态。 */
+    largeTitle: String? = null,
+    /** 非空时大标题自动折叠（滚过它即淡出）；为空时常显。 */
+    largeTitleScrollState: LazyListState? = null,
+    /** 大标题自己的内边距（默认横向 16dp + 纵向 6dp，与手写版一致）。 */
+    largeTitlePadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
     content: @Composable (PaddingValues) -> Unit,
 ) {
     if (!enabled) {
@@ -115,6 +130,44 @@ fun GlassPage(
         PaddingValues(top = statusBarTop + GlassTopBarHeight)
     }
 
+    // 大标题的折叠判定：给了 LazyListState 才自动折叠（阈值退化成「滚过 32dp」），否则常显。
+    val autoCollapsed = if (largeTitleScrollState != null) {
+        rememberGlassTitleCollapse(largeTitleScrollState, largeTitleHeightPx = 0)
+    } else {
+        false
+    }
+    val resolvedCollapsed = collapsed || autoCollapsed
+    val resolvedScrimAlpha = maxOf(scrimAlpha, if (resolvedCollapsed) 1f else 0f)
+    val largeTitleVisible = largeTitle != null && !(largeTitleScrollState != null && resolvedCollapsed)
+
+    // 有大标题时把内容整体下移一行：大标题固定在顶栏下方，内容在自己的 Box 里滚动，
+    // 这样两种形态（常显 / 自动折叠）都不需要调用方的列表配合。
+    val pageContent: @Composable (PaddingValues) -> Unit = if (largeTitle == null) {
+        content
+    } else {
+        { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = padding.calculateTopPadding()),
+            ) {
+                AnimatedVisibility(
+                    visible = largeTitleVisible,
+                    enter = fadeIn(animationSpec = tween(180)),
+                    exit = fadeOut(animationSpec = tween(120)),
+                ) {
+                    GlassLargeTitle(
+                        title = largeTitle,
+                        contentPadding = largeTitlePadding,
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    content(PaddingValues.Zero)
+                }
+            }
+        }
+    }
+
     if (!isLiquidGlassSupported()) {
         // 不支持真玻璃的机器：不套 host，但骨架结构（返回钮 / 顶栏 / 底栏）保留，
         // 玻璃控件自己会降级成 LiquidGlassSurface 的伪玻璃。
@@ -124,13 +177,13 @@ fun GlassPage(
                     .fillMaxSize()
                     .background(GlasmioTheme.colors.groupedBackground)
             ) {
-                content(contentPadding)
+                pageContent(contentPadding)
             }
             GlassPageTopBar(
                 title = title,
                 onBack = onBack,
-                collapsed = collapsed,
-                scrimAlpha = scrimAlpha,
+                collapsed = resolvedCollapsed,
+                scrimAlpha = resolvedScrimAlpha,
                 center = center,
                 actions = actions,
             )
@@ -152,7 +205,7 @@ fun GlassPage(
                             .fillMaxSize()
                             .background(GlasmioTheme.colors.groupedBackground)
                     ) {
-                        content(contentPadding)
+                        pageContent(contentPadding)
                     }
                 },
                 overlayContent = {
@@ -160,8 +213,8 @@ fun GlassPage(
                         GlassPageTopBar(
                             title = title,
                             onBack = onBack,
-                            collapsed = collapsed,
-                            scrimAlpha = scrimAlpha,
+                            collapsed = resolvedCollapsed,
+                            scrimAlpha = resolvedScrimAlpha,
                             center = center,
                             actions = actions,
                         )
