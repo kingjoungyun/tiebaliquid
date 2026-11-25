@@ -74,8 +74,6 @@ import com.huanchengfly.tieba.post.ui.page.thread.ThreadBottomBarInset
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassLargeTitle
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 import com.huanchengfly.tieba.post.ui.common.theme.glass.rememberGlassTitleCollapse
-import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageUi
-import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageUiStyle
 import com.huanchengfly.tieba.post.ui.page.destinations.CopyTextDialogPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
@@ -320,9 +318,8 @@ internal fun SubPostsContent(
         replyDialogState.show()
     }
 
-    val glassmio = ThreadPageUi.DefaultStyle == ThreadPageUiStyle.GLASMIO
     val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val bottomInset = if (glassmio) ThreadBottomBarInset + navigationBarBottom else 0.dp
+    val bottomInset = ThreadBottomBarInset + navigationBarBottom
     var largeTitleHeightPx by remember { mutableIntStateOf(0) }
     val isLargeTitleCollapsed = rememberGlassTitleCollapse(lazyListState, largeTitleHeightPx)
     val topScrimAlpha by animateFloatAsState(
@@ -339,7 +336,7 @@ internal fun SubPostsContent(
     GlassPage(
         title = largeTitle,
         onBack = onNavigateUp,
-        enabled = glassmio,
+        enabled = true,
         collapsed = isLargeTitleCollapsed,
         scrimAlpha = topScrimAlpha,
         actions = {
@@ -392,121 +389,10 @@ internal fun SubPostsContent(
     ) {
         MyScaffold(
             modifier = Modifier.fillMaxSize(),
-            backgroundColor = if (glassmio) Color.Transparent else MaterialTheme.colors.background,
+            backgroundColor = Color.Transparent,
             topBar = {
-                if (!glassmio) {
-                TitleCentredToolbar(
-                    title = {
-                        Text(text = post?.let {
-                            stringResource(
-                                id = R.string.title_sub_posts,
-                                it.get { floor })
-                        } ?: stringResource(id = R.string.title_sub_posts_default),
-                            fontWeight = FontWeight.Bold, style = MaterialTheme.typography.h6)
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onNavigateUp) {
-                            Icon(
-                                imageVector = if (isSheet) (PhosphorIcons["x"] ?: Icons.Rounded.Close) else Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = stringResource(id = R.string.btn_close)
-                            )
-                        }
-                    },
-                    actions = {
-                        if (!isSheet) {
-                            IconButton(onClick = {
-                                navigator.navigate(
-                                    ThreadPageDestination(
-                                        forumId = forum?.get { id } ?: forumId,
-                                        threadId = threadId,
-                                        postId = post?.get { id } ?: postId
-                                    )
-                                )
-                            }) {
-                                Icon(
-                                    imageVector = (PhosphorIcons["arrow-square-out"] ?: Icons.Rounded.OpenInBrowser),
-                                    contentDescription = stringResource(id = R.string.btn_open_origin_thread)
-                                )
-                            }
-                        }
-                    }
-                )
-                }
             },
             bottomBar = {
-                if (!glassmio) {
-                if (account != null && !LocalContext.current.appPreferences.safeMode) {
-                    Column(
-                        modifier = Modifier.background(AppTokens.threadBottomBar)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Avatar(
-                                data = StringUtil.getAvatarUrl(account.portrait),
-                                size = Sizes.Tiny,
-                                contentDescription = account.name,
-                            )
-                            Row(
-                                modifier = Modifier
-                                    .padding(vertical = 8.dp)
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(AppTokens.bottomBarSurface)
-//                                    .clickable {
-//                                        val fid = forum?.get { id } ?: forumId
-//                                        val forumName = forum?.get { name }
-//                                        if (fid != 0L) {
-//                                            showReplyDialog(
-//                                                ReplyArgs(
-//                                                    forumId = fid,
-//                                                    forumName = forumName.toString(),
-//                                                    threadId = threadId,
-//                                                    postId = postId,
-//                                                )
-//                                            )
-//                                        }
-//                                    }
-                                    .debounceClickable(onClick = {
-                                        val fid = forum?.get { id } ?: forumId
-                                        val forumName = forum?.get { name }
-                                        if (fid != 0L) {
-                                            showReplyDialog(
-                                                ReplyArgs(
-                                                    forumId = fid,
-                                                    forumName = forumName.toString(),
-                                                    threadId = threadId,
-                                                    postId = post?.get { id } ?: postId,
-                                                )
-                                            )
-                                        }
-                                    })
-                                    .padding(8.dp),
-                            ) {
-                                Text(
-                                    text = stringResource(id = R.string.tip_reply_thread),
-                                    style = MaterialTheme.typography.caption,
-                                    color = AppTokens.onBottomBarSurface,
-                                )
-                            }
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .requiredHeightIn(min = if (LocalContext.current.appPreferences.liftUpBottomBar) 16.dp else 0.dp)
-                        ) {
-                            Spacer(
-                                modifier = Modifier
-                                    .windowInsetsBottomHeight(WindowInsets.navigationBars)
-                            )
-                        }
-                    }
-                }
-                }
             }
         ) { paddingValues ->
             LoadMoreLayout(
@@ -530,28 +416,26 @@ internal fun SubPostsContent(
                 MyLazyColumn(
                     state = lazyListState,
                     contentPadding = PaddingValues(
-                        top = if (glassmio) padding.calculateTopPadding() else 0.dp,
+                        top = padding.calculateTopPadding(),
                         bottom = bottomInset,
                     ),
                 ) {
                     item(key = "Post$postId") {
                         post?.let {
                             Column {
-                                if (glassmio) {
-                                    GlassLargeTitle(
-                                        title = largeTitle,
-                                        subtitle = smallTitle,
-                                        onHeightChanged = { largeTitleHeightPx = it },
-                                    )
-                                }
+                                GlassLargeTitle(
+                                    title = largeTitle,
+                                    subtitle = smallTitle,
+                                    onHeightChanged = { largeTitleHeightPx = it },
+                                )
                                 PostCard(
                                     postHolder = it,
                                     contentRenders = postContentRenders,
                                     threadAuthorId = thread?.get { author?.id } ?: 0L,
                                     canDelete = { it.author_id == account?.uid?.toLongOrNull() || it.author?.id == account?.uid?.toLongOrNull() || thread?.get { author?.id } ==  account?.uid?.toLongOrNull() },
                                     showSubPosts = false,
-                                    glassmio = glassmio,
-                                    forceGlassCard = glassmio,
+                                    glassmio = true,
+                                    forceGlassCard = true,
                                     onUserClick = {
                                         navigator.navigate(UserProfilePageDestination(it.id))
                                     },
@@ -595,26 +479,20 @@ internal fun SubPostsContent(
                             }
                         }
                     }
-                    if (glassmio) {
-                        // 0 高度 item 维持 scrollToItem(2 + index) 的既有 index 语义。
-                        item(key = "SubPostsHeader") {}
-                    } else {
-                    stickyHeader(key = "SubPostsHeader") {
-                        Row(
+                    // §22：LEGACY 的「共 N 条回复」计数补回玻璃版（原来这里是 0 高度占位，
+                    // 计数被吞了）。仍用 item（不做 sticky），保持 scrollToItem(2 + index) 的 index 语义。
+                    item(key = "SubPostsHeader") {
+                        Text(
+                            text = stringResource(
+                                id = R.string.title_sub_posts_header,
+                                totalCount
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(AppTokens.background)
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                        ) {
-                            Text(
-                                text = stringResource(
-                                    id = R.string.title_sub_posts_header,
-                                    totalCount
-                                ),
-                                style = MaterialTheme.typography.subtitle1
-                            )
-                        }
-                    }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            fontSize = 13.sp,
+                            color = AppTokens.textSecondary,
+                        )
                     }
                     itemsIndexed(
                         items = subPosts,
@@ -624,7 +502,7 @@ internal fun SubPostsContent(
                         if (item.hidden) return@itemsIndexed
                         SubPostItem(
                             item = item,
-                            glassmio = glassmio,
+                            glassmio = true,
                             forumId = forum?.get { id } ?: forumId,
                             forumName = forum?.get { name } ?: "",
                             threadId = threadId,
