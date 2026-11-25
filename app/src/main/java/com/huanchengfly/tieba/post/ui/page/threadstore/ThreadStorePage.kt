@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageHost
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.api.models.ThreadStoreBean
@@ -54,15 +55,12 @@ import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageFrom
 import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageFromStoreExtra
 import com.huanchengfly.tieba.post.ui.page.thread.ThreadSortType
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
-import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.ErrorScreen
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadMoreLayout
 import com.huanchengfly.tieba.post.ui.widgets.compose.LongClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
-import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.UserHeader
 import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreen
 import com.huanchengfly.tieba.post.utils.StringUtil
@@ -132,22 +130,10 @@ fun ThreadStorePage(
             viewModel.onEvent<ThreadStoreUiEvent.Delete.Success> {
                 scaffoldState.snackbarHostState.showSnackbar(context.getString(R.string.delete_store_success))
             }
-            MyScaffold(
-                backgroundColor = Color.Transparent,
-                scaffoldState = scaffoldState,
-                topBar = {
-                    TitleCentredToolbar(
-                        title = {
-                            Text(
-                                text = stringResource(id = R.string.title_my_collect),
-                                fontWeight = FontWeight.Bold, style = MaterialTheme.typography.h6
-                            )
-                        },
-                        navigationIcon = {
-                            BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
-                        }
-                    )
-                }
+            GlassPage(
+                title = stringResource(id = R.string.title_my_collect),
+                largeTitle = stringResource(id = R.string.title_my_collect),
+                onBack = { navigator.navigateUp() },
             ) { contentPaddings ->
                 StateScreen(
                     isEmpty = data.isEmpty(),
