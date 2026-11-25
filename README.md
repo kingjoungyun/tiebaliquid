@@ -4,7 +4,7 @@
 
 **一个液态玻璃风格（iOS 26/27 观感）的第三方百度贴吧 Android 客户端**
 
-基于 [TiebaLite](https://github.com/HuanCheng65/TiebaLite) 4.0-dev 血脉，
+基于 [TiebaLite](https://github.com/HuanCheng65/TiebaLite) 4.0-dev ，
 经 [Aur5411/TiebaApp](https://github.com/Aur5411/TiebaApp)（Material 3 重制）二次开发，
 本分支把**表现层**重写为基于 [Glasmio](https://github.com/neoruaa/Glasmio) 的液态玻璃视觉。
 
@@ -139,13 +139,13 @@ Invoke-AppBuild -Tasks @(':app:connectedDebugAndroidTest')
 | **kingjoungyun**（维护者） | 需求定义、设计与工程取舍、验收与发布、问题定位 |
 | **DeepSeek 模型 + DeepSeek Harness 多智能体** | 具体实现：页面改造、组件迁移、测试、构建与验证 |
 
-说明几点，避免误解：
+说明：
 
-- **提交署名统一为维护者本人**，便于贡献统计清晰；AI 协作的实现细节记录在仓库历史、`docs/` 与设计文档中
+- **提交署名统一为维护者**，便于贡献统计清晰；AI 协作的实现细节记录在仓库历史、`docs/` 与设计文档中
 - 液态玻璃材质来自 Glasmio，**没有自行发明光学参数**；视觉参照 FlClash 的 prism_ui 与 Apple Liquid Glass
-- 界面改动均在真机或模拟器上实际验证后才提交；未验证的部分会写进「已知限制」，不假装完成
+- 界面改动均在真机或模拟器上实际验证后才提交；未验证的部分会写进「已知限制」
 
-如果这种协作方式不适合你的预期，请在使用前知悉。
+如果这种协作方式不合你的预期，请在使用前知悉。
 
 ## 致谢与许可
 
