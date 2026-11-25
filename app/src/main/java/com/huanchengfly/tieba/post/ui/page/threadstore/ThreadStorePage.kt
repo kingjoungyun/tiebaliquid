@@ -70,6 +70,12 @@ import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.arch.wrapImmutable
+import com.huanchengfly.tieba.post.ui.page.main.home.PostCard
+import com.huanchengfly.tieba.post.api.models.protos.Media
+import com.huanchengfly.tieba.post.api.models.protos.ThreadInfo
+import com.huanchengfly.tieba.post.api.models.protos.User
+import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
 
 private val UpdateTipTextStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 10.sp)
 
@@ -171,36 +177,52 @@ fun ThreadStorePage(
                                     items = data,
                                     key = { it.threadId }
                                 ) { info ->
-                                    StoreItem(
-                                        info = info,
-                                        onUserClick = {
-                                            info.author.lzUid?.let {
-                                                navigator.navigate(UserProfilePageDestination(it.toLong()))
+                                    // T5 批次 3：收藏列表接 PostCard。
+                                    // 跳转仍保留收藏页特有的「从上次阅读位置进入」参数（seeLz / 排序 / maxPid）。
+                                    val threadInfo = remember(info) {
+                                        wrapImmutable(info.toPostCardThreadInfo())
+                                    }
+                                    val openThread: (Boolean) -> Unit = { scrollToReply ->
+                                        navigator.navigate(
+                                            ThreadPageDestination(
+                                                threadId = info.threadId.toLong(),
+                                                postId = info.markPid.toLong(),
+                                                seeLz = context.appPreferences.collectThreadSeeLz,
+                                                sortType = if (context.appPreferences.collectThreadDescSort) ThreadSortType.SORT_TYPE_DESC else ThreadSortType.SORT_TYPE_DEFAULT,
+                                                from = ThreadPageFrom.FROM_STORE,
+                                                extra = ThreadPageFromStoreExtra(
+                                                    maxPid = info.maxPid.toLong(),
+                                                    maxFloor = info.postNo.toInt()
+                                                ),
+                                                scrollToReply = scrollToReply,
+                                            )
+                                        )
+                                    }
+                                    LongClickMenu(
+                                        menuContent = {
+                                            DropdownMenuItem(onClick = {
+                                                viewModel.send(
+                                                    ThreadStoreUiIntent.Delete(info.threadId)
+                                                )
+                                            }) {
+                                                Text(text = stringResource(id = R.string.title_collect_on))
                                             }
                                         },
-                                        onClick = {
-                                            navigator.navigate(
-                                                ThreadPageDestination(
-                                                    threadId = info.threadId.toLong(),
-                                                    postId = info.markPid.toLong(),
-                                                    seeLz = context.appPreferences.collectThreadSeeLz,
-                                                    sortType = if(context.appPreferences.collectThreadDescSort) ThreadSortType.SORT_TYPE_DESC else ThreadSortType.SORT_TYPE_DEFAULT,
-                                                    from = ThreadPageFrom.FROM_STORE,
-                                                    extra = ThreadPageFromStoreExtra(
-                                                        maxPid = info.maxPid.toLong(),
-                                                        maxFloor = info.postNo.toInt()
-                                                    )
-                                                )
-                                            )
-                                        },
-                                        onDelete = {
-                                            viewModel.send(
-                                                ThreadStoreUiIntent.Delete(
-                                                    info.threadId
-                                                )
-                                            )
-                                        }
-                                    )
+                                    ) {
+                                        PostCard(
+                                            item = threadInfo,
+                                            onClick = { openThread(false) },
+                                            onAgree = {},
+                                            onClickReply = { openThread(true) },
+                                            onClickUser = { user ->
+                                                navigator.navigate(UserProfilePageDestination(user.id))
+                                            },
+                                            onClickForum = { forum ->
+                                                navigator.navigate(ForumPageDestination(forum.name))
+                                            },
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -326,3 +348,39 @@ private fun StoreItem(
         }
     }
 }
+
+
+/**
+ * 收藏条目（`ThreadStoreBean.ThreadStoreInfo`，JSON DTO）→ proto `ThreadInfo`。
+ *
+ * T5 批次 3：收藏列表接 `PostCard` 后需要一份 proto 模型，只映射卡片用到的字段
+ * （标题 / 作者 / 配图 / 吧名 / 时间锚点）。收藏接口没有点赞数与回复数，卡片上显示 0。
+ */
+private fun ThreadStoreBean.ThreadStoreInfo.toPostCardThreadInfo(): ThreadInfo = ThreadInfo(
+    id = threadId.toLongOrNull() ?: 0L,
+    threadId = threadId.toLongOrNull() ?: 0L,
+    title = title,
+    forumName = forumName,
+    lastTimeInt = parseStoreTime(lastTime),
+    author = User(
+        id = author.lzUid?.toLongOrNull() ?: 0L,
+        name = author.name.orEmpty(),
+        nameShow = author.nameShow.orEmpty(),
+        portrait = author.userPortrait.orEmpty(),
+    ),
+    media = media.map { pic ->
+        Media(
+            originPic = pic.bigPic.orEmpty(),
+            bigPic = pic.bigPic.orEmpty(),
+            srcPic = pic.smallPic.orEmpty(),
+            width = pic.width?.toIntOrNull() ?: 0,
+            height = pic.height?.toIntOrNull() ?: 0,
+        )
+    },
+)
+
+/** 收藏接口的 `last_time` 是「yyyy-MM-dd HH:mm」字符串；卡片只需要一个相对时间锚点。 */
+private fun parseStoreTime(lastTime: String): Int = runCatching {
+    java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+        .parse(lastTime)!!.time.toInt()
+}.getOrDefault(0)
