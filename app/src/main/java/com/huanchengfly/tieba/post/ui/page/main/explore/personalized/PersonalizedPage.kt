@@ -69,8 +69,6 @@ import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
 import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
 import com.huanchengfly.tieba.post.ui.page.main.home.PostCard
-import com.huanchengfly.tieba.post.ui.page.main.home.PostCardUi
-import com.huanchengfly.tieba.post.ui.page.main.home.PostCardUiStyle
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockTip
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockableContent
 import com.huanchengfly.tieba.post.ui.widgets.compose.Container
@@ -283,10 +281,6 @@ fun PersonalizedPage(
  */
 @Composable
 private fun FeedPageSkin(content: @Composable () -> Unit) {
-    if (PostCardUi.DefaultStyle == PostCardUiStyle.LEGACY) {
-        content()
-        return
-    }
     LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
             Box(
@@ -334,36 +328,19 @@ private fun FeedList(
     onOpenForum: (forumName: String) -> Unit = {},
     onClickUser: (User) -> Unit = {},
 ) {
-    // 卡片风格的唯一分叉点：TWITTER = PostCard，LEGACY = 原来的 FeedCard 列表。
-    when (PostCardUi.DefaultStyle) {
-        PostCardUiStyle.TWITTER -> TwitterFeedList(
-            state = state,
-            dataProvider = dataProvider,
-            refreshPositionProvider = refreshPositionProvider,
-            hiddenThreadIdsProvider = hiddenThreadIdsProvider,
-            onItemClick = onItemClick,
-            onItemReplyClick = onItemReplyClick,
-            onAgree = onAgree,
-            onDislike = onDislike,
-            onRefresh = onRefresh,
-            onOpenForum = onOpenForum,
-            onClickUser = onClickUser,
-        )
-
-        PostCardUiStyle.LEGACY -> LegacyFeedList(
-            state = state,
-            dataProvider = dataProvider,
-            refreshPositionProvider = refreshPositionProvider,
-            hiddenThreadIdsProvider = hiddenThreadIdsProvider,
-            onItemClick = onItemClick,
-            onItemReplyClick = onItemReplyClick,
-            onAgree = onAgree,
-            onDislike = onDislike,
-            onRefresh = onRefresh,
-            onOpenForum = onOpenForum,
-            onClickUser = onClickUser,
-        )
-    }
+    TwitterFeedList(
+        state = state,
+        dataProvider = dataProvider,
+        refreshPositionProvider = refreshPositionProvider,
+        hiddenThreadIdsProvider = hiddenThreadIdsProvider,
+        onItemClick = onItemClick,
+        onItemReplyClick = onItemReplyClick,
+        onAgree = onAgree,
+        onDislike = onDislike,
+        onRefresh = onRefresh,
+        onOpenForum = onOpenForum,
+        onClickUser = onClickUser,
+    )
 }
 
 /**
@@ -459,113 +436,6 @@ private fun TwitterFeedList(
     }
 }
 
-/**
- * 迁移前的信息流列表（`PostCardUiStyle.LEGACY`）：`FeedCard` + 16dp 页边 + 分隔线。
- * **代码原样保留**，只把函数名从 `FeedList` 改成 `LegacyFeedList`，便于一行回滚。
- */
-@Composable
-private fun LegacyFeedList(
-    state: LazyListState,
-    dataProvider: () -> ImmutableList<ThreadItemData>,
-    refreshPositionProvider: () -> Int,
-    hiddenThreadIdsProvider: () -> ImmutableList<Long>,
-    onItemClick: (ThreadInfo) -> Unit,
-    onItemReplyClick: (ThreadInfo) -> Unit,
-    onAgree: (ThreadInfo) -> Unit,
-    onDislike: (ThreadInfo, Long, ImmutableList<ImmutableHolder<DislikeReason>>) -> Unit,
-    onRefresh: () -> Unit,
-    onOpenForum: (forumName: String) -> Unit = {},
-    onClickUser: (User) -> Unit = {},
-) {
-    val data = dataProvider()
-    val refreshPosition = refreshPositionProvider()
-    val hiddenThreadIds = hiddenThreadIdsProvider()
-
-    MyLazyColumn(
-        state = state,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        itemsIndexed(
-            items = data,
-            key = { _, (item) -> "${item.get { id }}" },
-            contentType = { _, (item) ->
-                when {
-                    item.get { videoInfo } != null -> "Video"
-                    item.get { media }.size == 1 -> "SingleMedia"
-                    item.get { media }.size > 1 -> "MultiMedia"
-                    else -> "PlainText"
-                }
-            }
-        ) { index, (item, blocked, personalized, hidden) ->
-            val isHidden =
-                remember(
-                    hiddenThreadIds,
-                    item,
-                    hidden
-                ) { hiddenThreadIds.contains(item.get { threadId }) || hidden }
-            val isRefreshPosition =
-                remember(index, refreshPosition) { index + 1 == refreshPosition }
-            val isNotLast = remember(index, data.size) { index < data.size - 1 }
-            val showDivider = remember(
-                isHidden,
-                isRefreshPosition,
-                isNotLast
-            ) { !isHidden && !isRefreshPosition && isNotLast }
-            Container {
-                AnimatedVisibility(
-                    visible = !isHidden,
-                    enter = EnterTransition.None,
-                    exit = shrinkVertically() + fadeOut()
-                ) {
-                    Column {
-                        BlockableContent(
-                            blocked = blocked,
-                            blockedTip = { BlockTip(text = { Text(text = stringResource(id = R.string.tip_blocked_thread)) }) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp, horizontal = 16.dp)
-                        ) {
-                            Column {
-                                PostCard(
-                                    item = item,
-                                    onClick = onItemClick,
-                                    onClickReply = onItemReplyClick,
-                                    onAgree = onAgree,
-                                    onClickForum = remember {
-                                        {
-                                            onOpenForum(it.name)
-                                        }
-                                    },
-                                    onClickUser = onClickUser,
-                                    menuAction = {
-                                        if (personalized != null) {
-                                            Dislike(
-                                                personalized = personalized,
-                                                onDislike = { clickTime, reasons ->
-                                                    onDislike(item.get(), clickTime, reasons)
-                                                }
-                                            )
-                                        }
-                                    },
-                                )
-                                if (showDivider) {
-                                    VerticalDivider(
-                                        modifier = Modifier.padding(horizontal = 16.dp),
-                                        thickness = 2.dp
-                                    )
-                                }
-                            }
-                        }
-                        if (isRefreshPosition) {
-                            RefreshTip(onRefresh)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun RefreshTip(
