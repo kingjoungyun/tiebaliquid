@@ -47,16 +47,12 @@ import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
-import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
-import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponent
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTextField
 import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
-import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassLargeTitle
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import io.github.neoruaa.glasmio.core.GlasmioTheme
@@ -121,7 +117,6 @@ fun PostAnalysisPage(
         }
     }
 
-    val glassmio = AnalysisUi.DefaultStyle == AnalysisUiStyle.GLASMIO
     ProvideNavigator(navigator = navigator) {
         // 列表内容抽成 lambda：玻璃分支（GlassPage）和回滚分支（MyScaffold）共用同一份。
         val analysisContent: LazyListScope.() -> Unit = {
@@ -203,72 +198,27 @@ fun PostAnalysisPage(
             }
         }
 
-        if (glassmio) {
             // T1：外壳交给统一的 GlassPage。大标题仍在返回钮下方、不随列表滚动（与迁移前一致），
             // 所以它放在内容的 Column 里，而不是列表首项里。
             GlassPage(
                 title = stringResource(id = R.string.title_post_analysis),
+                largeTitle = stringResource(id = R.string.title_post_analysis),
                 onBack = { navigator.navigateUp() },
             ) { padding ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = padding.calculateTopPadding()),
-                ) {
-                    GlassLargeTitle(
-                        title = stringResource(id = R.string.title_post_analysis),
-                        color = AppTokens.text,
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                        maxLines = 1,
-                    )
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(vertical = 12.dp),
-                    ) {
-                        analysisContent()
-                    }
-                }
-            }
-        } else {
-            MyScaffold(
-                backgroundColor = AppTokens.background,
-                topBar = {
-                    TitleCentredToolbar(
-                        title = {
-                            Text(
-                                text = stringResource(id = R.string.title_post_analysis),
-                                style = MaterialTheme.typography.h6,
-                            )
-                        },
-                        navigationIcon = {
-                            BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
-                        },
-                    )
-                },
-            ) { contentPaddings ->
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(contentPaddings),
+                        .padding(top = padding.calculateTopPadding()),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(vertical = 12.dp),
                 ) {
                     analysisContent()
                 }
             }
-        }
+
     }
 }
 
-/**
- * 玻璃胶囊搜索框：44dp 高、Glasmio `GlassSurface` 默认材质 + 22dp 圆角。
- *
- * 分析页本身没有页级 backdrop host，所以这里给输入框自带一个 44dp 的**纯色**小 host
- * （`GlasmioBackdropHost(sampledColor = ...)`，`fillsBoundsUniformly`），玻璃采的是这层纯色，
- * 既拿得到真材质，也不会自己采样自己。输入框在 host 的 overlay 层，不在录制层里。
- */
 @Composable
 private fun AnalysisSearchField(
     value: String,
@@ -442,4 +392,3 @@ private fun PostHitRow(post: PostRecord, onClick: () -> Unit) {
         )
     }
 }
-

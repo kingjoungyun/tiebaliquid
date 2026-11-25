@@ -46,7 +46,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.Scaffold
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.api.models.protos.topicList.NewTopicList
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
@@ -58,19 +57,17 @@ import com.huanchengfly.tieba.post.ui.common.theme.compose.White
 import com.huanchengfly.tieba.post.ui.common.theme.compose.Yellow
 import com.huanchengfly.tieba.post.ui.common.theme.compose.pullRefreshIndicator
 import com.huanchengfly.tieba.post.ui.page.destinations.TopicDetailPageDestination
-import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
-import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
 import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageSkin
 import com.huanchengfly.tieba.post.ui.page.thread.ThreadTopBarHeight
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
 import com.huanchengfly.tieba.post.ui.widgets.compose.NetworkImage
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
-import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 
 @Composable
 private fun TopicImage(
@@ -187,34 +184,17 @@ fun HotTopicListPage(
         prop1 = HotTopicListUiState::topicList,
         initial = emptyList()
     )
-    val glassmio = HotTopicListUi.DefaultStyle == HotTopicListUiStyle.GLASMIO
-    if (glassmio) {
         val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
         val topInset = statusBarTop + ThreadTopBarHeight
         val pullRefreshState = rememberPullRefreshState(
             refreshing = isRefreshing,
             onRefresh = { viewModel.send(HotTopicListUiIntent.Load) }
         )
-        ThreadPageSkin(
-            enabled = true,
-            topBar = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .height(ThreadTopBarHeight)
-                        .padding(horizontal = 8.dp)
-                ) {
-                    GlassIconButton(
-                        onClick = { navigator.navigateUp() },
-                        icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = stringResource(id = R.string.button_back),
-                        modifier = Modifier.align(Alignment.CenterStart),
-                    )
-                }
-            },
-            bottomBar = {},
-        ) {
+        GlassPage(
+            title = stringResource(id = R.string.title_hot_message_list),
+            largeTitle = stringResource(id = R.string.title_hot_message_list),
+            onBack = { navigator.navigateUp() },
+        ) { padding ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -222,20 +202,11 @@ fun HotTopicListPage(
             ) {
                 MyLazyColumn(
                     verticalArrangement = Arrangement.spacedBy(0.dp),
-                    contentPadding = PaddingValues(top = topInset, bottom = 16.dp),
+                    contentPadding = PaddingValues(
+                        top = topInset + padding.calculateTopPadding(),
+                        bottom = 16.dp,
+                    ),
                 ) {
-                    item(key = "HotTitle") {
-                        Text(
-                            text = "热榜",
-                            style = LocalTextStyle.current.copy(
-                                fontSize = 34.sp,
-                                lineHeight = 40.sp,
-                                fontWeight = FontWeight.Bold,
-                            ),
-                            color = AppTokens.text,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        )
-                    }
                     itemsIndexed(
                         items = topicList,
                         key = { _, item -> item.topic_id },
@@ -287,77 +258,4 @@ fun HotTopicListPage(
                 )
             }
         }
-        return
-    }
-
-    Scaffold(
-        backgroundColor = Color.Transparent,
-        topBar = {
-            TitleCentredToolbar(
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.title_hot_message_list),
-                        fontWeight = FontWeight.Bold, style = MaterialTheme.typography.h6
-                    )
-                },
-                navigationIcon = {
-                    BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
-                }
-            )
-        },
-    ) { contentPaddings ->
-        val pullRefreshState = rememberPullRefreshState(
-            refreshing = isRefreshing,
-            onRefresh = { viewModel.send(HotTopicListUiIntent.Load) }
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPaddings)
-                .pullRefresh(pullRefreshState)
-        ) {
-            MyLazyColumn(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(16.dp)
-            ) {
-                itemsIndexed(
-                    items = topicList,
-                    key = { _, item -> item.topic_id },
-                ) { index, item ->
-                    if (index < 3) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth()
-                                .debounceClickable(onClick =  {
-                                    navigator.navigate(TopicDetailPageDestination(item.topic_id, item.topic_name))
-                                }),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            TopicImage(index = index, imageUri = item.topic_image)
-                            TopicBody(index = index, item = item)
-                        }
-                    } else {
-                        Row(
-                            modifier = Modifier.fillMaxWidth()
-                                .debounceClickable(onClick =  {
-                                    navigator.navigate(TopicDetailPageDestination(item.topic_id, item.topic_name))
-                                }),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            TopicImage(index = index, imageUri = item.topic_image)
-                            TopicBody(index = index, item = item)
-                        }
-                    }
-                }
-            }
-
-            PullRefreshIndicator(
-                refreshing = isRefreshing,
-                state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter),
-                backgroundColor = AppTokens.pullRefreshIndicator,
-                contentColor = AppTokens.primary,
-            )
-        }
-    }
 }
