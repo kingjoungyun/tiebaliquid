@@ -130,6 +130,8 @@
     <string name="toast_success">成功</string>
     <string name="title_report">举报</string>
     <string name="tip_empty">这里什么都没有</string>
+    <string name="tip_empty_block_user">还没有屏蔽任何用户，在下方点「添加」即可</string>
+    <string name="tip_empty_block_keyword">还没有屏蔽词，在下方点「添加屏蔽词」即可</string>
     <string name="title_auto_sign">自动签到</string>
     <string name="summary_auto_sign">开启后，将每天定时运行一键签到</string>
     <string name="summary_auto_sign_on">自动签到已开启</string>
