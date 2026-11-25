@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Checkbox
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.TextFields
@@ -55,17 +54,25 @@ import com.huanchengfly.tieba.post.models.database.Block
 import com.huanchengfly.tieba.post.models.database.Block.Companion.getKeywords
 import com.huanchengfly.tieba.post.ui.page.main.BottomNavigationDivider
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassPromptDialog
-import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
 import com.huanchengfly.tieba.post.ui.widgets.compose.DialogScope
 import com.huanchengfly.tieba.post.ui.widgets.compose.LongClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
-import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreen
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.text.style.TextAlign
+import com.huanchengfly.tieba.post.ui.common.components.GlassListCard
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponentSurface
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
+import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
+import com.kyant.capsule.ContinuousRoundedRectangle
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.SnackbarHost
+import androidx.compose.material.rememberScaffoldState
 
 /**
  * 屏蔽词管理：独立页面，与「黑名单」分开。
@@ -135,56 +142,58 @@ fun BlockKeywordPage(
             )
             val items = remember(blackList) { blackList.filter { it.type == Block.TYPE_KEYWORD } }
     
-            MyScaffold(
-                backgroundColor = Color.Transparent,
-                topBar = {
-                    TitleCentredToolbar(
-                        title = {
-                            Text(
-                                text = stringResource(id = R.string.title_keyword_list_manage),
-                                fontWeight = FontWeight.Bold, style = MaterialTheme.typography.h6
-                            )
-                        },
-                        navigationIcon = {
-                            BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
-                        },
+            // 去掉 MyScaffold 后 `LocalSnackbarHostState` 没有提供者了（它的默认实现会抛
+            // "no scaffold here!"），所以这里自己造一个 state，并在 floating 槽里挂 SnackbarHost。
+            val snackbarHostState = rememberScaffoldState().snackbarHostState
+            GlassPage(
+                title = stringResource(id = R.string.title_keyword_list_manage),
+                largeTitle = stringResource(id = R.string.title_keyword_list_manage),
+                onBack = { navigator.navigateUp() },
+                floating = {
+                    SnackbarHost(
+                        hostState = snackbarHostState,
+                        modifier = Modifier.align(Alignment.BottomCenter),
                     )
                 },
                 bottomBar = {
-                    Column {
-                        BottomNavigationDivider()
+                    // 底部动作条：玻璃胶囊 + 图标 + 文案（原来是 M2 的一条底栏）
+                    GlassComponentSurface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        shape = ContinuousRoundedRectangle(22.dp),
+                        tint = AppTokens.card,
+                        hostFill = AppTokens.groupedBackground,
+                        innerGlow = true,
+                    ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .navigationBarsPadding()
+                                .debounceClickable(onClick = { dialogState.show() })
+                                .padding(vertical = 13.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { dialogState.show() }
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = PhosphorIcons["text-t"] ?: Icons.Outlined.TextFields,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Text(
-                                    text = stringResource(id = R.string.title_add_keyword),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                            Icon(
+                                imageVector = PhosphorIcons["text-t"] ?: Icons.Outlined.TextFields,
+                                contentDescription = null,
+                                tint = AppTokens.primary,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(id = R.string.title_add_keyword),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = AppTokens.primary,
+                            )
                         }
                     }
-                }
+                },
             ) { paddingValues ->
-                val snackBarHostState = LocalSnackbarHostState.current
                 viewModel.onEvent<BlockListUiEvent.Success> {
-                    snackBarHostState.showSnackbar(
+                    snackbarHostState.showSnackbar(
                         when (it) {
                             is BlockListUiEvent.Success.Add -> context.getString(R.string.toast_add_success)
                             is BlockListUiEvent.Success.Delete -> context.getString(R.string.toast_delete_success)
@@ -195,6 +204,20 @@ fun BlockKeywordPage(
                     isEmpty = items.isEmpty(),
                     isError = false,
                     isLoading = isLoading,
+                    emptyScreen = {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.tip_empty_block_keyword),
+                                fontSize = 15.sp,
+                                color = AppTokens.textSecondary,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    },
                     loadingScreen = {
                         MyLazyColumn(
                             modifier = Modifier
@@ -211,7 +234,10 @@ fun BlockKeywordPage(
                         .padding(paddingValues)
                 ) {
                     val clipboardManager = LocalClipboardManager.current
-                    MyLazyColumn(Modifier.fillMaxSize()) {
+                    MyLazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(vertical = 6.dp),
+                    ) {
                         items(items, key = { it.id }) { item ->
                             LongClickMenu(menuContent = {
                                 DropdownMenuItem(onClick = {
@@ -230,7 +256,11 @@ fun BlockKeywordPage(
                                     Text(text = stringResource(id = R.string.title_delete))
                                 }
                             }) {
-                                BlockKeywordItem(item = item)
+                                GlassListCard(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                                ) {
+                                    BlockKeywordItem(item = item)
+                                }
                             }
                         }
                     }
