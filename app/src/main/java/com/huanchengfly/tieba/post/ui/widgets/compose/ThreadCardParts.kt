@@ -1,5 +1,20 @@
 package com.huanchengfly.tieba.post.ui.widgets.compose
 
+/*
+ * 帖子卡的**共享部件**（T3.5 从 `FeedCard.kt` 拆出来）。
+ *
+ * `FeedCard`（3 个重载）/ `FeedCardPlaceholder` / `FeedCardPreview` 已删除；信息流 / 吧页 /
+ * 关注 / 话题详情 / 他的帖子统一走 `ui/page/main/home/PostCard`。这里只留**还没迁完的页面**
+ * 仍在复用的零件：
+ *
+ * - 搜索结果卡（`Search.kt`）：`ThreadContent` / `ForumInfoChip` / `Thread*Btn` / `Badge` / `Card`；
+ * - 楼中楼（`SubPostsPage`）与「他的帖子」的非主题分支：`Card` / `UserHeader`；
+ * - 帖子页的原帖卡（`ThreadPage`）：`OriginThreadCard`；
+ * - 富文本里的视频（`PbContentRender`）：`VideoPlayer`（带全屏处理的包装）。
+ *
+ * 这些页面下一步统一骨架后，本文件应随之消失（见 T3.5 简报「遗留」）。
+ */
+
 import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 
 import android.content.pm.ActivityInfo
@@ -316,53 +331,6 @@ fun ThreadContent(
         maxLines = maxLines,
         style = MaterialTheme.typography.body1,
         highlightKeywords = highlightKeywords
-    )
-}
-
-@Composable
-fun FeedCardPlaceholder() {
-    Card(
-        header = { UserHeaderPlaceholder(avatarSize = Sizes.Small) },
-        content = {
-            Text(
-                text = "TitlePlaceholder",
-                style = MaterialTheme.typography.subtitle1,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .placeholder(
-                        visible = true,
-                        color = MaterialTheme.colors.surface,
-                        highlight = PlaceholderHighlight.fade(),
-                    )
-            )
-
-            Text(
-                text = "Text",
-                style = MaterialTheme.typography.body1,
-                fontSize = 15.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .placeholder(
-                        visible = true,
-                        color = MaterialTheme.colors.surface,
-                        highlight = PlaceholderHighlight.fade(),
-                    )
-            )
-        },
-        action = {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                repeat(3) {
-                    ActionBtnPlaceholder(
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
     )
 }
 
@@ -755,246 +723,6 @@ fun ThreadShareBtn(
 }
 
 @Composable
-@JvmName("FeedCardForThreadInfo")
-fun FeedCard(
-    item: ImmutableHolder<ThreadInfo>,
-    onClick: (ThreadInfo) -> Unit,
-    onAgree: (ThreadInfo) -> Unit,
-    modifier: Modifier = Modifier,
-    onClickReply: (ThreadInfo) -> Unit = {},
-    onClickUser: (User) -> Unit = {},
-    onClickForum: (SimpleForum) -> Unit = {},
-    onClickOriginThread: (OriginThreadInfo) -> Unit = {},
-    dislikeAction: @Composable () -> Unit = {},
-) {
-    Card(
-        header = {
-            val author = remember(item) { item.getNullableImmutable { author } }
-            author?.let {
-                UserHeader(
-                    userProvider = { it },
-                    timeProvider = { item.get { lastTimeInt } },
-                    onClick = {
-                        onClickUser(it.get())
-                    },
-                ) { dislikeAction() }
-            }
-        },
-        content = {
-            ThreadContent(
-                title = item.get { title },
-                abstractText = item.get { abstractText },
-                tabName = item.get { tabName },
-                showTitle = item.get { isNoTitle != 1 && title.isNotBlank() },
-                showAbstract = item.get { abstractText.isNotBlank() },
-                isGood = item.get { isGood == 1 },
-            )
-
-            ThreadMedia(
-                item = item,
-            )
-
-            item.getNullableImmutable { origin_thread_info }
-                .takeIf { item.get { is_share_thread } == 1 }?.let {
-                    OriginThreadCard(
-                        originThreadInfo = it,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(AppTokens.floorCard)
-                            .debounceClickable(onClick = {
-                                onClickOriginThread(it.get())
-                            })
-                            .padding(16.dp)
-                    )
-                }
-
-            ThreadForumInfo(item = item, onClick = onClickForum)
-        },
-        action = {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                ThreadShareBtn(
-                    shareNum = item.get { shareNum }.toString(),
-                    onClick = {},
-                    modifier = Modifier.weight(1f)
-                )
-
-                ThreadReplyBtn(
-                    replyNum = item.get { replyNum }.toString(),
-                    onClick = { onClickReply(item.get()) },
-                    modifier = Modifier.weight(1f)
-                )
-
-                ThreadAgreeBtn(
-                    hasAgree = item.get { agree?.hasAgree == 1 },
-                    agreeNum = item.get { agreeNum }.toString(),
-                    onClick = { onAgree(item.get()) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        },
-        onClick = { onClick(item.get()) },
-        modifier = modifier,
-    )
-}
-
-
-@Composable
-@JvmName("FeedCardForThreadBean")
-fun FeedCard(
-    item: ImmutableHolder<ThreadBean>,
-    onClick: (ThreadBean) -> Unit,
-    onAgree: (ThreadBean) -> Unit,
-    modifier: Modifier = Modifier,
-    onClickReply: (ThreadBean) -> Unit = {},
-    onClickUser: (id: Long) -> Unit = {},
-    onClickForum: (name: String) -> Unit = {},
-    onClickOriginThread: (OriginThreadInfo) -> Unit = {},
-) {
-    Card(
-        header = {
-            UserHeader(
-                nameProvider = { item.get { threadInfo.author.name }.orEmpty() },
-                nameShowProvider = { item.get { threadInfo.author.showNickName } },
-                portraitProvider = { item.get { threadInfo.author.portrait } },
-                timeProvider = { item.get { threadInfo.createTime.toInt() } },
-                onClick = {
-                    onClickUser(item.get { threadInfo.userId })
-                },
-            )
-        },
-        content = {
-            ThreadContent(
-                title = item.get { threadInfo.title!! },
-                abstractText = item.get { threadInfo.abstractText },
-                showTitle = item.get { threadInfo.title?.isNotBlank() == true },
-                showAbstract = item.get { threadInfo.abstractText.isNotBlank() },
-            )
-
-            ThreadMedia(
-                forumId = item.get { threadInfo.forumId },
-                forumName = item.get { threadInfo.forumName },
-                threadId = item.get { threadInfo.threadId },
-            )
-            ThreadForumInfo(
-                forumName = item.get { threadInfo.forumName },
-                forumAvatar = item.get { threadInfo.avatar },
-                onClick = { onClickForum(item.get { threadInfo.forumName }) }
-            )
-        },
-        action = {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                ThreadShareBtn(
-                    shareNum = item.get { threadInfo.shareNum }.toString(),
-                    onClick = {},
-                    modifier = Modifier.weight(1f)
-                )
-
-                ThreadReplyBtn(
-                    replyNum = item.get { threadInfo.replyNum }.toString(),
-                    onClick = { onClickReply(item.get()) },
-                    modifier = Modifier.weight(1f)
-                )
-
-                ThreadAgreeBtn(
-                    hasAgree = item.get { threadInfo.agree.hasAgree == 1 },
-                    agreeNum = item.get { threadInfo.agreeNum }.toString(),
-                    onClick = { onAgree(item.get()) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        },
-        onClick = { onClick(item.get()) },
-        modifier = modifier,
-    )
-}
-
-@Composable
-fun FeedCard(
-    item: ImmutableHolder<PostInfoList>,
-    onClick: (PostInfoList) -> Unit,
-    onAgree: (PostInfoList) -> Unit,
-    modifier: Modifier = Modifier,
-    onClickReply: (PostInfoList) -> Unit = {},
-    onClickUser: (id: Long) -> Unit = {},
-    onClickForum: (name: String) -> Unit = {},
-    onClickOriginThread: (OriginThreadInfo) -> Unit = {},
-) {
-    Card(
-        header = {
-            UserHeader(
-                nameProvider = { item.get { user_name } },
-                nameShowProvider = { item.get { name_show } },
-                portraitProvider = { item.get { user_portrait } },
-                timeProvider = { item.get { create_time } },
-                onClick = {
-                    onClickUser(item.get { user_id })
-                },
-            )
-        },
-        content = {
-            ThreadContent(
-                title = item.get { title },
-                abstractText = item.get { abstractText },
-                showTitle = item.get { is_ntitle != 1 && title.isNotBlank() },
-                showAbstract = item.get { abstractText.isNotBlank() },
-            )
-
-            ThreadMedia(
-                forumId = item.get { forum_id },
-                forumName = item.get { forum_name },
-                threadId = item.get { thread_id },
-                medias = item.getImmutableList { media },
-                videoInfo = item.getNullableImmutable { video_info }
-            )
-
-            item.getNullableImmutable { origin_thread_info }
-                .takeIf { item.get { is_share_thread } == 1 }?.let {
-                    OriginThreadCard(
-                        originThreadInfo = it,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(AppTokens.floorCard)
-                            .debounceClickable(onClick = {
-                                onClickOriginThread(it.get())
-                            })
-                            .padding(16.dp)
-                    )
-                }
-
-            ThreadForumInfo(
-                forumName = item.get { forum_name },
-                forumAvatar = null,
-                onClick = { onClickForum(item.get { forum_name }) }
-            )
-        },
-        action = {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                ThreadShareBtn(
-                    shareNum = item.get { share_num }.toString(),
-                    onClick = {},
-                    modifier = Modifier.weight(1f)
-                )
-
-                ThreadReplyBtn(
-                    replyNum = item.get { reply_num }.toString(),
-                    onClick = { onClickReply(item.get()) },
-                    modifier = Modifier.weight(1f)
-                )
-
-                ThreadAgreeBtn(
-                    hasAgree = item.get { agree?.hasAgree == 1 },
-                    agreeNum = item.get { agree_num }.toString(),
-                    onClick = { onAgree(item.get()) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        },
-        onClick = { onClick(item.get()) },
-        modifier = modifier,
-    )
-}
-
-@Composable
 private fun ActionBtnPlaceholder(
     modifier: Modifier = Modifier,
 ) {
@@ -1114,19 +842,3 @@ fun VideoPlayer(
     }
 }
 
-@Preview("FeedCardPreview")
-@Composable
-fun FeedCardPreview() {
-    FeedCard(
-        item = wrapImmutable(
-            ThreadInfo(
-                title = "预览",
-                author = User(),
-                lastTimeInt = (System.currentTimeMillis() / 1000).toInt()
-            )
-        ),
-        onClick = {},
-        onAgree = {},
-        modifier = Modifier.background(AppTokens.card)
-    )
-}
