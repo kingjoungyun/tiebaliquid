@@ -1,6 +1,8 @@
 package com.huanchengfly.tieba.post.ui.page.main.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -17,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
@@ -25,7 +29,10 @@ import androidx.compose.material.icons.rounded.Photo
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.SwapCalls
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,6 +42,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -46,14 +54,21 @@ import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.App
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.api.models.protos.Media
+import com.huanchengfly.tieba.post.api.models.protos.OriginThreadInfo
 import com.huanchengfly.tieba.post.api.models.protos.SimpleForum
 import com.huanchengfly.tieba.post.api.models.protos.ThreadInfo
 import com.huanchengfly.tieba.post.api.models.protos.User
 import com.huanchengfly.tieba.post.api.models.protos.VideoInfo
 import com.huanchengfly.tieba.post.api.models.protos.abstractText
+import com.huanchengfly.tieba.post.api.models.protos.renders
 import com.huanchengfly.tieba.post.arch.ImmutableHolder
+import com.huanchengfly.tieba.post.models.PhotoViewData
+import com.huanchengfly.tieba.post.ui.common.PbContentRender
+import com.huanchengfly.tieba.post.ui.common.PicContentRender
+import com.huanchengfly.tieba.post.ui.common.TextContentRender
 import com.huanchengfly.tieba.post.ui.utils.getPhotoViewData
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
+import com.huanchengfly.tieba.post.ui.widgets.compose.EmoticonText
 import com.huanchengfly.tieba.post.ui.widgets.compose.NetworkImage
 import com.huanchengfly.tieba.post.ui.widgets.compose.ProvideContentColor
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
@@ -134,8 +149,6 @@ fun PostCard(
     val originThread = remember(item) {
         if (item.get { is_share_thread } == 1) item.get { origin_thread_info } else null
     }
-    val originTitle = remember(originThread) { originThread?.title.orEmpty() }
-    val originAuthorName = remember(originThread) { originThread?.author?.name.orEmpty() }
     val rawForumName = remember(item, forumNameFallback) {
         item.get { forumName }.takeUnless { it.isBlank() } ?: forumNameFallback.orEmpty()
     }
@@ -183,7 +196,17 @@ fun PostCard(
         }
     }
 
-    val hasMedia = medias.isNotEmpty() || videoInfo != null
+    // 正文富文本（T3.5）：优先用第一楼完整内容，其次用摘要；图片节点单独提出来进轮播，
+    // 正文只渲染文字，避免图文重复占位。
+    val richRenders = remember(item) {
+        val first = item.get { firstPostContent }
+        if (first.isNotEmpty()) first.renders else item.get { richAbstract }.renders
+    }
+    val inlineImages = remember(richRenders) {
+        richRenders.filterIsInstance<PicContentRender>()
+    }
+
+    val hasMedia = medias.isNotEmpty() || videoInfo != null || inlineImages.isNotEmpty()
     val hideMedia = context.appPreferences.hideMedia
     // GlasmioCard 的 backdrop 默认值会去读 `LocalGlassBackdrop.current`，而这个 local 在没有
     // `GlasmioBackdropHost` 祖先时**直接抛异常**（宽屏 / 无 dock / 玻璃不可用的降级路径都会没有 host）。
@@ -262,39 +285,28 @@ fun PostCard(
                         )
                     }
 
-                    if (body.isNotBlank()) {
-                        Spacer(
-                            modifier = Modifier.height(
-                                if (hasTitle) PostCardTokens.BodyTopGap else PostCardTokens.TitleTopGap
-                            )
-                        )
-                        Text(
-                            text = body,
-                            fontSize = 15.sp,
-                            lineHeight = 21.sp,
-                            color = colors.secondaryContent,
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
+                    PostBody(
+                        renders = richRenders,
+                        fallbackText = body,
+                        topGap = if (hasTitle) PostCardTokens.BodyTopGap else PostCardTokens.TitleTopGap,
+                    )
 
                     if (originThread != null) {
                         Spacer(modifier = Modifier.height(PostCardTokens.BodyTopGap))
-                        ShareThreadPlaceholder(
-                            title = originTitle,
-                            authorName = originAuthorName,
-                        )
+                        OriginThreadBlock(originThread = originThread)
                     }
 
                     if (hasMedia) {
                         Spacer(modifier = Modifier.height(PostCardTokens.MediaTopGap))
                         PostMedia(
                             medias = medias,
+                            inlineImages = inlineImages,
                             videoInfo = videoInfo,
                             forumId = item.get { forumId },
                             forumName = item.get { forumName },
                             threadId = item.get { threadId },
                             hideMedia = hideMedia,
+                            onOpenThread = { onClick(item.get()) },
                         )
                     }
 
@@ -424,29 +436,70 @@ private fun AvatarColumn(
 }
 
 /**
- * 媒体区：左沿 = 文字块左沿，右沿 = 卡内边距。
+ * 媒体区（T3.5 重写）：视频封面 / 单图 / 多图轮播。左沿 = 文字块左沿，右沿 = 卡内边距。
  *
- * - 单图：按 `width/height` 算比例（夹到 1.2~1.9，避免超长竖图把卡片撑成一张图），14dp 圆角；
- * - 多图：最多 3 张并排，每张 1:1、间距 4dp，>3 张时右下角挂 `+N`；
- * - 视频：16:9 占位块（TODO：接 `VideoPlayer`）；
- * - `hideMedia` 打开时只画一行「图片 N 张」占位。
+ * - **视频**：`videoInfo.thumbnailUrl` 封面 + 中央播放键。这里**不内嵌播放器**（信息流里同时
+ *   存活的播放器实例数不可控、且会和「点整卡进详情」抢点击），点击进帖子详情再看；
+ * - **单图**：按宽高比（夹到 1.2~1.9），14dp 圆角，点开相册；
+ * - **多图**：横向轮播（可左右滑），右下角 `1/N` 药丸，点开相册并**定位到当前页**；
+ * - **正文内嵌图**（`medias` 为空但 `PbContent` 里有图）：用提取出来的图走同样的单图/轮播；
+ * - `hideMedia` 打开时只画一行占位。
  */
 @Composable
 private fun PostMedia(
     medias: ImmutableList<ImmutableHolder<Media>>,
+    inlineImages: List<PicContentRender>,
     videoInfo: ImmutableHolder<VideoInfo>?,
     forumId: Long,
     forumName: String,
     threadId: Long,
     hideMedia: Boolean,
+    onOpenThread: () -> Unit,
 ) {
     val colors = GlasmioTheme.colors
     val mediaShape = ContinuousRoundedRectangle(PostCardTokens.MediaRadius)
 
+    // 轮播素材：优先接口给的 media，为空时用正文里抽出来的图。
+    val urls: List<String> = remember(medias, inlineImages) {
+        if (medias.isNotEmpty()) medias.map { it.mediaUrl() } else inlineImages.map { it.picUrl }
+    }
+    val aspects: List<Float> = remember(medias, inlineImages) {
+        if (medias.isNotEmpty()) medias.map { it.singleAspectRatio() } else inlineImages.map { it.inlineAspectRatio() }
+    }
+    val photoViewDataList: List<PhotoViewData> = remember(medias, inlineImages, forumId, forumName, threadId) {
+        if (medias.isNotEmpty()) {
+            val plain = medias.map { it.get() }
+            medias.indices.map { index ->
+                getPhotoViewData(
+                    medias = plain,
+                    forumId = forumId,
+                    forumName = forumName,
+                    threadId = threadId,
+                    index = index,
+                )
+            }
+        } else {
+            inlineImages.map { pic ->
+                getPhotoViewData(
+                    forumId = forumId,
+                    forumName = forumName,
+                    threadId = threadId,
+                    postId = 0L,
+                    picId = pic.picId,
+                    picUrl = pic.picUrl,
+                    originUrl = pic.originUrl,
+                    showOriginBtn = pic.showOriginBtn,
+                    originSize = pic.originSize,
+                )
+            }
+        }
+    }
+
     if (hideMedia) {
+        val videoOnly = videoInfo != null && urls.isEmpty()
         val label = when {
-            videoInfo != null -> stringResource(id = R.string.desc_video)
-            else -> stringResource(id = R.string.btn_open_photos, medias.size)
+            videoOnly -> stringResource(id = R.string.desc_video)
+            else -> stringResource(id = R.string.btn_open_photos, urls.size)
         }
         Row(
             modifier = Modifier
@@ -458,7 +511,7 @@ private fun PostMedia(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Icon(
-                imageVector = if (videoInfo != null) PhosphorIcons["play"] ?: Icons.Rounded.PlayArrow else PhosphorIcons["image"] ?: Icons.Rounded.Photo,
+                imageVector = if (videoOnly) PhosphorIcons["play"] ?: Icons.Rounded.PlayArrow else PhosphorIcons["image"] ?: Icons.Rounded.Photo,
                 contentDescription = null,
                 tint = colors.secondaryContent,
                 modifier = Modifier.size(16.dp),
@@ -474,123 +527,245 @@ private fun PostMedia(
     }
 
     if (videoInfo != null) {
-        // TODO(视频): 目前只是占位，点击走整卡进详情；后续接 FeedCard 里的 VideoPlayer。
+        val thumbnailUrl = remember(videoInfo) { videoInfo.get { thumbnailUrl } }
+        val videoAspect = remember(videoInfo) {
+            val w = videoInfo.get { thumbnailWidth }.toFloat()
+            val h = videoInfo.get { thumbnailHeight }.toFloat()
+            if (w > 0f && h > 0f) (w / h).coerceIn(1.2f, 16f / 9f) else 16f / 9f
+        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(16f / 9f)
+                .aspectRatio(videoAspect)
                 .clip(mediaShape)
-                .background(colors.container),
-            contentAlignment = Alignment.Center,
+                .background(colors.container)
+                .debounceClickable(onClick = onOpenThread),
         ) {
-            Icon(
-                imageVector = PhosphorIcons["play"] ?: Icons.Rounded.PlayArrow,
-                contentDescription = stringResource(id = R.string.desc_video),
-                tint = colors.secondaryContent,
-                modifier = Modifier.size(36.dp),
-            )
+            if (thumbnailUrl.isNotBlank()) {
+                NetworkImage(
+                    imageUri = thumbnailUrl,
+                    contentDescription = stringResource(id = R.string.desc_video),
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    enablePreview = false,
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(PostCardTokens.PlayBadgeSize)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.42f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = PhosphorIcons["play-fill"] ?: Icons.Rounded.PlayArrow,
+                    contentDescription = stringResource(id = R.string.desc_video),
+                    tint = Color.White,
+                    modifier = Modifier.size(PostCardTokens.PlayIconSize),
+                )
+            }
         }
         return
     }
 
-    if (medias.isEmpty()) return
+    if (urls.isEmpty()) return
 
-    if (medias.size == 1) {
-        val media = medias.first()
-        val aspect = remember(media) { media.singleAspectRatio() }
-        val photoViewData = remember(medias, forumId, forumName, threadId) {
-            getPhotoViewData(
-                medias = medias.map { it.get() },
-                forumId = forumId,
-                forumName = forumName,
-                threadId = threadId,
-                index = 0,
-            )
-        }
+    if (urls.size == 1) {
         NetworkImage(
-            imageUri = remember(media) { media.mediaUrl() },
+            imageUri = urls.first(),
             contentDescription = stringResource(id = R.string.desc_photo),
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(aspect)
+                .aspectRatio(aspects.first())
                 .clip(mediaShape),
-            photoViewData = photoViewData,
+            photoViewData = photoViewDataList.first(),
             contentScale = ContentScale.Crop,
             enablePreview = true,
         )
         return
     }
 
-    val shown = remember(medias) { medias.take(3) }
-    val moreCount = remember(medias) { medias.size - shown.size }
+    // 多图：横向轮播 + 1/N 药丸
+    val pagerState = rememberPagerState(pageCount = { urls.size })
     Box(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            // 2 张就各占一半、3 张各占 1/3（不做「固定 3 等分 + 补空位」，否则 2 张只铺满 2/3）。
-            shown.forEachIndexed { index, media ->
-                val photoViewData = remember(medias, index, forumId, forumName, threadId) {
-                    getPhotoViewData(
-                        medias = medias.map { it.get() },
-                        forumId = forumId,
-                        forumName = forumName,
-                        threadId = threadId,
-                        index = index,
-                    )
-                }
-                NetworkImage(
-                    imageUri = remember(media) { media.mediaUrl() },
-                    contentDescription = stringResource(id = R.string.desc_photo),
-                    modifier = Modifier
-                        .weight(1f)
-                        .aspectRatio(1f)
-                        .clip(mediaShape),
-                    photoViewData = photoViewData,
-                    contentScale = ContentScale.Crop,
-                    enablePreview = true,
-                )
-            }
-        }
-        if (moreCount > 0) {
-            Text(
-                text = "+$moreCount",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(6.dp)
-                    .clip(RoundedCornerShape(100))
-                    .background(Color.Black.copy(alpha = 0.45f))
-                    .padding(horizontal = 6.dp, vertical = 2.dp),
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxWidth()
+                // 统一按 4:3 出图（单图才按原比例），保证左右翻页时卡片高度不跳。
+                .aspectRatio(PostCardTokens.CarouselAspect)
+                .clip(mediaShape),
+        ) { page ->
+            NetworkImage(
+                imageUri = urls[page],
+                contentDescription = stringResource(id = R.string.desc_photo),
+                modifier = Modifier.fillMaxSize(),
+                photoViewData = photoViewDataList[page],
+                contentScale = ContentScale.Crop,
+                enablePreview = true,
             )
         }
+        Text(
+            text = "${pagerState.currentPage + 1}/${urls.size}",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.White,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(8.dp)
+                .clip(RoundedCornerShape(100))
+                .background(Color.Black.copy(alpha = 0.45f))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
+        )
     }
 }
 
 /**
- * 转发帖占位（TODO：接 `OriginThreadCard` 的完整原帖内容 / 原帖配图）。
+ * 正文（T3.5）：富文本渲染 + 6 行折叠。
+ *
+ * - 文字来自 `PbContentRender` 的文本节点（图片节点已被 [PostCard] 抽出去做轮播），
+ *   所以加粗 / 链接 / @ / 表情样式都还在；
+ * - 超过 6 行时在卡内给「展开」，展开后给「收起」（不跳转）；
+ * - 没有富文本时退回 `abstract` 纯文本，行为一致。
  */
 @Composable
-private fun ShareThreadPlaceholder(
-    title: String,
-    authorName: String,
+private fun PostBody(
+    renders: ImmutableList<PbContentRender>,
+    fallbackText: String,
+    topGap: androidx.compose.ui.unit.Dp,
 ) {
     val colors = GlasmioTheme.colors
-    Text(
-        text = if (authorName.isNotBlank()) "转发自 $authorName：$title" else "转发：$title",
-        fontSize = 13.sp,
-        lineHeight = 18.sp,
+    val text: AnnotatedString? = remember(renders, fallbackText) {
+        val fromRenders = buildAnnotatedString {
+            renders.forEach { render ->
+                if (render is TextContentRender && render.text.isNotBlank()) {
+                    if (length > 0) append('\n')
+                    append(render.text)
+                }
+            }
+        }
+        when {
+            fromRenders.isNotEmpty() -> fromRenders
+            fallbackText.isNotBlank() -> AnnotatedString(fallbackText)
+            else -> null
+        }
+    }
+
+    if (text == null) return
+
+    var expanded by remember(text) { mutableStateOf(false) }
+    var overflowed by remember(text) { mutableStateOf(false) }
+
+    Spacer(modifier = Modifier.height(topGap))
+    EmoticonText(
+        text = text,
+        modifier = Modifier.fillMaxWidth(),
+        fontSize = 15.sp,
+        lineSpacing = 0.8.sp,
         color = colors.secondaryContent,
-        maxLines = 2,
+        style = LocalTextStyle.current,
+        maxLines = if (expanded) Int.MAX_VALUE else PostCardTokens.BodyCollapsedLines,
         overflow = TextOverflow.Ellipsis,
+        onTextLayout = { layout ->
+            if (!expanded) overflowed = layout.hasVisualOverflow
+        },
+    )
+    if (overflowed) {
+        Text(
+            text = if (expanded) "收起" else "展开",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = colors.accent,
+            modifier = Modifier
+                .padding(top = 3.dp, bottom = 1.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .debounceClickable(onClick = { expanded = !expanded })
+                .padding(horizontal = 2.dp, vertical = 2.dp),
+        )
+    }
+}
+
+/**
+ * 转发帖的「原帖卡片」：标题 + 作者（+ 吧名）+ 摘要，有配图时右侧给一张 64dp 缩略图。
+ *
+ * 原帖卡片**不单独可点**：整卡点击仍然是进当前转发帖的详情，避免在同一张卡里出现两个跳转目标。
+ */
+@Composable
+private fun OriginThreadBlock(originThread: OriginThreadInfo) {
+    val colors = GlasmioTheme.colors
+    val title = originThread.title
+    val authorName = remember(originThread) {
+        val author = originThread.author
+        author?.nameShow?.takeIf { it.isNotBlank() } ?: author?.name.orEmpty()
+    }
+    val forumName = originThread.fname
+    val summary = remember(originThread) { originThread._abstract.abstractText }
+    val cover = remember(originThread) {
+        originThread.media.firstOrNull()?.let { media ->
+            ImageUtil.getUrl(App.INSTANCE, true, media.originPic, media.bigPic, media.dynamicPic, media.srcPic)
+        }
+    }
+
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(ContinuousRoundedRectangle(PostCardTokens.MediaRadius))
             .background(colors.container)
             .padding(horizontal = 12.dp, vertical = 10.dp),
-    )
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            if (title.isNotBlank()) {
+                Text(
+                    text = title,
+                    fontSize = 15.sp,
+                    lineHeight = 20.sp,
+                    fontWeight = FontWeight(600),
+                    color = colors.content,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (authorName.isNotBlank()) {
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = if (forumName.isNotBlank()) "@$authorName · $forumName" else "@$authorName",
+                    fontSize = 12.sp,
+                    color = colors.secondaryContent,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (summary.isNotBlank()) {
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = summary,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    color = colors.secondaryContent,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        if (!cover.isNullOrBlank()) {
+            NetworkImage(
+                imageUri = cover,
+                contentDescription = stringResource(id = R.string.desc_photo),
+                modifier = Modifier
+                    .size(PostCardTokens.OriginCoverSize)
+                    .clip(ContinuousRoundedRectangle(PostCardTokens.OriginCoverRadius)),
+                contentScale = ContentScale.Crop,
+            )
+        }
+    }
+}
+
+/** 正文内嵌图的单图比例（夹到 1.2~1.9，跟 [singleAspectRatio] 一致）。 */
+private fun PicContentRender.inlineAspectRatio(): Float {
+    if (width <= 0 || height <= 0) return 4f / 3f
+    return (width.toFloat() / height.toFloat()).coerceIn(1.2f, 1.9f)
 }
 
 /**
@@ -675,6 +850,20 @@ private object PostCardTokens {
 
     /** 操作按钮的触控区高度：图标只有 16dp，但点击区域补到 28dp。 */
     val ActionTouchHeight = 28.dp
+
+    /** 正文折叠行数（T3.5：完整渲染 + 6 行折叠）。 */
+    const val BodyCollapsedLines = 6
+
+    /** 多图轮播的页高比（统一 4:3，翻页时高度不跳）。 */
+    const val CarouselAspect = 4f / 3f
+
+    /** 视频封面上的播放键。 */
+    val PlayBadgeSize = 48.dp
+    val PlayIconSize = 26.dp
+
+    /** 转发帖原帖配图。 */
+    val OriginCoverSize = 64.dp
+    val OriginCoverRadius = 10.dp
 
     /** 点赞高亮色：iOS 红，浅色 / 深色各一档（不跟主题 accent 走，见简报「遗留」）。 */
     val likeColor: Color
