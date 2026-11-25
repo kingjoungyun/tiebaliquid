@@ -36,14 +36,11 @@ import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.ui.common.theme.compose.pullRefreshIndicator
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
-import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.ErrorScreen
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadMoreLayout
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
-import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreen
 import com.huanchengfly.tieba.post.utils.AccountUtil
 import com.huanchengfly.tieba.post.utils.StringUtil
@@ -51,6 +48,9 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.collections.immutable.persistentListOf
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import androidx.compose.foundation.layout.PaddingValues
+import com.huanchengfly.tieba.post.ui.common.components.GlassListCard
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 
 @Destination
 @OptIn(ExperimentalMaterialApi::class)
@@ -104,21 +104,10 @@ fun FansListPage(
     val isEmpty by remember { derivedStateOf { users.isEmpty() } }
     val isError by remember { derivedStateOf { error != null } }
 
-    MyScaffold(
-        topBar = {
-            TitleCentredToolbar(
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.title_fans_list),
-                        style = MaterialTheme.typography.h6,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
-                }
-            )
-        }
+    GlassPage(
+        title = stringResource(id = R.string.title_fans_list),
+        largeTitle = stringResource(id = R.string.title_fans_list),
+        onBack = { navigator.navigateUp() },
     ) { contentPaddings ->
         Column(
             modifier = Modifier
@@ -195,15 +184,22 @@ private fun FansList(
     onClick: (FansPageBean.FanBean) -> Unit,
     lazyListState: LazyListState = rememberLazyListState(),
 ) {
-    MyLazyColumn(state = lazyListState) {
+    MyLazyColumn(
+        state = lazyListState,
+        contentPadding = PaddingValues(vertical = 6.dp),
+    ) {
         items(
             items = data,
             key = { it.id }
         ) {
-            FansListItem(
-                item = it,
-                onClick = { onClick(it) }
-            )
+            GlassListCard(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                FansListItem(
+                    item = it,
+                    onClick = { onClick(it) }
+                )
+            }
         }
     }
 }
