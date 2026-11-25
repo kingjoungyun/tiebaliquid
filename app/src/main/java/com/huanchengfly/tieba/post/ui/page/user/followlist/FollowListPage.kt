@@ -54,14 +54,11 @@ import com.huanchengfly.tieba.post.ui.common.theme.compose.pullRefreshIndicator
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.AppMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
-import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.ErrorScreen
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadMoreLayout
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
-import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreen
 import com.huanchengfly.tieba.post.utils.AccountUtil
 import com.huanchengfly.tieba.post.utils.StringUtil
@@ -69,6 +66,10 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.collections.immutable.persistentListOf
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import androidx.compose.foundation.layout.PaddingValues
+import com.huanchengfly.tieba.post.ui.common.components.GlassListCard
+import com.huanchengfly.tieba.post.ui.common.components.UserRow
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 
 private enum class FollowListFilter { All, Mutual }
 
@@ -150,21 +151,10 @@ fun FollowListPage(
                 }
             }
     
-            MyScaffold(
-                topBar = {
-                    TitleCentredToolbar(
-                        title = {
-                            Text(
-                                text = stringResource(id = R.string.title_follow_list),
-                                style = MaterialTheme.typography.h6,
-                                fontWeight = FontWeight.Bold
-                            )
-                        },
-                        navigationIcon = {
-                            BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
-                        }
-                    )
-                }
+            GlassPage(
+                title = stringResource(id = R.string.title_follow_list),
+                largeTitle = stringResource(id = R.string.title_follow_list),
+                onBack = { navigator.navigateUp() },
             ) { contentPaddings ->
                 Column(
                     modifier = Modifier
@@ -363,7 +353,10 @@ private fun FollowList(
     onClick: (FollowListBean.FollowUserBean) -> Unit,
     lazyListState: LazyListState = rememberLazyListState(),
 ) {
-    MyLazyColumn(state = lazyListState) {
+    MyLazyColumn(
+        state = lazyListState,
+        contentPadding = PaddingValues(vertical = 6.dp),
+    ) {
         items(
             items = data,
             key = { it.id }
@@ -394,55 +387,35 @@ private fun FollowListItem(
     onButtonClick: () -> Unit,
     onClick: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    // T5 批次 3：复用 UserRow（批次 2 抽的），尾部槽位放「关注 / 已关注」按钮
+    GlassListCard(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
-        Avatar(
-            data = StringUtil.getAvatarUrl(item.portrait),
-            size = Sizes.Small,
-            contentDescription = item.name
+        UserRow(
+            name = StringUtil.getUsernameAnnotatedString(
+                LocalContext.current,
+                item.name.orEmpty(),
+                item.nameShow
+            ),
+            portraitUrl = StringUtil.getAvatarUrl(item.portrait),
+            description = item.intro,
+            onClick = onClick,
+            trailing = if (showButton) {
+                {
+                    FollowListFollowButton(
+                        text = when {
+                            unfollowed -> stringResource(id = R.string.button_follow)
+                            item.hasConcerned == 2 -> stringResource(id = R.string.filter_follow_mutual)
+                            else -> stringResource(id = R.string.text_followed)
+                        },
+                        followed = !unfollowed,
+                        onClick = onButtonClick,
+                    )
+                }
+            } else {
+                null
+            },
         )
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = StringUtil.getUsernameAnnotatedString(
-                    LocalContext.current,
-                    item.name.orEmpty(),
-                    item.nameShow
-                ),
-                style = MaterialTheme.typography.subtitle1,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            val subText = item.intro
-            if (!subText.isNullOrBlank()) {
-                Text(
-                    text = subText,
-                    style = MaterialTheme.typography.body2,
-                    color = AppTokens.textSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-        if (showButton) {
-            FollowListFollowButton(
-                text = when {
-                    unfollowed -> stringResource(id = R.string.button_follow)
-                    item.hasConcerned == 2 -> stringResource(id = R.string.filter_follow_mutual)
-                    else -> stringResource(id = R.string.text_followed)
-                },
-                followed = !unfollowed,
-                onClick = onButtonClick,
-            )
-        }
     }
 }
 
