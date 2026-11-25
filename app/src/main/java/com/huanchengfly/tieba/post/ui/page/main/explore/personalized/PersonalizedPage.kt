@@ -75,7 +75,6 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.BlockTip
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockableContent
 import com.huanchengfly.tieba.post.ui.widgets.compose.Container
 import com.huanchengfly.tieba.post.ui.widgets.compose.ErrorScreen
-import com.huanchengfly.tieba.post.ui.widgets.compose.FeedCard
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadMoreLayout
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
@@ -528,7 +527,7 @@ private fun LegacyFeedList(
                                 .padding(vertical = 8.dp, horizontal = 16.dp)
                         ) {
                             Column {
-                                FeedCard(
+                                PostCard(
                                     item = item,
                                     onClick = onItemClick,
                                     onClickReply = onItemReplyClick,
@@ -539,16 +538,17 @@ private fun LegacyFeedList(
                                         }
                                     },
                                     onClickUser = onClickUser,
-                                ) {
-                                    if (personalized != null) {
-                                        Dislike(
-                                            personalized = personalized,
-                                            onDislike = { clickTime, reasons ->
-                                                onDislike(item.get(), clickTime, reasons)
-                                            }
-                                        )
-                                    }
-                                }
+                                    menuAction = {
+                                        if (personalized != null) {
+                                            Dislike(
+                                                personalized = personalized,
+                                                onDislike = { clickTime, reasons ->
+                                                    onDislike(item.get(), clickTime, reasons)
+                                                }
+                                            )
+                                        }
+                                    },
+                                )
                                 if (showDivider) {
                                     VerticalDivider(
                                         modifier = Modifier.padding(horizontal = 16.dp),

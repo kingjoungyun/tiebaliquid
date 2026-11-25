@@ -869,3 +869,63 @@ private object PostCardTokens {
     val likeColor: Color
         @Composable get() = if (AppTokens.isNightMode) Color(0xFFFF453A) else Color(0xFFFF3B30)
 }
+
+/**
+ * 帖子卡骨架屏（T3.5 从 `FeedCard.kt` 的 `FeedCardPlaceholder` 搬来）。
+ *
+ * 原实现用 M2 `placeholder()` + `Card`/`UserHeader` 占位；卡片统一后这里只保留「同尺寸的
+ * 中性色块」——骨架屏出现的时间很短，用色块已经足够，也不用再依赖那套 M2 组件。
+ */
+@Composable
+fun PostCardPlaceholder(modifier: Modifier = Modifier) {
+    val colors = GlasmioTheme.colors
+    GlasmioCard(
+        modifier = modifier.fillMaxWidth(),
+        backdrop = remember { emptyBackdrop() },
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = PostCardTokens.CardPaddingH,
+                    end = PostCardTokens.CardPaddingH,
+                    top = PostCardTokens.CardPaddingTop,
+                    bottom = PostCardTokens.CardPaddingBottom,
+                ),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(PostCardTokens.AvatarSize)
+                    .clip(CircleShape)
+                    .background(colors.secondaryContent.copy(alpha = 0.12f))
+            )
+            Spacer(modifier = Modifier.width(PostCardTokens.AvatarGutter))
+            Column(modifier = Modifier.weight(1f)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.35f)
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(colors.secondaryContent.copy(alpha = 0.12f))
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .height(16.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(colors.secondaryContent.copy(alpha = 0.10f))
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(colors.secondaryContent.copy(alpha = 0.07f))
+                )
+            }
+        }
+    }
+}

@@ -61,7 +61,6 @@ import com.huanchengfly.tieba.post.ui.page.main.home.PostCardUiStyle
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockTip
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockableContent
 import com.huanchengfly.tieba.post.ui.widgets.compose.Chip
-import com.huanchengfly.tieba.post.ui.widgets.compose.FeedCard
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadMoreLayout
 import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
@@ -283,13 +282,14 @@ private fun ThreadList(
                                 }
                                 VerticalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                             }
-                            FeedCard(
+                            PostCard(
                                 item = holder,
                                 onClick = onItemClicked,
                                 onClickReply = onItemReplyClicked,
                                 onAgree = onAgree,
-                                onClickOriginThread = onOriginThreadClicked,
-                                onClickUser = onUserClicked
+                                onClickUser = onUserClicked,
+                                forumNameFallback = forumNameFallback,
+                                modifier = Modifier.fillMaxWidth(itemFraction),
                             )
                         }
                     }

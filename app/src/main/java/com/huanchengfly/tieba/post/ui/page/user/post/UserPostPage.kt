@@ -39,6 +39,10 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.api.models.protos.PostInfoList
+import com.huanchengfly.tieba.post.arch.wrapImmutable
+import com.huanchengfly.tieba.post.api.models.protos.ThreadInfo
+import com.huanchengfly.tieba.post.api.models.protos.User
+import com.huanchengfly.tieba.post.ui.page.main.home.PostCard
 import com.huanchengfly.tieba.post.arch.GlobalEvent
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.arch.getOrNull
@@ -54,8 +58,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.Button
 import com.huanchengfly.tieba.post.ui.widgets.compose.Card
 import com.huanchengfly.tieba.post.ui.widgets.compose.Container
 import com.huanchengfly.tieba.post.ui.widgets.compose.ErrorScreen
-import com.huanchengfly.tieba.post.ui.widgets.compose.FeedCard
-import com.huanchengfly.tieba.post.ui.widgets.compose.FeedCardPlaceholder
+import com.huanchengfly.tieba.post.ui.page.main.home.PostCardPlaceholder
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadMoreLayout
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
@@ -143,7 +146,7 @@ fun UserPostPage(
             ) {
                 Column {
                     repeat(4) {
-                        FeedCardPlaceholder()
+                        PostCardPlaceholder()
                     }
                 }
             }
@@ -345,15 +348,14 @@ fun UserPostItem(
 ) {
     val item = post.data
     if (post.isThread) {
-        FeedCard(
-            item = item,
-            onClick = { onClick(it.thread_id, null, false) },
-            onAgree = onAgree,
+        PostCard(
+            item = remember(item) { wrapImmutable(item.get().toPostCardThreadInfo()) },
+            onClick = { onClick(it.threadId, null, false) },
+            onAgree = { onAgree(item.get()) },
             modifier = modifier,
-            onClickReply = onClickReply,
-            onClickUser = onClickUser,
-            onClickForum = onClickForum,
-            onClickOriginThread = { onClickOriginThread(it.tid.toLong()) },
+            onClickReply = { onClickReply(item.get()) },
+            onClickUser = { onClickUser(it.id) },
+            onClickForum = { onClickForum(it.name) },
         )
     } else {
         Card(
@@ -421,3 +423,36 @@ fun UserPostItem(
         )
     }
 }
+/**
+ * 「他的帖子」列表返回的是 `PostInfoList`（帖子/主题混排），卡片统一后主题帖走
+ * [com.huanchengfly.tieba.post.ui.page.main.home.PostCard]，这里补一份 proto `ThreadInfo` 映射。
+ *
+ * 只映射卡片用到的字段；时间用 `create_time`（`lastTimeInt` 是卡片显示相对时间用的字段）。
+ */
+private fun PostInfoList.toPostCardThreadInfo(): ThreadInfo = ThreadInfo(
+    id = thread_id,
+    threadId = thread_id,
+    title = title,
+    replyNum = reply_num,
+    viewNum = view_num,
+    lastTimeInt = create_time,
+    author = User(
+        id = user_id,
+        name = user_name,
+        nameShow = name_show,
+        portrait = user_portrait,
+    ),
+    forumId = forum_id,
+    forumName = forum_name,
+    isNoTitle = is_ntitle,
+    firstPostId = post_id,
+    createTime = create_time,
+    agreeNum = agree_num,
+    shareNum = share_num.toLong(),
+    agree = agree,
+    origin_thread_info = origin_thread_info,
+    is_share_thread = is_share_thread,
+    _abstract = abstract_thread,
+    media = media,
+    videoInfo = video_info,
+)

@@ -48,7 +48,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.R
+import com.huanchengfly.tieba.post.api.models.ThreadInfoBean
 import com.huanchengfly.tieba.post.api.models.TopicInfoBean
+import com.huanchengfly.tieba.post.api.models.protos.Media
+import com.huanchengfly.tieba.post.api.models.protos.ThreadInfo
+import com.huanchengfly.tieba.post.api.models.protos.User
+import com.huanchengfly.tieba.post.ui.page.main.home.PostCard
 import com.huanchengfly.tieba.post.api.models.protos.hasAgree
 import com.huanchengfly.tieba.post.arch.CommonUiEvent.ScrollToTop.bindScrollToTopEvent
 import com.huanchengfly.tieba.post.arch.collectPartialAsState
@@ -63,7 +68,6 @@ import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestinati
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.Container
-import com.huanchengfly.tieba.post.ui.widgets.compose.FeedCard
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadMoreLayout
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
@@ -313,8 +317,8 @@ fun TopicDetailPage(
                                     ) { index, item ->
                                         Container {
                                             Column {
-                                                FeedCard(
-                                                    item = wrapImmutable(item),
+                                                PostCard(
+                                                    item = wrapImmutable(item.threadInfo.toPostCardThreadInfo()),
                                                     onClick = {
                                                         navigator.navigate(
                                                             ThreadPageDestination(
@@ -509,3 +513,42 @@ private fun TopicHeader(
         }
     }
 }
+/**
+ * 热门话题「相关帖子」用的是 JSON DTO（`TopicDetailBean.ThreadInfoBean`），
+ * 卡片统一到 [com.huanchengfly.tieba.post.ui.page.main.home.PostCard] 后需要一份 proto `ThreadInfo`。
+ *
+ * 只映射卡片实际用到的字段；`media` 用 `big_pic`/`small_pic` 还原成 proto `Media`（宽度用于算比例）。
+ */
+private fun ThreadInfoBean.toPostCardThreadInfo(): ThreadInfo = ThreadInfo(
+    id = feedId,
+    threadId = threadId,
+    title = title.orEmpty(),
+    replyNum = replyNum,
+    lastTime = lastTime,
+    lastTimeInt = lastTimeInt.toInt(),
+    author = User(
+        id = userId,
+        name = author.name.orEmpty(),
+        nameShow = author.nameShow,
+        portrait = author.portrait.ifBlank { avatar },
+    ),
+    forumId = forumId,
+    forumName = forumName,
+    firstPostId = firstPostId,
+    createTime = createTime.toInt(),
+    agreeNum = agreeNum,
+    shareNum = shareNum,
+    agree = com.huanchengfly.tieba.post.api.models.protos.Agree(
+        agreeNum = agree.agreeNum.toLong(),
+        hasAgree = userAgree,
+    ),
+    media = media.map { bean ->
+        Media(
+            originPic = bean.bigPic,
+            bigPic = bean.bigPic,
+            srcPic = bean.smallPic,
+            width = bean.width.toIntOrNull() ?: 0,
+            height = bean.height.toIntOrNull() ?: 0,
+        )
+    },
+)

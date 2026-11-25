@@ -53,7 +53,6 @@ import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestinati
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockTip
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockableContent
 import com.huanchengfly.tieba.post.ui.widgets.compose.Chip
-import com.huanchengfly.tieba.post.ui.widgets.compose.FeedCard
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadMoreLayout
@@ -64,6 +63,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.page.main.home.PostCard
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -349,12 +349,13 @@ private fun ThreadList(
                             }
                             VerticalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                         }
-                        FeedCard(
+                        PostCard(
                             item = holder,
                             onClick = onItemClicked,
                             onClickReply = onItemReplyClicked,
                             onAgree = onAgree,
                             onClickUser = onUserClicked,
+                            modifier = Modifier.fillMaxWidth(itemFraction),
                         )
                     }
                 }

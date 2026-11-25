@@ -28,13 +28,13 @@ import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.Container
-import com.huanchengfly.tieba.post.ui.widgets.compose.FeedCard
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadMoreLayout
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
 import com.huanchengfly.tieba.post.ui.widgets.compose.VerticalDivider
 import kotlinx.collections.immutable.persistentListOf
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.page.main.home.PostCard
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -96,7 +96,7 @@ fun ConcernPage(
                     Container {
                         if (item.recommendType == 1) {
                             Column {
-                                FeedCard(
+                                PostCard(
                                     item = wrapImmutable(item.threadList!!),
                                     onClick = {
                                         navigator.navigate(
