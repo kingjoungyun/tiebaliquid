@@ -1,12 +1,8 @@
 package com.huanchengfly.tieba.post.ui.page.settings.account
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.AddCircleOutline
@@ -18,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -35,8 +30,6 @@ import com.huanchengfly.tieba.post.ui.common.prefs.widgets.DropDownPref
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.EditTextPref
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.page.destinations.LoginPageDestination
-import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
-import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.utils.AccountUtil
 import com.huanchengfly.tieba.post.utils.AccountUtil.AllAccounts
 import com.huanchengfly.tieba.post.utils.AccountUtil.LocalAccount
@@ -46,6 +39,8 @@ import com.huanchengfly.tieba.post.utils.launchUrl
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.padding
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
 @Destination
@@ -53,30 +48,16 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 fun AccountManagePage(
     navigator: DestinationsNavigator,
 ) {
-    Scaffold(
-        backgroundColor = Color.Transparent,
-        topBar = {
-            TitleCentredToolbar(
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.title_account_manage),
-                        fontWeight = FontWeight.Bold, style = MaterialTheme.typography.h6
-                    )
-                },
-                navigationIcon = {
-                    BackNavigationIcon(onBackPressed = { navigator.navigateUp() })
-                }
-            )
-        },
-    ) { paddingValues ->
-        val account = LocalAccount.current
-        val context = LocalContext.current
-        PrefsScreen(
-            dataStore = LocalContext.current.dataStore,
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize(),
-        ) {
+    val account = LocalAccount.current
+    val context = LocalContext.current
+    // T5：骨架换成 PrefsScreen 自带的 GlassPage（折叠大标题 + 悬浮返回），行样式本来就是
+    // TextPref / DropDownPref / EditTextPref，不再需要一层 M2 Scaffold + Toolbar。
+    PrefsScreen(
+        dataStore = context.dataStore,
+        title = stringResource(id = R.string.title_account_manage),
+        onBack = { navigator.navigateUp() },
+        modifier = Modifier.fillMaxSize(),
+    ) {
             prefsItem {
                 if (account != null) {
                     DropDownPref(
@@ -197,6 +178,5 @@ fun AccountManagePage(
                     dialogTitle = stringResource(id = R.string.title_dialog_modify_little_tail),
                 )
             }
-        }
     }
 }
