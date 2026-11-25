@@ -593,8 +593,6 @@ fun ForumPage(
         } else context.toastShort(R.string.toast_add_thread_failed)
     }
 
-    // 吧页的风格开关（GLASMIO / LEGACY）。两条分支共用下面这一整套页面逻辑，只换外壳。
-    val glassmio = ForumPageUi.DefaultStyle == ForumPageUiStyle.GLASMIO
     // 顶栏与悬浮条共用的「更多」菜单内容（热榜 / 分享 / 发送到桌面 / 取消关注）
     val forumMenuContent: @Composable MenuScope.() -> Unit = {
         // 热榜的入口：HotTopicListPage 一直带 @Destination，但全仓没有导航到它的地方，
@@ -662,7 +660,7 @@ fun ForumPage(
     }
 
     ProvideNavigator(navigator = navigator) {
-        ForumPageSkin(enabled = glassmio) {
+        ForumPageSkin(enabled = true) {
         StateScreen(
             modifier = Modifier.fillMaxSize(),
             isEmpty = forumInfo == null,
@@ -692,28 +690,20 @@ fun ForumPage(
 
                         // GLASMIO：顶栏本体透明、只有两个 40dp 圆形按钮（返回 / 搜索 / ⋯），
                         // 没有标题、没有背景色——视觉上等同「无顶栏」，但保留了二级页必须的返回与菜单落点。
-                        if (!glassmio) {
-                            ForumToolbar(
-                                forumName = forumName,
-                                showTitle = !isShowTopBarArea,
-                                menuContent = forumMenuContent,
-                                forumId = forumInfo?.get { id }
-                            )
-                        } else {
-                            ForumTopBar(
-                                showSearch = forumInfo != null,
-                                menuContent = forumMenuContent,
-                                onBack = { navigator.navigateUp() },
-                                onSearch = {
-                                    val forumId = forumInfo?.get { id }
-                                    if (forumId != null) {
-                                        navigator.navigate(
-                                            ForumSearchPostPageDestination(forumName, forumId)
-                                        )
-                                    }
-                                },
-                            )
-                        }
+                                                ForumTopBar(
+                            showSearch = forumInfo != null,
+                            menuContent = forumMenuContent,
+                            onBack = { navigator.navigateUp() },
+                            onSearch = {
+                                val forumId = forumInfo?.get { id }
+                                if (forumId != null) {
+                                    navigator.navigate(
+                                        ForumSearchPostPageDestination(forumName, forumId)
+                                    )
+                                }
+                            },
+                        )
+                    
                 
     }
 
@@ -888,60 +878,24 @@ fun ForumPage(
                                             }
                                     ) {
                                         forumInfo?.let { holder ->
-                                            if (glassmio) {
-                                                // 大标题（吧名）+ 吧头卡片：大标题随 header 一起收起。
-                                                Column(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        // 顶部留一条给悬浮按钮（返回 / 搜索 / ⋯）：40dp 按钮 + 上下各 4dp。
-                                                        .padding(
-                                                            start = 16.dp,
-                                                            end = 16.dp,
-                                                            top = 8.dp,
-                                                            bottom = 4.dp,
-                                                        ),
-                                                ) {
-                                                    ForumLargeTitle(text = stringResource(
-                                                        id = R.string.title_forum,
-                                                        forumName,
-                                                    ))
-                                                    Spacer(modifier = Modifier.height(10.dp))
-                                                    GlasmioForumHeaderCard(
-                                                        forumInfoImmutableHolder = holder,
-                                                        onOpenForumInfo = {
-                                                            navigator.navigate(
-                                                                ForumDetailPageDestination(
-                                                                    forumId = holder.get { this.id })
-                                                            )
-                                                        },
-                                                        onBtnClick = {
-                                                            val (forum) = holder
-                                                            when {
-                                                                forum.is_like != 1 -> viewModel.send(
-                                                                    ForumUiIntent.Like(
-                                                                        forum.id,
-                                                                        forum.name,
-                                                                        tbs ?: account!!.tbs
-                                                                    )
-                                                                )
-
-                                                                forum.sign_in_info?.user_info?.is_sign_in != 1 -> {
-                                                                    viewModel.send(
-                                                                        ForumUiIntent.SignIn(
-                                                                            forum.id,
-                                                                            forum.name,
-                                                                            tbs ?: account!!.tbs
-                                                                        )
-                                                                    )
-                                                                }
-                                                            }
-                                                        },
-                                                        showAction = account != null &&
-                                                            !context.appPreferences.safeMode,
-                                                    )
-                                                }
-                                            } else {
-                                                ForumHeader(
+                                                                                        // 大标题（吧名）+ 吧头卡片：大标题随 header 一起收起。
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    // 顶部留一条给悬浮按钮（返回 / 搜索 / ⋯）：40dp 按钮 + 上下各 4dp。
+                                                    .padding(
+                                                        start = 16.dp,
+                                                        end = 16.dp,
+                                                        top = 8.dp,
+                                                        bottom = 4.dp,
+                                                    ),
+                                            ) {
+                                                ForumLargeTitle(text = stringResource(
+                                                    id = R.string.title_forum,
+                                                    forumName,
+                                                ))
+                                                Spacer(modifier = Modifier.height(10.dp))
+                                                GlasmioForumHeaderCard(
                                                     forumInfoImmutableHolder = holder,
                                                     onOpenForumInfo = {
                                                         navigator.navigate(
@@ -971,11 +925,11 @@ fun ForumPage(
                                                             }
                                                         }
                                                     },
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .padding(16.dp)
+                                                    showAction = account != null &&
+                                                        !context.appPreferences.safeMode,
                                                 )
                                             }
+                                        
                                         }
                                     }
                                 }
@@ -986,25 +940,13 @@ fun ForumPage(
                                     add(stringResource(id = R.string.tab_forum_good))
                                     generalTabs.forEach { add(it.tabName) }
                                 }
-                                val tabTextStyle = if (glassmio) {
-                                    MaterialTheme.typography.body1.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 15.sp,
-                                        letterSpacing = 0.sp
-                                    )
-                                } else {
-                                    MaterialTheme.typography.button.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp,
-                                        letterSpacing = 0.sp
-                                    )
-                                }
-                                val tabSelectedColor =
-                                    if (glassmio) GlasmioTheme.colors.content
-                                    else AppTokens.primary
-                                val tabUnselectedColor =
-                                    if (glassmio) GlasmioTheme.colors.secondaryContent
-                                    else AppTokens.textSecondary
+                                val tabTextStyle = MaterialTheme.typography.body1.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 15.sp,
+                                    letterSpacing = 0.sp
+                                )
+                                val tabSelectedColor = GlasmioTheme.colors.content
+                                val tabUnselectedColor = GlasmioTheme.colors.secondaryContent
                                 // tab 0 的排序（回复时间 / 发帖时间）与各分类 tab 的排序下标
                                 var currentSortType by remember {
                                     mutableIntStateOf(getSortType(context, forumName))
@@ -1100,7 +1042,7 @@ fun ForumPage(
                                         divider = {},
                                         backgroundColor = Color.Transparent,
                                         contentColor = tabSelectedColor,
-                                        edgePadding = if (glassmio) 12.dp else 0.dp,
+                                        edgePadding = 12.dp,
                                         modifier = Modifier
                                             .wrapContentWidth(align = Alignment.Start)
                                             .align(Alignment.Start)
@@ -1236,28 +1178,8 @@ fun LoadingPlaceholder(
 ) {
     val context = LocalContext.current
 
-    MyScaffold(
-        backgroundColor = Color.Transparent,
-        modifier = Modifier
-            .fillMaxSize(),
-        topBar = {
-            ForumToolbar(
-                forumName = forumName,
-                showTitle = false,
-                menuContent = {
-                    DropdownMenuItem(
-                        onClick = {
-                            shareForum(context, forumName)
-                            dismiss()
-                        }
-                    ) {
-                        Text(text = stringResource(id = R.string.title_share))
-                    }
-                }
-            )
-        }
-    ) { contentPadding ->
-        Column(modifier = Modifier.padding(contentPadding)) {
+    // 加载占位不再画顶栏（分享仍在吧页 ⋯ 菜单里），只留占位内容。
+    Column(modifier = Modifier.fillMaxSize()) {
             ForumHeaderPlaceholder(
                 forumName = forumName,
                 modifier = Modifier
@@ -1293,7 +1215,6 @@ fun LoadingPlaceholder(
             repeat(4) {
                 PostCardPlaceholder()
             }
-        }
     }
 }
 
@@ -1309,72 +1230,6 @@ private fun BackNavigationIconPlaceholder() {
             contentDescription = null
         )
     }
-}
-
-@Composable
-private fun ForumToolbar(
-    forumName: String,
-    showTitle: Boolean,
-    menuContent: @Composable (MenuScope.() -> Unit)? = null,
-    forumId: Long? = null,
-) {
-    val navigator = LocalNavigator.current
-    Toolbar(
-        title = {
-            if (showTitle) Text(
-                text = stringResource(
-                    id = R.string.title_forum,
-                    forumName
-                )
-            )
-        },
-        navigationIcon = {
-            BackNavigationIcon(onBackPressed = {
-                val navigateUp =
-                    navigator.navigateUp()
-            })
-        },
-        actions = {
-            if (forumId != null) {
-                var lastClickTime by remember { mutableLongStateOf(0L) }
-                IconButton(
-                    onClick = {
-                        val currentTime = System.currentTimeMillis()
-                        val delayMillis = 500L
-                        if (currentTime - lastClickTime >= delayMillis) {
-                            navigator.navigate(ForumSearchPostPageDestination(forumName, forumId))
-                        }
-                        lastClickTime = currentTime
-                    }
-                ) {
-                    Icon(
-                        imageVector = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
-                        contentDescription = stringResource(id = R.string.btn_search_in_forum)
-                    )
-                }
-            }
-            Box {
-                if (menuContent != null) {
-                    val menuState = rememberMenuState()
-                    ClickMenu(
-                        menuContent = menuContent,
-                        menuState = menuState,
-                        triggerShape = CircleShape
-                    ) {
-                        Box(
-                            modifier = Modifier.size(48.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreVert,
-                                contentDescription = stringResource(id = R.string.btn_more)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    )
 }
 
 @Composable

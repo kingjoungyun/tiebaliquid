@@ -56,8 +56,6 @@ import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
 import com.huanchengfly.tieba.post.ui.page.forum.getSortType
 import com.huanchengfly.tieba.post.ui.page.main.home.PostCard
-import com.huanchengfly.tieba.post.ui.page.main.home.PostCardUi
-import com.huanchengfly.tieba.post.ui.page.main.home.PostCardUiStyle
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockTip
 import com.huanchengfly.tieba.post.ui.widgets.compose.BlockableContent
 import com.huanchengfly.tieba.post.ui.widgets.compose.Chip
@@ -183,25 +181,18 @@ private fun ThreadList(
         WindowWidthSizeClass.Expanded -> 0.5f
         else -> 1f
     }
-    // 与首页信息流共用同一个卡片开关：TWITTER → 推特式 PostCard（16dp 页边 / 10dp 卡距 / 无分隔线）；
-    // LEGACY → 原来的 FeedCard + 分隔线。
-    val twitter = PostCardUi.DefaultStyle == PostCardUiStyle.TWITTER
     val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     MyLazyColumn(
         state = state,
-        horizontalAlignment = if (twitter) Alignment.Start else Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.Start,
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = if (twitter) {
-            PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 10.dp,
-                bottom = navigationBarBottom + 16.dp,
-            )
-        } else {
-            WindowInsets.navigationBars.asPaddingValues()
-        },
-        verticalArrangement = if (twitter) Arrangement.spacedBy(10.dp) else Arrangement.Top,
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            end = 16.dp,
+            top = 10.dp,
+            bottom = navigationBarBottom + 16.dp,
+        ),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (!forumRuleTitle.isNullOrEmpty()) {
             item(key = "ForumRule") {
@@ -236,16 +227,12 @@ private fun ThreadList(
             BlockableContent(
                 blocked = blocked,
                 blockedTip = { BlockTip(text = { Text(text = stringResource(id = R.string.tip_blocked_thread)) }) },
-                modifier = if (twitter) {
-                    Modifier.fillMaxWidth()
-                } else {
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp, horizontal = 16.dp)
-                },
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 val (item) = holder
-                if (twitter) {
+                                Column(
+                    modifier = Modifier.fillMaxWidth(itemFraction)
+                ) {
                     if (item.isTop == 1) {
                         val title = item.title.takeUnless { it.isBlank() } ?: item.abstractText
                         TopThreadItem(
@@ -254,6 +241,12 @@ private fun ThreadList(
                             modifier = Modifier.fillMaxWidth(),
                         )
                     } else {
+                        if (index > 0) {
+                            if (items[index - 1].thread.get { isTop } == 1) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                            VerticalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                        }
                         PostCard(
                             item = holder,
                             onClick = onItemClicked,
@@ -264,36 +257,8 @@ private fun ThreadList(
                             modifier = Modifier.fillMaxWidth(itemFraction),
                         )
                     }
-                } else {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(itemFraction)
-                    ) {
-                        if (item.isTop == 1) {
-                            val title = item.title.takeUnless { it.isBlank() } ?: item.abstractText
-                            TopThreadItem(
-                                title = title,
-                                onClick = { onItemClicked(item) },
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        } else {
-                            if (index > 0) {
-                                if (items[index - 1].thread.get { isTop } == 1) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                }
-                                VerticalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                            }
-                            PostCard(
-                                item = holder,
-                                onClick = onItemClicked,
-                                onClickReply = onItemReplyClicked,
-                                onAgree = onAgree,
-                                onClickUser = onUserClicked,
-                                forumNameFallback = forumNameFallback,
-                                modifier = Modifier.fillMaxWidth(itemFraction),
-                            )
-                        }
-                    }
                 }
+            
             }
         }
     }
