@@ -6,7 +6,8 @@
 
 基于 [TiebaLite](https://github.com/HuanCheng65/TiebaLite) 4.0-dev ，
 经 [Aur5411/TiebaApp](https://github.com/Aur5411/TiebaApp)（Material 3 重制）二次开发，
-本分支把**表现层**重写为基于 [Glasmio](https://github.com/neoruaa/Glasmio) 的液态玻璃视觉。
+本分支把**表现层**整体重写：页面骨架与组件层为自研（`GlassPage` / `GlassTabRow` / `GlassTextField` / `GlassSnackbar` 等），
+玻璃材质来自 [Glasmio](https://github.com/neoruaa/Glasmio)（`RuntimeShader` 背景采样 + 模糊 + 折射）。
 
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](./LICENSE)
 ![Platform](https://img.shields.io/badge/Platform-Android-3DDC84.svg)
@@ -129,6 +130,9 @@ Invoke-AppBuild -Tasks @(':app:connectedDebugAndroidTest')
 - **部分玻璃为“自采样”**：页面内容层内的悬浮钮采样的是纯色而非真实背景（观感为半透明 + 描边）
 - **dock 偶发停帧**：极低概率出现镜头停在中间，未定位（需要真机手势复现）
 - **未登录场景未验证**：发帖、编辑资料保存、楼中楼发送等流程需要账号，尚未实测
+- **Dialogs.kt 仍是 Material 2 基类**：弹窗尚未换成玻璃外观，计划 v1.9.1 处理
+- **7 个页面仍有 LEGACY 分支**：Home / Explore / Search / Notifications / History / SearchUser / UserProfile 的
+  `*UiStyle` 回滚开关仍在，计划 v1.9.1 清理
 
 ## 开发方式
 
