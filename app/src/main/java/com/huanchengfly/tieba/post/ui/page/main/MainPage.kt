@@ -59,7 +59,7 @@ import com.huanchengfly.tieba.post.ui.utils.DevicePosture
 import com.huanchengfly.tieba.post.ui.utils.MainNavigationContentPosition
 import com.huanchengfly.tieba.post.ui.utils.MainNavigationType
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoadHorizontalPager
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppScaffold
 import com.huanchengfly.tieba.post.utils.AccountUtil.LocalAccount
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.ramcosta.composedestinations.annotation.Destination
@@ -400,7 +400,7 @@ fun MainPage(
 }
 
 /**
- * 页面骨架：各页自己的顶栏（在 page content 里的 MyScaffold）+ 分页容器。
+ * 页面骨架：各页自己的顶栏（在 page content 里的 AppScaffold）+ 分页容器。
  *
  * [bottomBar] 由调用方决定：
  * - 真玻璃路径 → 空（胶囊在玻璃叠加层里，内容从它下面滚过去）；
@@ -417,7 +417,7 @@ private fun MainPageScaffold(
     bottomInset: Dp,
     bottomBar: @Composable () -> Unit,
 ) {
-    MyScaffold(
+    AppScaffold(
         backgroundColor = Color.Transparent,
         modifier = Modifier.fillMaxSize(),
         bottomBar = bottomBar,

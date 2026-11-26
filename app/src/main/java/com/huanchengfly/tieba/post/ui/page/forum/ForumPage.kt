@@ -127,7 +127,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.MenuScope
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassBackdropHost
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassOverlayPage
 import com.huanchengfly.tieba.post.ui.common.theme.glass.useOverlayTopBarHost
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.PullToRefreshLayout
 import androidx.compose.material.ScrollableTabRow
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
@@ -708,7 +708,7 @@ fun ForumPage(
     }
 
     val forumPageScaffold: @Composable (topBarSlot: @Composable () -> Unit, extraTop: Dp) -> Unit = { topBarSlot, extraTop ->
-                MyScaffold(
+                AppScaffold(
                     scaffoldState = scaffoldState,
                     backgroundColor = Color.Transparent,
                     modifier = Modifier.fillMaxSize(),

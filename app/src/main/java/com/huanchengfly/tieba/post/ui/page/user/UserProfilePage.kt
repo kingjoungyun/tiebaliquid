@@ -129,7 +129,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.DialogState
 import com.huanchengfly.tieba.post.ui.widgets.compose.ErrorScreen
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoadHorizontalPager
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.NetworkImage
 import com.huanchengfly.tieba.post.ui.widgets.compose.ProvideContentColor
 import com.huanchengfly.tieba.post.ui.widgets.compose.PullToRefreshLayout
@@ -574,7 +574,7 @@ private fun UserProfileContentNormal(
         }
     }
 
-    MyScaffold(
+    AppScaffold(
         topBar = {
             if (glassmio) {
                 Box(
@@ -858,7 +858,7 @@ private fun UserProfileContentExpanded(
     val context = LocalContext.current
     val navigator = LocalNavigator.current
 
-    MyScaffold(
+    AppScaffold(
         topBar = {
             UserProfileToolbar(
                 user = user,

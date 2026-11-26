@@ -54,7 +54,7 @@ fun OKSignSettingsPage(
     navigator: DestinationsNavigator,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    // T5/B4a：不再套 MyScaffold —— snackbar host 由 PrefsScreen 内部 GlassPage 的
+    // T5/B4a：不再套 AppScaffold —— snackbar host 由 PrefsScreen 内部 GlassPage 的
     // `snackbarHost` 槽挂（见 PrefsScreen(snackbarHostState = …)）。
     Box(modifier = Modifier.fillMaxSize()) {
         val context = LocalContext.current

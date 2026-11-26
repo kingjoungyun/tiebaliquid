@@ -93,7 +93,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.Button
 import com.huanchengfly.tieba.post.ui.widgets.compose.Container
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoadHorizontalPager
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyBackHandler
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.SearchBox
 import androidx.compose.material.TabRow
 import io.github.neoruaa.glasmio.core.GlasmioTheme
@@ -252,7 +252,7 @@ fun SearchPage(
             val glassmio = SearchPageUi.DefaultStyle == SearchPageUiStyle.GLASMIO
             LiquidGlassTheme(accent = AppTokens.primary) {
                 HarmonyTextProvider {
-            MyScaffold(
+            AppScaffold(
                 backgroundColor = if (glassmio) GlasmioTheme.colors.groupedBackground
                 else AppTokens.background,
                 topBar = {

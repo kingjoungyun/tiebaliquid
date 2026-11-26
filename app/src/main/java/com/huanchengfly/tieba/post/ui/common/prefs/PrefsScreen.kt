@@ -83,7 +83,7 @@ fun PrefsScreen(
     /** Stage 3 试点：非空时启用 Glasmio 页面骨架（折叠大标题 + 顶栏按钮槽），大标题由骨架负责，
      *  此时 [header] 不再渲染。为 null 时完全走旧版式（回滚用）。 */
     title: String? = null,
-    /** 非空时把它挂到内部 GlassPage 的 snackbarHost 槽（页面就不必再套 MyScaffold 取 host）。 */
+    /** 非空时把它挂到内部 GlassPage 的 snackbarHost 槽（页面就不必再套 AppScaffold 取 host）。 */
     snackbarHostState: SnackbarHostState? = null,
     uiStyle: PrefsUiStyle = PrefsUi.DefaultStyle,
     content: PrefsScope.() -> Unit

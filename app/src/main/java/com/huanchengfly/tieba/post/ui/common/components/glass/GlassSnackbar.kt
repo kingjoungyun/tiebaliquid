@@ -19,7 +19,7 @@ import com.kyant.capsule.ContinuousRoundedRectangle
  * 骨架把它放在 overlay 层的底部，提示是一条**玻璃胶囊**（`AppTokens.card` 材质 +
  * 连续圆角），而不是 M2 那条深灰直角条。
  *
- * 为什么不直接 `LocalSnackbarHostState`：那个 local 由 App 的 `MyScaffold` 提供，
+ * 为什么不直接 `LocalSnackbarHostState`：那个 local 由 App 的 `AppScaffold` 提供，
  * 一旦页面改用 `GlassPage` 就没有提供者，读了会抛 `no scaffold here!`。
  * 所以页面自己 `remember { SnackbarHostState() }`，再用这个宿主渲染。
  */

@@ -1,5 +1,13 @@
 package com.huanchengfly.tieba.post.ui.widgets.compose
 
+/*
+ * AppScaffold：**本项目自己的主壳**，不是 M2 Scaffold 的分叉。
+ *
+ * 它只做三件与 M2 无关的事：insets 处理、LocalSnackbarHostState 提供、可选 topBar/bottomBar 槽。
+ * 页面自己的顶栏/底栏内容仍由各页传入（玻璃骨架用 GlassPage；需要自定义顶栏的页面用这里）。
+ * 原名 MyScaffold（B4 收口时改名，避免与「M2 分叉」混淆）。
+ */
+
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.DismissValue
@@ -50,7 +58,7 @@ private fun SwipeToDismissSnackbarHost(hostState: SnackbarHostState) {
 val LocalSnackbarHostState = compositionLocalOf<SnackbarHostState> { error("no scaffold here!") }
 
 @Composable
-fun MyScaffold(
+fun AppScaffold(
     modifier: Modifier = Modifier,
     scaffoldState: ScaffoldState = rememberScaffoldState(),
     topBar: @Composable () -> Unit = {},

@@ -50,7 +50,7 @@ import com.huanchengfly.tieba.post.ui.page.history.list.HistoryListUi
 import com.huanchengfly.tieba.post.ui.page.history.list.HistoryListUiEvent
 import com.huanchengfly.tieba.post.ui.page.history.list.HistoryListUiStyle
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppScaffold
 import androidx.compose.material.TabRow
 import com.huanchengfly.tieba.post.utils.HistoryUtil
 import io.github.neoruaa.glasmio.core.GlasmioTheme
@@ -82,7 +82,7 @@ fun HistoryPage(
 
     LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
-            MyScaffold(
+            AppScaffold(
                 backgroundColor = if (glassmio) GlasmioTheme.colors.groupedBackground
                 else Color.Transparent,
                 scaffoldState = scaffoldState,

@@ -118,7 +118,7 @@ fun PostAnalysisPage(
     }
 
     ProvideNavigator(navigator = navigator) {
-        // 列表内容抽成 lambda：玻璃分支（GlassPage）和回滚分支（MyScaffold）共用同一份。
+        // 列表内容抽成 lambda：玻璃分支（GlassPage）和回滚分支（AppScaffold）共用同一份。
         val analysisContent: LazyListScope.() -> Unit = {
             item {
                 AnalysisSearchField(

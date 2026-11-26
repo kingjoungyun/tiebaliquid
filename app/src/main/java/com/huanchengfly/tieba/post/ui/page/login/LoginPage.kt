@@ -108,7 +108,7 @@ fun LoginPage(
     
             val animatedProgress by animateFloatAsState(targetValue = progress, label = "progress")
     
-            // T5/B4a：外壳从 MyScaffold 换成普通 Box（原来它只提供 insets + snackbar host）。
+            // T5/B4a：外壳从 AppScaffold 换成普通 Box（原来它只提供 insets + snackbar host）。
             // 登录页自己画顶栏（返回/刷新 + 34sp 大标题），snackbar 用 GlassSnackbarHost 挂底部。
             Box(
                 modifier = Modifier

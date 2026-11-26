@@ -58,7 +58,7 @@ import io.github.neoruaa.glasmio.glass.GlassSurface
  * 把原来三套并存的页面外壳收敛成一套：
  * 1. `ThreadPageSkin`（15 页手写：overlay 双层 host + 自己拼顶栏/底栏）；
  * 2. `glasmio-scaffold` 的导航页骨架（设置页试点）；
- * 3. M2 `MyScaffold` + 手写 34sp 大标题（工具箱 / 分析 / 长尾 11 页）。
+ * 3. M2 `AppScaffold` + 手写 34sp 大标题（工具箱 / 分析 / 长尾 11 页）。
  *
  * 骨架负责的（都从 `ThreadPageSkin` 搬过来，行为保持一致）：
  * - **overlay 双层结构**：`LiquidGlassBackdropHost(sampledContent, overlayContent)`。
@@ -122,7 +122,7 @@ fun GlassPage(
     /**
      * 底部 snackbar 宿主槽（T5 批次 3）。
      *
-     * 骨架原来没有 snackbar host：页面一旦不套 `MyScaffold`，读 `LocalSnackbarHostState`
+     * 骨架原来没有 snackbar host：页面一旦不套 `AppScaffold`，读 `LocalSnackbarHostState`
      * 就会抛 `no scaffold here!`。传这个槽 + [GlassSnackbarHost] 就能在玻璃层级里弹提示。
      */
     snackbarHost: (@Composable BoxScope.() -> Unit)? = null,

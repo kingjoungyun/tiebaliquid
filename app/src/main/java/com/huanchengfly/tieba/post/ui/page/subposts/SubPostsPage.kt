@@ -91,7 +91,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadMoreLayout
 import com.huanchengfly.tieba.post.ui.widgets.compose.LongClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.ui.widgets.compose.UserHeader
 import com.huanchengfly.tieba.post.ui.widgets.compose.VerticalDivider
@@ -386,175 +386,166 @@ internal fun SubPostsContent(
         isError = false,
         isLoading = isRefreshing
     ) {
-        MyScaffold(
-            modifier = Modifier.fillMaxSize(),
-            backgroundColor = Color.Transparent,
-            topBar = {
-            },
-            bottomBar = {
-            }
-        ) { paddingValues ->
-            LoadMoreLayout(
-                modifier = Modifier.padding(paddingValues),
-                isLoading = isLoading,
-                onLoadMore = {
-                    viewModel.send(
-                        SubPostsUiIntent.LoadMore(
-                            forumId,
-                            threadId,
-                            postId,
+        LoadMoreLayout(
+            isLoading = isLoading,
+            onLoadMore = {
+                viewModel.send(
+                    SubPostsUiIntent.LoadMore(
+                        forumId,
+                        threadId,
+                        postId,
 //                            subPostId,
-                            page = currentPage + 1,
-                        )
+                        page = currentPage + 1,
                     )
-                },
-                loadEnd = !hasMore,
-                lazyListState = lazyListState,
-                isEmpty = post == null && subPosts.isEmpty(),
+                )
+            },
+            loadEnd = !hasMore,
+            lazyListState = lazyListState,
+            isEmpty = post == null && subPosts.isEmpty(),
+        ) {
+            MyLazyColumn(
+                state = lazyListState,
+                contentPadding = PaddingValues(
+                    top = padding.calculateTopPadding(),
+                    bottom = bottomInset,
+                ),
             ) {
-                MyLazyColumn(
-                    state = lazyListState,
-                    contentPadding = PaddingValues(
-                        top = padding.calculateTopPadding(),
-                        bottom = bottomInset,
-                    ),
-                ) {
-                    item(key = "Post$postId") {
-                        post?.let {
-                            Column {
-                                GlassLargeTitle(
-                                    title = largeTitle,
-                                    subtitle = smallTitle,
-                                    onHeightChanged = { largeTitleHeightPx = it },
-                                )
-                                PostCard(
-                                    postHolder = it,
-                                    contentRenders = postContentRenders,
-                                    threadAuthorId = thread?.get { author?.id } ?: 0L,
-                                    canDelete = { it.author_id == account?.uid?.toLongOrNull() || it.author?.id == account?.uid?.toLongOrNull() || thread?.get { author?.id } ==  account?.uid?.toLongOrNull() },
-                                    showSubPosts = false,
-                                    glassmio = true,
-                                    forceGlassCard = true,
-                                    onUserClick = {
-                                        navigator.navigate(UserProfilePageDestination(it.id))
-                                    },
-                                    onAgree = {
-                                        val hasAgreed = it.get { agree?.hasAgree != 0 }
-                                        viewModel.send(
-                                            SubPostsUiIntent.Agree(
-                                                forumId,
-                                                threadId,
-                                                post?.get { id } ?: postId,
-                                                agree = !hasAgreed
+                item(key = "Post$postId") {
+                    post?.let {
+                        Column {
+                            GlassLargeTitle(
+                                title = largeTitle,
+                                subtitle = smallTitle,
+                                onHeightChanged = { largeTitleHeightPx = it },
+                            )
+                            PostCard(
+                                postHolder = it,
+                                contentRenders = postContentRenders,
+                                threadAuthorId = thread?.get { author?.id } ?: 0L,
+                                canDelete = { it.author_id == account?.uid?.toLongOrNull() || it.author?.id == account?.uid?.toLongOrNull() || thread?.get { author?.id } ==  account?.uid?.toLongOrNull() },
+                                showSubPosts = false,
+                                glassmio = true,
+                                forceGlassCard = true,
+                                onUserClick = {
+                                    navigator.navigate(UserProfilePageDestination(it.id))
+                                },
+                                onAgree = {
+                                    val hasAgreed = it.get { agree?.hasAgree != 0 }
+                                    viewModel.send(
+                                        SubPostsUiIntent.Agree(
+                                            forumId,
+                                            threadId,
+                                            post?.get { id } ?: postId,
+                                            agree = !hasAgreed
+                                        )
+                                    )
+                                },
+                                onReplyClick = {
+                                    val fid = forum?.get { id } ?: forumId
+                                    if (fid != 0L) {
+                                        showReplyDialog(
+                                            ReplyArgs(
+                                                forumId = fid,
+                                                forumName = forum?.get { name } ?: "",
+                                                threadId = threadId,
+                                                postId =  post?.get { id } ?: postId,
+                                                replyUserId = it.author?.id ?: it.author_id,
+                                                replyUserName = it.author?.nameShow.takeIf { name -> !name.isNullOrEmpty() }
+                                                    ?: it.author?.name,
+                                                replyUserPortrait = it.author?.portrait,
                                             )
                                         )
-                                    },
-                                    onReplyClick = {
-                                        val fid = forum?.get { id } ?: forumId
-                                        if (fid != 0L) {
-                                            showReplyDialog(
-                                                ReplyArgs(
-                                                    forumId = fid,
-                                                    forumName = forum?.get { name } ?: "",
-                                                    threadId = threadId,
-                                                    postId =  post?.get { id } ?: postId,
-                                                    replyUserId = it.author?.id ?: it.author_id,
-                                                    replyUserName = it.author?.nameShow.takeIf { name -> !name.isNullOrEmpty() }
-                                                        ?: it.author?.name,
-                                                    replyUserPortrait = it.author?.portrait,
-                                                )
-                                            )
-                                        }
-                                    },
-                                    onMenuCopyClick = {
-                                        navigator.navigate(
-                                            CopyTextDialogPageDestination(it)
-                                        )
-                                    },
-                                ) {
-                                    deleteSubPost = null
-                                    confirmDeleteDialogState.show()
-                                }
+                                    }
+                                },
+                                onMenuCopyClick = {
+                                    navigator.navigate(
+                                        CopyTextDialogPageDestination(it)
+                                    )
+                                },
+                            ) {
+                                deleteSubPost = null
+                                confirmDeleteDialogState.show()
                             }
                         }
                     }
-                    // §22：LEGACY 的「共 N 条回复」计数补回玻璃版（原来这里是 0 高度占位，
-                    // 计数被吞了）。仍用 item（不做 sticky），保持 scrollToItem(2 + index) 的 index 语义。
-                    item(key = "SubPostsHeader") {
-                        Text(
-                            text = stringResource(
-                                id = R.string.title_sub_posts_header,
-                                totalCount
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            fontSize = 13.sp,
-                            color = AppTokens.textSecondary,
-                        )
-                    }
-                    itemsIndexed(
-                        items = subPosts,
-                        key = { _, subPost -> subPost.id }
-                    ) { _, item ->
-                        // 命中屏蔽词的楼中楼直接不渲染
-                        if (item.hidden) return@itemsIndexed
-                        SubPostItem(
-                            item = item,
-                            glassmio = true,
-                            forumId = forum?.get { id } ?: forumId,
-                            forumName = forum?.get { name } ?: "",
-                            threadId = threadId,
-                            canDelete = { it.author_id == account?.uid?.toLongOrNull() || it.author?.id == account?.uid?.toLongOrNull() || thread?.get { author?.id } ==  account?.uid?.toLongOrNull() },
-                            threadAuthorId = thread?.get { author?.id },
-                            onUserClick = {
-                                navigator.navigate(UserProfilePageDestination(it.id))
-                            },
-                            onAgree = {
-                                val hasAgreed = it.agree?.hasAgree != 0
-                                viewModel.send(
-                                    SubPostsUiIntent.Agree(
-                                        forumId,
-                                        threadId,
-                                        post?.get { id } ?: postId,
+                }
+                // §22：LEGACY 的「共 N 条回复」计数补回玻璃版（原来这里是 0 高度占位，
+                // 计数被吞了）。仍用 item（不做 sticky），保持 scrollToItem(2 + index) 的 index 语义。
+                item(key = "SubPostsHeader") {
+                    Text(
+                        text = stringResource(
+                            id = R.string.title_sub_posts_header,
+                            totalCount
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        fontSize = 13.sp,
+                        color = AppTokens.textSecondary,
+                    )
+                }
+                itemsIndexed(
+                    items = subPosts,
+                    key = { _, subPost -> subPost.id }
+                ) { _, item ->
+                    // 命中屏蔽词的楼中楼直接不渲染
+                    if (item.hidden) return@itemsIndexed
+                    SubPostItem(
+                        item = item,
+                        glassmio = true,
+                        forumId = forum?.get { id } ?: forumId,
+                        forumName = forum?.get { name } ?: "",
+                        threadId = threadId,
+                        canDelete = { it.author_id == account?.uid?.toLongOrNull() || it.author?.id == account?.uid?.toLongOrNull() || thread?.get { author?.id } ==  account?.uid?.toLongOrNull() },
+                        threadAuthorId = thread?.get { author?.id },
+                        onUserClick = {
+                            navigator.navigate(UserProfilePageDestination(it.id))
+                        },
+                        onAgree = {
+                            val hasAgreed = it.agree?.hasAgree != 0
+                            viewModel.send(
+                                SubPostsUiIntent.Agree(
+                                    forumId,
+                                    threadId,
+                                    post?.get { id } ?: postId,
+                                    subPostId = it.id,
+                                    agree = !hasAgreed
+                                )
+                            )
+                        },
+                        onReplyClick = {
+                            val fid = forum?.get { id } ?: forumId
+                            if (fid != 0L) {
+                                showReplyDialog(
+                                    ReplyArgs(
+                                        forumId = fid,
+                                        forumName = forum?.get { name } ?: "",
+                                        threadId = threadId,
+                                        postId = post?.get { id } ?: postId,
                                         subPostId = it.id,
-                                        agree = !hasAgreed
+                                        replyUserId = it.author?.id ?: it.author_id,
+                                        replyUserName = it.author?.nameShow.takeIf { name -> !name.isNullOrEmpty() }
+                                            ?: it.author?.name,
+                                        replyUserPortrait = it.author?.portrait,
                                     )
                                 )
-                            },
-                            onReplyClick = {
-                                val fid = forum?.get { id } ?: forumId
-                                if (fid != 0L) {
-                                    showReplyDialog(
-                                        ReplyArgs(
-                                            forumId = fid,
-                                            forumName = forum?.get { name } ?: "",
-                                            threadId = threadId,
-                                            postId = post?.get { id } ?: postId,
-                                            subPostId = it.id,
-                                            replyUserId = it.author?.id ?: it.author_id,
-                                            replyUserName = it.author?.nameShow.takeIf { name -> !name.isNullOrEmpty() }
-                                                ?: it.author?.name,
-                                            replyUserPortrait = it.author?.portrait,
-                                        )
-                                    )
-                                }
-                            },
-                            onMenuCopyClick = {
-                                navigator.navigate(
-                                    CopyTextDialogPageDestination(it)
-                                )
+                            }
+                        },
+                        onMenuCopyClick = {
+                            navigator.navigate(
+                                CopyTextDialogPageDestination(it)
+                            )
 //                                TiebaUtil.copyText(context, it)
-                            },
-                            onMenuDeleteClick = {
-                                deleteSubPost = it.wrapImmutable()
-                                confirmDeleteDialogState.show()
-                            },
-                        )
-                    }
+                        },
+                        onMenuDeleteClick = {
+                            deleteSubPost = it.wrapImmutable()
+                            confirmDeleteDialogState.show()
+                        },
+                    )
                 }
             }
         }
+    
     }
 }
 }

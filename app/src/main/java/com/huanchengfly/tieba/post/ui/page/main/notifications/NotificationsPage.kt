@@ -45,7 +45,7 @@ import com.huanchengfly.tieba.post.ui.page.main.notifications.list.Notifications
 import com.huanchengfly.tieba.post.ui.widgets.compose.ActionItem
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoadHorizontalPager
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppScaffold
 import androidx.compose.material.TabRow
 import com.huanchengfly.tieba.post.ui.widgets.compose.Toolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.accountNavIconIfCompact
@@ -86,7 +86,7 @@ fun NotificationsPage(
     LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
             ProvideNavigator(navigator = navigator) {
-                MyScaffold(
+                AppScaffold(
                     backgroundColor = if (glassmio) GlasmioTheme.colors.groupedBackground
                     else Color.Transparent,
                     topBar = {

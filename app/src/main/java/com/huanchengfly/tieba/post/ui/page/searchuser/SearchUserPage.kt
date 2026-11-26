@@ -83,7 +83,7 @@ import com.huanchengfly.tieba.post.ui.page.destinations.UserPostListPageDestinat
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.AvatarPlaceholder
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.SearchBox
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.utils.AccountUtil
@@ -148,7 +148,7 @@ fun SearchUserPage(
     LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
     ProvideNavigator(navigator = navigator) {
-        MyScaffold(
+        AppScaffold(
             backgroundColor = if (glassmio) GlasmioTheme.colors.groupedBackground
             else AppTokens.background,
             topBar = {

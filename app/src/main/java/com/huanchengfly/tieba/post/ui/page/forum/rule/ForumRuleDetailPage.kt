@@ -51,7 +51,7 @@ import kotlinx.collections.immutable.persistentListOf
 /**
  * 吧规详情（T5 重排）。
  *
- * 骨架：旧的 `MyScaffold` + M2 顶栏 → [GlassPage]（折叠胶囊标题 + 悬浮返回）。
+ * 骨架：旧的 `AppScaffold` + M2 顶栏 → [GlassPage]（折叠胶囊标题 + 悬浮返回）。
  * 内容：标题/作者一张玻璃卡，正文另一张玻璃卡（段落 15sp / 行高 24sp ≈ 1.6，
  * 标题 17sp SemiBold）。富文本节点仍走 `PbContentRender`（图片/链接/加粗都在）。
  */

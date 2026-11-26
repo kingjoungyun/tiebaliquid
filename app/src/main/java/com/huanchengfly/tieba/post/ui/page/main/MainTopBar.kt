@@ -62,7 +62,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassColors
 import com.huanchengfly.tieba.post.ui.common.theme.glass.glassNavigationTint
 import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
+import com.huanchengfly.tieba.post.ui.widgets.compose.AppScaffold
 import com.huanchengfly.tieba.post.utils.ThemeUtil
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
@@ -185,7 +185,7 @@ private val ScrimTail = 16.dp
 /**
  * 主界面四个 tab 的 Scaffold 包装。
  *
- * 与旧的 `MyScaffold(topBar = ...)` 的区别：
+ * 与旧的 `AppScaffold(topBar = ...)` 的区别：
  * - 顶栏不再占布局高度（内容可以滚到它下面），而是登记给 overlay 层；
  * - 内容顶部补「状态栏 + 实测顶栏高度」的 padding，第一张卡不会被顶栏盖住；
  * - 内容上的 nestedScroll 把纵向滚动量喂给 [MainTopBarState]。
@@ -201,7 +201,7 @@ fun MainTabScaffold(
     val key = LocalMainTabKey.current
     if (state == null || key == null) {
         // 防御：不在 MainPage 里（预览 / 单页调试）时退回实体顶栏，至少不丢内容。
-        MyScaffold(
+        AppScaffold(
             modifier = modifier.fillMaxSize(),
             backgroundColor = Color.Transparent,
             topBar = {
