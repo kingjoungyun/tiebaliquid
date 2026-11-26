@@ -313,7 +313,7 @@ private fun GlassPrefsScaffold(
 
 /**
  * 骨架开关的调试覆盖：`adb shell settings put global tieba_prefs_skeleton 0` 后重进页面即为旧版式
- * （同一 APK 免重装；release 恒为 true）。**与已删除的 PrefsUiStyle 无关**，独立保留。
+ * （同一 APK 免重装；release 恒为 true）。**与旧版开关无关**，独立保留。
  */
 @Composable
 private fun prefsScaffoldSkeletonEnabled(): Boolean {

@@ -5,38 +5,12 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
- * 设置页的渲染层实现。
+ * 设置页渲染层用到的 CompositionLocal 与状态容器。
  *
- * - [GLASSMIO]：用 Glasmio 的分组列表组件（26dp 连续圆角卡片、内建分隔线、52/68dp 行、
- *   Glasmio 开关）渲染。这是当前默认值。
- * - [LEGACY]：迁移前的 FlClash 卡片版（16dp 圆角、不透明表层色、1dp 缩进分割线）。
- *   **代码原样保留**，出问题时把 [PrefsUi.DefaultStyle] 改回 [LEGACY] 即可整站回退，
- *   8 个业务页一行都不用动。
+ * 历史上这里还有一个「玻璃版 / 旧版」双实现开关，已随
+ * 「组件只有一套」的收口删除（PLAN §24）。现在 pref 组件固定走玻璃渲染，
+ * 只剩下面这些与渲染风格无关、纯粹用于布局协作的状态。
  */
-enum class PrefsUiStyle {
-    GLASSMIO,
-    LEGACY,
-}
-
-object PrefsUi {
-    /**
-     * 全站默认渲染风格。
-     *
-     * 这是「A/B 切回」的唯一开关：改成 [PrefsUiStyle.LEGACY] 就回到迁移前的版式。
-     * 单页覆盖可以用 `PrefsScreen(uiStyle = ...)`。
-     */
-    val DefaultStyle: PrefsUiStyle = PrefsUiStyle.GLASSMIO
-}
-
-/**
- * 当前渲染风格；[PrefsScreen] 负责注入，其它地方只读。
- *
- * 默认值是 [PrefsUiStyle.LEGACY] 而不是 [PrefsUi.DefaultStyle]：**只有在 [PrefsScreen]
- * 的树里**才切到 Glasmio（那里才有 `GlasmioTheme` / backdrop host 这两个前置条件）。
- * 设置页之外零散用到 pref 行的地方（例如用户页「禁言交互」弹窗里的 `TextPref`）
- * 因此保持迁移前的样子，不会因为拿不到 Glasmio 的 CompositionLocal 而变样。
- */
-internal val LocalPrefsUiStyle = staticCompositionLocalOf { PrefsUiStyle.LEGACY }
 
 /**
  * 行在所属分组里的下标（0 = 组内第一行）。

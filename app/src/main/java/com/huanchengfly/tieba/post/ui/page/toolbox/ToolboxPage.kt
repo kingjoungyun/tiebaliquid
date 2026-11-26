@@ -53,9 +53,7 @@ import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.toastShort
 import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 import com.huanchengfly.tieba.post.ui.common.prefs.GroupHeader
-import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsUiStyle
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCard
-import com.huanchengfly.tieba.post.ui.common.prefs.PrefsUiStyle
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.page.destinations.AccountManagePageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.FansListPageDestination
@@ -230,7 +228,7 @@ fun ToolboxPage(
             largeTitle = "工具箱",
             onBack = { navigator.navigateUp() },
         ) { padding ->
-            CompositionLocalProvider(LocalPrefsUiStyle provides PrefsUiStyle.GLASSMIO) {
+            run {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()

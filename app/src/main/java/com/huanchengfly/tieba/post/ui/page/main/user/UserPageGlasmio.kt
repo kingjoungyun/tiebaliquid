@@ -45,11 +45,9 @@ import com.huanchengfly.tieba.post.arch.collectPartialAsState
 import com.huanchengfly.tieba.post.models.database.Account
 import com.huanchengfly.tieba.post.ui.common.prefs.GroupHeader
 import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsRowIndex
-import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsUiStyle
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCard
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsIcon
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsLargeTitle
-import com.huanchengfly.tieba.post.ui.common.prefs.PrefsUiStyle
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
@@ -105,7 +103,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
  * - 右侧箭头 = `SfIcon("chevron.right")`，着色 `colors.accent`（与设置页的行 chevron 同源）。
  *
  * 头部以下的功能列表**完全复用设置页的渲染层**（`PrefsCard` + `GroupHeader` + `TextPref`），
- * 只是这里没有 `PrefsScreen`，所以显式把 `LocalPrefsUiStyle` 置成 GLASSMIO、并给每行补
+ * 只是这里没有 `PrefsScreen`，所以直接给每行补
  * `LocalPrefsRowIndex`（Glasmio 行自己画分隔线，且会吞掉组内第一行那条线）。
  *
  * 视觉约束：
@@ -152,12 +150,10 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
     )
 
     LiquidGlassTheme(accent = AppTokens.primary) {
-        // 设置页的两层前置条件在这里手动补齐（这个页面不是 PrefsScreen 的子树）：
-        // GLASSMIO 决定 PrefsCard / TextPref / PrefsLargeTitle 走 Glasmio 渲染层；
+        // 设置页的前置条件在这里手动补齐（这个页面不是 PrefsScreen 的子树）：
+        // PrefsCard / TextPref / PrefsLargeTitle 固定走玻璃渲染层；
         // 图标仍走 Glasmio 自带的 `SfIcon` → Material 解析表（本页没有自定义符号）。
-        CompositionLocalProvider(
-            LocalPrefsUiStyle provides PrefsUiStyle.GLASSMIO,
-        ) {
+        run {
             val colors = GlasmioTheme.colors
             Box(
                 modifier = Modifier

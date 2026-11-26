@@ -54,12 +54,12 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalGlassTokens
 /**
  * 设置项的一行。
  *
- * 渲染层由 [LocalPrefsUiStyle] 决定，**签名对所有 pref widget 保持不变**：
+ * 渲染层固定为玻璃实现，**签名对所有 pref widget 保持不变**：
  *
- * - `PrefsUiStyle.GLASSMIO`（默认）：一个 `GlasmioPreferenceEntry`
+ * - 玻璃版（默认）：一个 `GlasmioPreferenceEntry`
  *   （52dp 无副标题 / 68dp 有副标题、左右 16dp、icon 槽、内建分隔线），
  *   右侧 chevron 用 Glasmio 的 `SfIcon`；
- * - `PrefsUiStyle.LEGACY`：迁移前的 FlClash 行（56dp、17sp 标题、副标题最多 2 行）。
+ * - 旧版：迁移前的 FlClash 行（56dp、17sp 标题、副标题最多 2 行）。
  *
  * **「副标题最多几行」的规则（新）**：行内副标题只留 1 行以内；超过 1 行的说明不再把行撑高，
  * 而是登记到组尾 footnote（见 [PrefsFootnoteState] / [PrefsCard]）。判定用的是真实的

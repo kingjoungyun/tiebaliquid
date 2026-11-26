@@ -1,7 +1,7 @@
 package com.huanchengfly.tieba.post.ui.page.main.user
 
 /**
- * 「我的」页的渲染层实现（与 `PrefsUiStyle` 同构的一页式开关）。
+ * 「我的」页的渲染层实现（一页式开关）。
  *
  * - [GLASSMIO]：账户头卡片 + Glasmio 分组列表（当前默认值，见 [UserPageUi.DefaultStyle]）。
  * - [LEGACY]：迁移前的 Material 版（`InfoCard` + `StatCard` + `ListMenuItem`），

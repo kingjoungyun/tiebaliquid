@@ -115,10 +115,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.ui.common.prefs.GroupHeader
-import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsUiStyle
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCard
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsListItem
-import com.huanchengfly.tieba.post.ui.common.prefs.PrefsUiStyle
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
 import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassSurface
@@ -289,7 +287,7 @@ class EditProfileActivity : BaseActivity<Nothing>() {
  * 「编辑资料」字段区：iOS 分组卡（26dp 连续圆角、内建分隔线）+ 玻璃输入胶囊。
  *
  * 数据与回调与改造前完全一致（头像上传 / 昵称 / 性别 / 签名 / loading 占位），只换渲染层。
- * 必须在 `LocalPrefsUiStyle = GLASSMIO` 的树里调用（[GlassEditScaffold] 负责注入）。
+ * 必须在玻璃渲染树里调用（[GlassEditScaffold] 负责注入）。
  */
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -530,7 +528,7 @@ private fun GlassEditScaffold(
             Spacer(modifier = Modifier.height(12.dp))
             LiquidGlassTheme(accent = AppTokens.primary) {
                 HarmonyTextProvider {
-                    CompositionLocalProvider(LocalPrefsUiStyle provides PrefsUiStyle.GLASSMIO) {
+                    run {
                         Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                             content()
                         }

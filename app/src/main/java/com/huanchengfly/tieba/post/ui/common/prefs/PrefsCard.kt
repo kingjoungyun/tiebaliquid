@@ -163,10 +163,10 @@ private val PrefsCardShape: Shape by lazy { SquircleShape(PrefsCardDefaults.Corn
  * 一张分组卡片。
  *
  * 两种渲染路径：
- * - `PrefsUiStyle.GLASSMIO`（默认）：组标题 = `GlasmioPreferenceGroupTitle`，
+ * - 玻璃版（默认）：组标题 = `GlasmioPreferenceGroupTitle`，
  *   卡片 = `GlasmioGroupedList`（26dp 连续圆角 + `elevatedBackground` + 行内建分隔线），
  *   组尾 = `GlasmioGroupedTableFooter`（13sp 次级色、左右 16dp、上间距 8dp）。
- * - `PrefsUiStyle.LEGACY`：迁移前的 FlClash 卡片（16dp 超椭圆 + 不透明表层色 + 1dp 分割线），
+ * - 旧版：迁移前的 FlClash 卡片（16dp 超椭圆 + 不透明表层色 + 1dp 分割线），
  *   组尾 footnote 用同字号（13sp）的次级文字手绘，保证「切回 A 版」时 footer 语义不丢。
  *
  * 组尾 footnote 有**两个来源**，按顺序渲染：

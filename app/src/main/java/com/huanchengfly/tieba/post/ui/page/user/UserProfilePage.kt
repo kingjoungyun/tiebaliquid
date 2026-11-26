@@ -101,10 +101,8 @@ import com.huanchengfly.tieba.post.models.database.Block
 import com.huanchengfly.tieba.post.toastShort
 import com.huanchengfly.tieba.post.ui.common.prefs.GroupHeader
 import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsRowIndex
-import com.huanchengfly.tieba.post.ui.common.prefs.LocalPrefsUiStyle
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsCard
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsIcon
-import com.huanchengfly.tieba.post.ui.common.prefs.PrefsUiStyle
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
@@ -1367,7 +1365,7 @@ private fun UserProfileDetail(
  *
  * 这三行原先在「我的」页的账户卡下面，与账户卡点进来的这页重复；现在只在这里出现。
  * 视觉完全复用设置页的渲染层（[PrefsCard] + [GroupHeader] + [TextPref] + [PrefsIcon]），
- * 用 [LiquidGlassTheme] + [LocalPrefsUiStyle] 把这一小块切到 Glasmio 路径 —— 整页其它
+ * 用 [LiquidGlassTheme] 把这一小块切到 Glasmio 路径 —— 整页其它
  * Material 部分（顶栏、大头像、资料、tab、列表）保持原样，不做 Glasmio 化。
  *
  * 个人主页的底色是纯白，而设置页的卡片是「灰底白卡」；所以这里给整个组铺一条
@@ -1389,7 +1387,6 @@ private fun UserProfileAccountSection(
     LiquidGlassTheme(accent = AppTokens.primary) {
         val colors = GlasmioTheme.colors
         CompositionLocalProvider(
-            LocalPrefsUiStyle provides PrefsUiStyle.GLASSMIO,
             LocalGlasmioIconResolver provides UserProfileIconResolver,
         ) {
             Column(
