@@ -46,8 +46,6 @@ import com.huanchengfly.tieba.post.ui.page.webview.MyWebChromeClient
 import com.huanchengfly.tieba.post.ui.page.webview.MyWebViewClient
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadingState
-import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.WebView
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberSaveableWebViewState
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberWebViewNavigator
@@ -63,6 +61,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassSnackbarHost
 
 const val LOGIN_URL =
     "https://wappass.baidu.com/passport?login&u=https%3A%2F%2Ftieba.baidu.com%2Findex%2Ftbwise%2Fmine"
@@ -109,10 +108,14 @@ fun LoginPage(
     
             val animatedProgress by animateFloatAsState(targetValue = progress, label = "progress")
     
-            MyScaffold(
-                backgroundColor = AppTokens.background,
-                topBar = {},
-            ) { _ ->
+            // T5/B4a：外壳从 MyScaffold 换成普通 Box（原来它只提供 insets + snackbar host）。
+            // 登录页自己画顶栏（返回/刷新 + 34sp 大标题），snackbar 用 GlassSnackbarHost 挂底部。
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(AppTokens.background)
+            ) {
+                val snackbarHostState = remember { SnackbarHostState() }
                 Column(modifier = Modifier.fillMaxSize()) {
                     // 大标题 + 悬浮返回（登录页原来是 M2 Toolbar，这里统一成二级页的大标题范式）
                     Column(modifier = Modifier.statusBarsPadding()) {
@@ -153,7 +156,6 @@ fun LoginPage(
                             .clip(RoundedCornerShape(26.dp))
                             .background(Color.White)
                     ) {
-                        val snackbarHostState = LocalSnackbarHostState.current
                         WebView(
                             state = webViewState,
                             modifier = Modifier.fillMaxSize(),
@@ -185,6 +187,10 @@ fun LoginPage(
                         }
                     }
                 }
+                GlassSnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
             }
         }
 }
