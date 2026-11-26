@@ -56,7 +56,9 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.Chip
 import com.huanchengfly.tieba.post.ui.widgets.compose.debounceClickable
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadMoreLayout
-import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
+import androidx.compose.material.SnackbarHostState
+import androidx.compose.runtime.remember
+import com.huanchengfly.tieba.post.ui.common.components.glass.LocalSnackbarHostState
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
 import com.huanchengfly.tieba.post.ui.widgets.compose.VerticalDivider
 import kotlinx.collections.immutable.ImmutableList
@@ -75,7 +77,7 @@ fun GeneralTabListPage(
 ) {
     val context = LocalContext.current
     val navigator = LocalNavigator.current
-    val snackbarHostState = LocalSnackbarHostState.current
+    val snackbarHostState = LocalSnackbarHostState.current ?: remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
 

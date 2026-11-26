@@ -19,6 +19,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarHostState
+import com.huanchengfly.tieba.post.ui.common.components.glass.LocalSnackbarHostState
 import androidx.compose.material.SwipeToDismiss
 import androidx.compose.material.contentColorFor
 import androidx.compose.material.rememberDismissState
@@ -55,7 +56,6 @@ private fun SwipeToDismissSnackbarHost(hostState: SnackbarHostState) {
     }
 }
 
-val LocalSnackbarHostState = compositionLocalOf<SnackbarHostState> { error("no scaffold here!") }
 
 @Composable
 fun AppScaffold(

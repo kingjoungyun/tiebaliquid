@@ -6,11 +6,24 @@ import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import com.kyant.capsule.ContinuousRoundedRectangle
+
+/**
+ * 当前页面的 snackbar 宿主状态。
+ *
+ * **可空**：由 `AppScaffold` 或页面自己提供；没有提供者时读到的就是 `null`，
+ * 调用方应自行 `remember { SnackbarHostState() }` 兜底。
+ *
+ * 历史：它原来是**非空** local（默认 `error("no scaffold here!")`），页面一旦脱离
+ * `AppScaffold` 就会在运行时崩溃。改成可空后，「删掉 AppScaffold」不再需要一次性
+ * 改完所有子页面（PLAN §24 #1）。
+ */
+val LocalSnackbarHostState = compositionLocalOf<SnackbarHostState?> { null }
 
 /**
  * 玻璃风格的 snackbar 宿主（T5 批次 3）。

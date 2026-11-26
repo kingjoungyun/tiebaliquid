@@ -60,7 +60,8 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.Chip
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadMoreLayout
-import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
+import androidx.compose.material.SnackbarHostState
+import com.huanchengfly.tieba.post.ui.common.components.glass.LocalSnackbarHostState
 import com.huanchengfly.tieba.post.ui.widgets.compose.LongClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
@@ -122,7 +123,7 @@ fun HistoryListPage(
             )
     
             val context = LocalContext.current
-            val snackbarHostState = LocalSnackbarHostState.current
+            val snackbarHostState = LocalSnackbarHostState.current ?: remember { SnackbarHostState() }
             viewModel.onEvent<HistoryListUiEvent.Delete.Failure> {
                 snackbarHostState.showSnackbar(
                     context.getString(
