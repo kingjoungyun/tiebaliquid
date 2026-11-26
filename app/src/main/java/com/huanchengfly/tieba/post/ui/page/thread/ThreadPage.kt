@@ -176,7 +176,6 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.OriginThreadCard
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.ui.widgets.compose.TextWithMinWidth
 import com.huanchengfly.tieba.post.ui.widgets.compose.TipScreen
-import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.UserHeader
 import com.huanchengfly.tieba.post.ui.widgets.compose.VerticalDivider
 import com.huanchengfly.tieba.post.ui.widgets.compose.VerticalGrid
@@ -526,7 +525,6 @@ fun ThreadPage(
 ) {
     // 帖子页外壳的风格开关（GLASMIO / LEGACY）。楼层内容、数据流两条分支完全共用。
     // API < 33 时 Glasmio 材质起不来，直接退回旧外观，避免玻璃组件读到不存在的 theme/host。
-    val glassmio = ThreadPageUi.DefaultStyle == ThreadPageUiStyle.GLASMIO && isLiquidGlassSupported()
     LazyLoad(loaded = viewModel.initialized) {
         viewModel.send(
             ThreadUiIntent.Init(
@@ -695,7 +693,7 @@ fun ThreadPage(
     val threadTopInset = statusBarTop + ThreadTopBarHeight
     // 底栏在 overlay 层：列表 viewport 铺到屏幕底，用 contentPadding 让最后一条能滚到胶囊上方。
     val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val threadBottomInset = if (glassmio) ThreadBottomBarInset + navigationBarBottom else 0.dp
+    val threadBottomInset = ThreadBottomBarInset + navigationBarBottom
     val isContentScrolled by remember {
         derivedStateOf {
             lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 6
@@ -1334,7 +1332,7 @@ fun ThreadPage(
                     )
                 )
             },
-            glassmio = glassmio,
+            glassmio = true,
             onSubPostReplyClick = { post, subPost ->
                 navigator.navigate(
                     ReplyPageDestination(
@@ -1473,7 +1471,7 @@ fun ThreadPage(
             isDesc = curSortType == ThreadSortType.SORT_TYPE_DESC,
             canDelete = { author?.get { id } == user.get { id } },
             onDismiss = onDismiss,
-            showHandle = !glassmio,
+            showHandle = false,
             onSeeLzClick = {
                 viewModel.send(
                     ThreadUiIntent.LoadFirstPage(
@@ -1568,7 +1566,7 @@ fun ThreadPage(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = if (glassmio) 8.dp else 16.dp)
+                .padding(vertical = 8.dp)
                 .defaultMinSize(minHeight = 1.dp)
         )
     }
@@ -1580,7 +1578,7 @@ fun ThreadPage(
         GlassPage(
             title = threadForumName,
             onBack = { navigator.navigateUp() },
-            enabled = glassmio,
+            enabled = true,
             scrimAlpha = topScrimAlpha,
             center = {
                 ThreadForumCapsule(
@@ -1617,7 +1615,7 @@ fun ThreadPage(
                 isError = isError,
                 isLoading = isRefreshing || (isEmpty && !isError),
                 loadingScreen = {
-                    ThreadSkeleton(glassmio = glassmio)
+                    ThreadSkeleton(glassmio = true)
                 },
                 errorScreen = {
                     error?.let {
@@ -1641,44 +1639,16 @@ fun ThreadPage(
                 CompositionLocalProvider(LocalThreadImagesEnabled provides imagesEnabled) {
                 MyScaffold(
                     scaffoldState = scaffoldState,
-                    backgroundColor = if (glassmio) Color.Transparent else MaterialTheme.colors.background,
+                    backgroundColor = Color.Transparent,
                     topBar = {
                         // GLASMIO 的顶栏是 overlay（见 GlassPage 的顶栏/center 槽），
                         // Scaffold 这里不再占高度，内容才能从顶栏下穿过。
-                        if (!glassmio) {
-                            TopBar(
-                                forum = forum,
-                                onBack = { navigator.navigateUp() },
-                                onForumClick = {
-                                    val forumName = forum?.get { name }
-                                    if (forumName != null) navigator.navigate(
-                                        ForumPageDestination(
-                                            forumName
-                                        )
-                                    )
-                                }
-                            )
-                        }
+                        
                     },
                 bottomBar = {
                     // GLASMIO 的底栏在 GlassPage 的 overlay 槽里（能采真实内容）；
                     // 这里只给 LEGACY 保留旧的 Scaffold 底栏。
-                    if (!glassmio) {
-                        BottomBar(
-                            user = user,
-                            onClickReply = onReplyClick,
-                            onAgree = onAgreeClick,
-                            onClickMore = onMoreClick,
-                            hasAgreed = hasThreadAgreed,
-                            agreeNum = threadAgreeNum,
-                            modifier = Modifier
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                    onClick = {}
-                                )
-                        )
-                    }
+                    
                 },
             ) { paddingValues ->
                 ModalBottomSheetLayout(
@@ -1688,9 +1658,7 @@ fun ThreadPage(
                     sheetContent = {
                         // LEGACY 仍然用这张 M2 bottom sheet；GLASMIO 走顶栏/底栏的 AppMenu，
                         // sheet 永远保持隐藏（保留状态机只是为了不动旧分支）。
-                        if (!glassmio) {
-                            threadMenuContent { closeBottomSheet() }
-                        }
+                        
                     },
                     scrimColor = Color.Transparent,
                     modifier = Modifier
@@ -1746,7 +1714,7 @@ fun ThreadPage(
                                 state = lazyListState,
                                 modifier = Modifier.fillMaxWidth(),
                                 contentPadding = PaddingValues(
-                                    top = if (glassmio) threadTopInset else 0.dp,
+                                    top = threadTopInset,
                                     // overlay 底栏不再占 Scaffold 高度：把「胶囊 + 边距 + 导航栏」
                                     // 放进 contentPadding，最后一条能滚到胶囊上方，滚动时内容从底下穿过。
                                     bottom = threadBottomInset,
@@ -1797,7 +1765,7 @@ fun ThreadPage(
                                                             )
                                                         )
                                                     },
-                                                    glassmio = glassmio,
+                                                    glassmio = true,
                                                 ) {
                                                     deletePost = null
                                                     confirmDeleteDialogState.show()
@@ -1843,147 +1811,9 @@ fun ThreadPage(
                                         }
                                     }
                                 }
-                                if (glassmio) {
-                                    item(key = "ThreadHeader") {
-                                        // 原来的「回复数 / 只看楼主 / 正序倒序」整行已移到玻璃底栏。
-                                        // 保留一个 0 高度 item，维持 animateScrollToItem(1/2/+n) 的既有 index 语义。
-                                    }
-                                } else {
-                                    stickyHeader(key = "ThreadHeader") {
-                                        Container {
-                                            Row(
-                                                modifier = Modifier
-                                                    .background(MaterialTheme.colors.background)
-                                                    .padding(8.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-    //                                            Text(
-    //                                                text = stringResource(
-    //                                                    R.string.title_thread_header,
-    //                                                    "${thread?.get { replyNum - 1 } ?: 0}"),
-    //                                                fontSize = 13.sp,
-    //                                                fontWeight = FontWeight.Bold,
-    //                                                color = AppTokens.text,
-    //                                                modifier = Modifier.padding(horizontal = 8.dp),
-    //                                            )
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    modifier = Modifier.height(IntrinsicSize.Min)
-                                                ) {
-                                                    Text(
-                                                        text = stringResource(
-                                                            R.string.title_thread_header,
-                                                            "${thread?.get { replyNum - 1 } ?: 0}"),
-                                                        modifier = Modifier
-                                                            .padding(horizontal = 8.dp)
-                                                            .debounceClickable(
-                                                                interactionSource = remember { MutableInteractionSource() },
-                                                                indication = null,
-                                                                enabled = isSeeLz,
-                                                                onClick = {
-                                                                    if (isSeeLz) {
-                                                                        viewModel.send(
-                                                                            ThreadUiIntent.LoadFirstPage(
-                                                                                threadId = threadId,
-                                                                                forumId = forumId,
-                                                                                seeLz = false,
-                                                                                sortType = curSortType
-                                                                            )
-                                                                        )
-                                                                    }
-                                                                }),
-                                                        fontSize = 13.sp,
-                                                        fontWeight = if (!isSeeLz) FontWeight.SemiBold else FontWeight.Normal,
-                                                        color = if (!isSeeLz) AppTokens.text else AppTokens.textSecondary,
-                                                    )
-                                                    HorizontalDivider()
-                                                    Text(
-                                                        text = stringResource(R.string.title_see_lz),
-                                                        modifier = Modifier
-                                                            .padding(horizontal = 8.dp)
-                                                            .debounceClickable(
-                                                                interactionSource = remember { MutableInteractionSource() },
-                                                                enabled = !isSeeLz,
-                                                                indication = null,
-                                                                onClick =
-                                                                    {
-                                                                        if (!isSeeLz) {
-                                                                            viewModel.send(
-                                                                                ThreadUiIntent.LoadFirstPage(
-                                                                                    threadId = threadId,
-                                                                                    forumId = forumId,
-                                                                                    seeLz = true,
-                                                                                    sortType = curSortType
-                                                                                )
-                                                                            )
-                                                                        }
-                                                                    }),
-                                                        fontSize = 13.sp,
-                                                        fontWeight = if (isSeeLz) FontWeight.SemiBold else FontWeight.Normal,
-                                                        color = if (isSeeLz) AppTokens.text else AppTokens.textSecondary,
-                                                    )
-                                                }
-                                                Spacer(modifier = Modifier.weight(1f))
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    modifier = Modifier.height(IntrinsicSize.Min)
-                                                ) {
-                                                    Text(
-                                                        text = stringResource(R.string.title_asc),
-                                                        modifier = Modifier
-                                                            .padding(horizontal = 8.dp)
-                                                            .debounceClickable(
-                                                                interactionSource = remember { MutableInteractionSource() },
-                                                                enabled = (curSortType == 1),
-                                                                indication = null,
-                                                                onClick =
-                                                                    {
-                                                                        if (curSortType == 1) {
-                                                                            viewModel.send(
-                                                                                ThreadUiIntent.LoadFirstPage(
-                                                                                    threadId = threadId,
-                                                                                    forumId = forumId,
-                                                                                    seeLz = isSeeLz,
-                                                                                    sortType = 0
-                                                                                )
-                                                                            )
-                                                                        }
-                                                                    }),
-                                                        fontSize = 13.sp,
-                                                        fontWeight = if (curSortType == 0) FontWeight.SemiBold else FontWeight.Normal,
-                                                        color = if (curSortType == 0) AppTokens.text else AppTokens.textSecondary,
-                                                    )
-                                                    HorizontalDivider()
-                                                    Text(
-                                                        text = stringResource(R.string.title_desc),
-                                                        modifier = Modifier
-                                                            .padding(horizontal = 8.dp)
-                                                            .debounceClickable(
-                                                                interactionSource = remember { MutableInteractionSource() },
-                                                                enabled = (curSortType == 0),
-                                                                indication = null,
-                                                                onClick =
-                                                                    {
-                                                                        if (curSortType == 0) {
-                                                                            viewModel.send(
-                                                                                ThreadUiIntent.LoadFirstPage(
-                                                                                    threadId = threadId,
-                                                                                    forumId = forumId,
-                                                                                    seeLz = isSeeLz,
-                                                                                    sortType = 1
-                                                                                )
-                                                                            )
-                                                                        }
-                                                                    }),
-                                                        fontSize = 13.sp,
-                                                        fontWeight = if (curSortType == 1) FontWeight.SemiBold else FontWeight.Normal,
-                                                        color = if (curSortType == 1) AppTokens.text else AppTokens.textSecondary,
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                                // 玻璃版：回复数 / 只看楼主 / 正序倒序 在底栏；这里保留 0 高度 item，
+                                // 维持 animateScrollToItem(1/2/+n) 的 index 语义。
+                                item(key = "ThreadHeader") {}
                                 if (curSortType == ThreadSortType.SORT_TYPE_DESC) {
                                     latestPosts(true)
                                 }
@@ -2086,7 +1916,7 @@ fun ThreadPage(
                             state = pullRefreshState,
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
-                                .padding(top = if (glassmio) threadTopInset else 0.dp),
+                                .padding(top = threadTopInset),
                             backgroundColor = AppTokens.pullRefreshIndicator,
                             contentColor = AppTokens.primary,
                         )
@@ -2099,140 +1929,7 @@ fun ThreadPage(
     }
 }
 
-@Composable
-private fun TopBar(
-    forum: ImmutableHolder<SimpleForum>?,
-    onBack: () -> Unit,
-    onForumClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    TitleCentredToolbar(
-        title = {
-            forum?.let {
-                if (forum.get { name }.isNotBlank()) {
-                    Row(
-                        modifier = Modifier
-                            .padding(horizontal = 48.dp)
-                            .height(IntrinsicSize.Min)
-                            .clip(RoundedCornerShape(100))
-                            .background(AppTokens.chip)
-                            .debounceClickable(onClick = onForumClick)
-                            .padding(4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Avatar(
-                            data = forum.get { avatar },
-                            contentDescription = it.get { name },
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .aspectRatio(1f)
-                        )
 
-                        Text(
-                            text = stringResource(id = R.string.title_forum, it.get { name }),
-                            fontSize = 14.sp,
-                            color = AppTokens.text,
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
-            }
-        },
-        navigationIcon = {
-            BackNavigationIcon(onBack)
-        },
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun BottomBar(
-    user: ImmutableHolder<User>,
-    onClickReply: () -> Unit,
-    onAgree: () -> Unit,
-    onClickMore: () -> Unit,
-    modifier: Modifier = Modifier,
-    hasAgreed: Boolean = false,
-    agreeNum: Long = 0,
-) {
-    Column(
-        modifier = Modifier.background(AppTokens.threadBottomBar)
-    ) {
-        Row(
-            modifier = Modifier
-                .height(IntrinsicSize.Min)
-                .then(modifier)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (user.get { is_login } == 1 && !LocalContext.current.appPreferences.safeMode) {
-                Avatar(
-                    data = StringUtil.getAvatarUrl(user.get { portrait }),
-                    size = Sizes.Tiny,
-                    contentDescription = user.get { name },
-                    modifier = Modifier
-                        .padding(vertical = 8.dp)
-                )
-
-                Row(
-                    modifier = Modifier
-                        .padding(vertical = 8.dp)
-                        .weight(1f)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(AppTokens.bottomBarSurface)
-                        .debounceClickable(onClick = onClickReply)
-                        .padding(8.dp),
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.tip_reply_thread),
-                        style = MaterialTheme.typography.caption,
-                        color = AppTokens.onBottomBarSurface,
-                    )
-                }
-            } else {
-                Spacer(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(40.dp)
-                )
-            }
-
-            BottomBarAgreeBtn(
-                hasAgreed = hasAgreed,
-                agreeNum = agreeNum,
-                onClick = onAgree,
-                modifier = Modifier.fillMaxHeight()
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .debounceClickable(onClick = onClickMore)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreVert,
-                    contentDescription = stringResource(id = R.string.btn_more),
-                    tint = AppTokens.textSecondary,
-                )
-            }
-        }
-
-        Box(
-            modifier = Modifier
-                .requiredHeightIn(min = if (LocalContext.current.appPreferences.liftUpBottomBar) 16.dp else 0.dp)
-        ) {
-            Spacer(
-                modifier = Modifier
-                    .windowInsetsBottomHeight(WindowInsets.navigationBars)
-            )
-        }
-    }
-}
 
 @Composable
 private fun PostContentRenders(
