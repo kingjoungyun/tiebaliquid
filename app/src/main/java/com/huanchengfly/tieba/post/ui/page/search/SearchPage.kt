@@ -252,10 +252,14 @@ fun SearchPage(
             val glassmio = SearchPageUi.DefaultStyle == SearchPageUiStyle.GLASMIO
             LiquidGlassTheme(accent = AppTokens.primary) {
                 HarmonyTextProvider {
-            AppScaffold(
-                backgroundColor = if (glassmio) GlasmioTheme.colors.groupedBackground
-                else AppTokens.background,
-                topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        if (glassmio) GlasmioTheme.colors.groupedBackground
+                        else AppTokens.background
+                    ),
+            ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -304,11 +308,11 @@ fun SearchPage(
                             SearchTabRow(pagerState = pagerState, pages = pages)
                         }
                     }
-                }
-            ) { paddingValues ->
-                Box(modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
                     if (!isKeywordEmpty) {
                         ProvideNavigator(navigator = navigator) {
                             LazyLoadHorizontalPager(

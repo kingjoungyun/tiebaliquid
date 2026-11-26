@@ -148,10 +148,14 @@ fun SearchUserPage(
     LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
     ProvideNavigator(navigator = navigator) {
-        AppScaffold(
-            backgroundColor = if (glassmio) GlasmioTheme.colors.groupedBackground
-            else AppTokens.background,
-            topBar = {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    if (glassmio) GlasmioTheme.colors.groupedBackground
+                    else AppTokens.background
+                ),
+        ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -182,13 +186,17 @@ fun SearchUserPage(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                     )
                 }
-            },
-        ) { contentPaddings ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
             SearchUserContent(
                 viewModel = viewModel,
-                contentPadding = contentPaddings,
+                contentPadding = PaddingValues(0.dp),
                 initialUid = initialUid,
             )
+            }
         }
     }
         }
