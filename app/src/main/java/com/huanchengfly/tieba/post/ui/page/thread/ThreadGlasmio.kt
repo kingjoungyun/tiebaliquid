@@ -55,6 +55,8 @@ import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.core.IosTypography
 import io.github.neoruaa.glasmio.glass.GlassSurface
 import io.github.neoruaa.glasmio.ui.GlasmioIconButton
+import androidx.compose.material.LocalContentColor
+import io.github.neoruaa.glasmio.core.LocalGlassColors
 
 /**
  * 帖子详情页的 Glasmio 外壳。
@@ -204,6 +206,8 @@ fun ThreadTopBarMenu(
  * 底栏：两个 GlassSurface 默认胶囊。这个 composable 只在 `GlassPage` 的 bottomBar 槽里调用，
  * 所以玻璃采到的是页面真实内容。
  */
+private const val SecondaryContentAlpha = 0.62f
+
 @Composable
 fun ThreadGlassBottomBar(
     onClickReply: () -> Unit,
@@ -250,10 +254,12 @@ fun ThreadGlassBottomBar(
                         .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.CenterStart,
                 ) {
+                    // 颜色必须取 GlassSurface 内部提供的（会随采样背景自适应）：
+                    // 用外层固定色的话，背景是深色图时胶囊会变深、文字仍是深色 → 看不见。
                     Text(
                         text = stringResource(id = R.string.tip_reply_thread),
                         style = IosTypography.subheadline,
-                        color = normal,
+                        color = LocalContentColor.current.copy(alpha = SecondaryContentAlpha),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -266,6 +272,9 @@ fun ThreadGlassBottomBar(
                     .height(ThreadBottomBarHeight),
                 shape = shape,
             ) {
+                // 同左胶囊：内容色取 GlassSurface 内提供的自适应色，避免「深色玻璃 + 深色图标」。
+                val surfaceContent = LocalContentColor.current.copy(alpha = SecondaryContentAlpha)
+                val surfaceAccent = LocalGlassColors.current.accent
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
@@ -276,7 +285,7 @@ fun ThreadGlassBottomBar(
                     ThreadInfoGroup(
                         icon = Icons.AutoMirrored.Rounded.Comment,
                         count = replyNum.toLong(),
-                        color = normal,
+                        color = surfaceContent,
                         contentDescription = stringResource(
                             id = R.string.title_thread_header,
                             replyNum.toString(),
@@ -286,21 +295,21 @@ fun ThreadGlassBottomBar(
                     ThreadInfoGroup(
                         icon = if (hasAgreed) (PhosphorIcons["heart-fill"] ?: Icons.Rounded.Favorite) else (PhosphorIcons["heart"] ?: (PhosphorIcons["heart"] ?: Icons.Rounded.FavoriteBorder)),
                         count = agreeNum,
-                        color = if (hasAgreed) accent else normal,
+                        color = if (hasAgreed) surfaceAccent else surfaceContent,
                         contentDescription = stringResource(id = R.string.title_agree),
                         onClick = onAgree,
                     )
                     ThreadInfoGroup(
                         icon = (PhosphorIcons["user"] ?: Icons.Rounded.Person),
                         count = null,
-                        color = if (isSeeLz) accent else normal,
+                        color = if (isSeeLz) surfaceAccent else surfaceContent,
                         contentDescription = stringResource(id = R.string.title_see_lz),
                         onClick = onSeeLzClick,
                     )
                     ThreadInfoGroup(
                         icon = (PhosphorIcons["arrows-down-up"] ?: Icons.Rounded.SwapVert),
                         count = null,
-                        color = sortColor,
+                        color = if (isDesc) surfaceAccent else surfaceContent,
                         contentDescription = stringResource(
                             id = if (isDesc) R.string.title_desc else R.string.title_asc,
                         ),
