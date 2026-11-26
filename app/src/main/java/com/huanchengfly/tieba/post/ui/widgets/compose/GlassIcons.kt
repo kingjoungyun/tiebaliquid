@@ -1,5 +1,14 @@
 package com.huanchengfly.tieba.post.ui.widgets.compose
 
+/*
+ * 玻璃 UI 的图标/动作小件（原 `Toolbar.kt`，B4 收口时改名搬家）。
+ *
+ * 这里**不是** M2 工具栏分叉：`BackNavigationIcon` / `ActionItem` / `AccountNavIcon` /
+ * `TopAppBarContainer` 是被各页复用的按钮与容器；只有底部的 `Toolbar(...)` 还是 M2
+ * `TopAppBar` 薄包装，仍被 `TopicDetailPage` / `UserProfilePage` / `WebViewPage` 使用
+ * （这 3 页迁到 GlassPage 后即可删除，见 B4b）。
+ */
+
 import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 
 import android.util.Log
