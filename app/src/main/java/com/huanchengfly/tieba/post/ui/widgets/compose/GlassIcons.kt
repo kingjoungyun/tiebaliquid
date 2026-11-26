@@ -42,7 +42,6 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -84,6 +83,7 @@ import com.huanchengfly.tieba.post.utils.StringUtil
 import com.huanchengfly.tieba.post.utils.compose.calcStatusBarColor
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import androidx.compose.foundation.layout.height
 
 @Composable
 fun accountNavIconIfCompact(): (@Composable () -> Unit)? =
@@ -276,6 +276,16 @@ fun Toolbar(
     )
 }
 
+/**
+ * 自研工具栏（非 Material 2 派生）。
+ *
+ * 布局：`Row(height = 56dp)` → 左 `navigationIcon`（56dp 槽）→ 中间标题（占剩余宽度、单行省略）→
+ * 右 `actions`（RowScope）。背景 `AppTokens.topBar`、内容色 `AppTokens.onTopBar`；
+ * 状态栏占位与双击回顶仍由 [TopAppBarContainer] 提供（那部分本来就是自研的）。
+ *
+ * 与替换前的 M2 顶栏相比：标题字号仍是 `MaterialTheme.typography.h6` + Bold，高度 56dp、无阴影，
+ * 行为一致；区别只是不再依赖 M2 的顶栏组件。
+ */
 @Composable
 fun Toolbar(
     title: @Composable (() -> Unit),
@@ -287,26 +297,44 @@ fun Toolbar(
 ) {
     TopAppBarContainer(
         topBar = {
-            TopAppBar(
-                title = {
-                    ProvideTextStyle(value = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold)) {
-                        ProvideContentColor(color = contentColor, content = title)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .background(backgroundColor),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (navigationIcon != null) {
+                    Box(
+                        modifier = Modifier.size(56.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        ProvideContentColor(color = contentColor) {
+                            navigationIcon()
+                        }
                     }
-                },
-                actions = {
-                    ProvideContentColor(color = contentColor) {
-                        actions()
+                }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = if (navigationIcon == null) 16.dp else 0.dp, end = 8.dp),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    ProvideTextStyle(
+                        value = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold)
+                    ) {
+                        ProvideContentColor(color = contentColor) {
+                            title()
+                        }
                     }
-                },
-                navigationIcon = (@Composable {
-                    ProvideContentColor(color = contentColor) {
-                        navigationIcon?.invoke()
-                    }
-                }).takeIf { navigationIcon != null },
-                backgroundColor = backgroundColor,
-                contentColor = contentColor,
-                elevation = 0.dp
-            )
+                }
+                ProvideContentColor(color = contentColor) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        content = actions,
+                    )
+                }
+            }
         },
         content = content
     )
