@@ -57,11 +57,11 @@ import com.huanchengfly.tieba.post.ui.page.destinations.LoginPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.SettingsPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadStorePageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ToolboxPageDestination
+import com.huanchengfly.tieba.post.ui.page.destinations.UserLikeForumListPageDestination
+import com.huanchengfly.tieba.post.ui.page.destinations.UserPostListPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
-import com.huanchengfly.tieba.post.ui.page.destinations.WebViewPageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
-import com.huanchengfly.tieba.post.utils.CuidUtils
 import com.huanchengfly.tieba.post.utils.StringUtil
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.core.IosTypography
@@ -204,14 +204,104 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
                         }
                     }
 
-                    item(key = "mine-group-general") {
-                        UserPrefsGroup(title = stringResource(id = R.string.mine_group_general)) {
-                            UserRow(index = 0) {
+                    item(key = "mine-group-content") {
+                        UserPrefsGroup(title = stringResource(id = R.string.title_toolbox_group_content)) {
+                            val selfUid = currentAccount?.uid?.toLongOrNull() ?: 0L
+                            val authorName = currentAccount?.name.orEmpty()
+                            val authorNameShow = currentAccount?.nameShow.orEmpty()
+                            val authorPortrait = currentAccount?.portrait.orEmpty()
+                            if (currentAccount != null) {
+                                UserRow(index = 0) {
+                                    TextPref(
+                                        title = stringResource(id = R.string.title_toolbox_threads),
+                                        leadingIcon = { PrefsIcon("square.and.pencil") },
+                                        onClick = {
+                                            navigator.navigate(
+                                                UserPostListPageDestination(
+                                                    uid = selfUid,
+                                                    isThread = true,
+                                                    authorName = authorName,
+                                                    authorNameShow = authorNameShow,
+                                                    authorPortrait = authorPortrait,
+                                                )
+                                            )
+                                        },
+                                    )
+                                }
+                                UserRow(index = 1) {
+                                    TextPref(
+                                        title = stringResource(id = R.string.title_toolbox_posts),
+                                        leadingIcon = { PrefsIcon("bubble.left.and.bubble.right") },
+                                        onClick = {
+                                            navigator.navigate(
+                                                UserPostListPageDestination(
+                                                    uid = selfUid,
+                                                    isThread = false,
+                                                    authorName = authorName,
+                                                    authorNameShow = authorNameShow,
+                                                    authorPortrait = authorPortrait,
+                                                )
+                                            )
+                                        },
+                                    )
+                                }
+                            }
+                            if (currentAccount != null) {
+                                UserRow(index = 2) {
+                                    TextPref(
+                                        title = stringResource(id = R.string.title_my_collect),
+                                        leadingIcon = { PrefsIcon("star") },
+                                        onClick = {
+                                            navigator.navigate(ThreadStorePageDestination)
+                                        },
+                                    )
+                                }
+                                UserRow(index = 3) {
+                                    TextPref(
+                                        title = stringResource(id = R.string.title_toolbox_like_forum),
+                                        leadingIcon = { PrefsIcon("rectangle.stack") },
+                                        onClick = {
+                                            navigator.navigate(
+                                                UserLikeForumListPageDestination(uid = selfUid)
+                                            )
+                                        },
+                                    )
+                                }
+                            }
+                            UserRow(index = if (currentAccount != null) 4 else 0) {
                                 TextPref(
                                     title = stringResource(id = R.string.title_history),
                                     leadingIcon = { PrefsIcon("clock.arrow.circlepath") },
                                     onClick = {
                                         navigator.navigate(HistoryPageDestination)
+                                    },
+                                )
+                            }
+                        }
+                    }
+
+                    item(key = "mine-group-tools") {
+                        UserPrefsGroup(title = stringResource(id = R.string.mine_group_tools)) {
+                            UserRow(index = 0) {
+                                TextPref(
+                                    title = stringResource(id = R.string.title_toolbox),
+                                    leadingIcon = { PrefsIcon("wrench.and.screwdriver") },
+                                    onClick = {
+                                        navigator.navigate(ToolboxPageDestination)
+                                    },
+                                )
+                            }
+                        }
+                    }
+
+                    item(key = "mine-group-app") {
+                        UserPrefsGroup(title = stringResource(id = R.string.title_toolbox_group_app)) {
+                            UserRow(index = 0) {
+                                TextPref(
+                                    title = stringResource(id = R.string.my_info_settings),
+                                    leadingIcon = { PrefsIcon("gearshape") },
+                                    onClick = {
+                                        navigator.navigate(SettingsPageDestination)
                                     },
                                 )
                             }
@@ -221,55 +311,6 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
                                     leadingIcon = { PrefsIcon("paintpalette") },
                                     onClick = {
                                         navigator.navigate(AppThemePageDestination)
-                                    },
-                                )
-                            }
-                        }
-                    }
-
-                    item(key = "mine-group-more") {
-                        UserPrefsGroup(title = stringResource(id = R.string.mine_group_more)) {
-                            // 收藏 / 服务中心只有登录后才存在（原版同样如此），放在「更多」里，
-                            // 避免挤占「通用」组；三个统计入口已移到个人主页。
-                            if (currentAccount != null) {
-                                UserRow(index = 0) {
-                                    TextPref(
-                                        title = stringResource(id = R.string.title_my_collect),
-                                        leadingIcon = { PrefsIcon("star") },
-                                        onClick = {
-                                            navigator.navigate(ThreadStorePageDestination)
-                                        },
-                                    )
-                                }
-                                UserRow(index = 1) {
-                                    TextPref(
-                                        title = stringResource(id = R.string.my_info_service_center),
-                                        leadingIcon = { PrefsIcon("questionmark.circle") },
-                                        onClick = {
-                                            navigator.navigate(
-                                                WebViewPageDestination(
-                                                    initialUrl = "https://tieba.baidu.com/mo/q/hybrid-main-service/uegServiceCenter?cuid=${CuidUtils.getNewCuid()}&cuid_galaxy2=${CuidUtils.getNewCuid()}&cuid_gid=&timestamp=${System.currentTimeMillis()}&_client_version=12.52.1.0&nohead=1"
-                                                )
-                                            )
-                                        },
-                                    )
-                                }
-                            }
-                            UserRow(index = if (currentAccount != null) 2 else 0) {
-                                TextPref(
-                                    title = stringResource(id = R.string.title_toolbox),
-                                    leadingIcon = { PrefsIcon("wrench.and.screwdriver") },
-                                    onClick = {
-                                        navigator.navigate(ToolboxPageDestination)
-                                    },
-                                )
-                            }
-                            UserRow(index = if (currentAccount != null) 3 else 1) {
-                                TextPref(
-                                    title = stringResource(id = R.string.my_info_settings),
-                                    leadingIcon = { PrefsIcon("gearshape") },
-                                    onClick = {
-                                        navigator.navigate(SettingsPageDestination)
                                     },
                                 )
                             }
