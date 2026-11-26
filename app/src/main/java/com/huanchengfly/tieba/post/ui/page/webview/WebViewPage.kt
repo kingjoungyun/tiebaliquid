@@ -63,12 +63,10 @@ import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.AccompanistWebChromeClient
 import com.huanchengfly.tieba.post.ui.widgets.compose.AccompanistWebViewClient
-import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.ClickMenu
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadingState
-import com.huanchengfly.tieba.post.ui.widgets.compose.AppScaffold
-import com.huanchengfly.tieba.post.ui.widgets.compose.Toolbar
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 import com.huanchengfly.tieba.post.ui.widgets.compose.WebView
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberMenuState
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberSaveableWebViewState
@@ -169,87 +167,64 @@ fun WebViewPage(
     
             val animatedProgress by animateFloatAsState(targetValue = progress, label = "progress")
     
-            AppScaffold(
-                topBar = {
-                    Toolbar(
-                        title = {
-                            Column {
-                                Text(
-                                    text = displayPageTitle,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                if (isExternalHost) {
-                                    Text(
-                                        text = currentHost,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        color = AppTokens.onTopBarSecondary,
-                                        style = MaterialTheme.typography.caption
-                                    )
-                                }
-                            }
-                        },
-                        navigationIcon = { BackNavigationIcon(onBackPressed = { navigator.navigateUp() }) },
-                        actions = {
+            GlassPage(
+                title = if (isExternalHost) "$displayPageTitle · $currentHost" else displayPageTitle,
+                onBack = { navigator.navigateUp() },
+                actions = {
                             val menuState = rememberMenuState()
-                            ClickMenu(
-                                menuContent = {
-                                    DropdownMenuItem(
-                                        onClick = {
-                                            val url = webViewState.webView?.url ?: initialUrl
-                                            TiebaUtil.copyText(context, url)
-                                            dismiss()
-                                        }
-                                    ) {
-                                        Text(text = stringResource(id = R.string.title_copy_link))
-                                    }
-                                    DropdownMenuItem(
-                                        onClick = {
-                                            val uri = (webViewState.webView?.url ?: initialUrl).toUri()
-                                            context.startActivity(
-                                                Intent(
-                                                    Intent.ACTION_VIEW,
-                                                    uri
-                                                )
-                                            )
-                                            dismiss()
-                                        }
-                                    ) {
-                                        Text(text = stringResource(id = R.string.title_open_in_browser))
-                                    }
-                                    DropdownMenuItem(
-                                        onClick = {
-                                            webViewNavigator.reload()
-                                            dismiss()
-                                        }
-                                    ) {
-                                        Text(text = stringResource(id = R.string.title_refresh))
-                                    }
-                                },
-                                menuState = menuState,
-                                triggerShape = CircleShape
-                            ) {
-                                Box(
-                                    modifier = Modifier.size(48.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreVert,
-                                        contentDescription = stringResource(id = R.string.btn_more)
-                                    )
+                    ClickMenu(
+                        menuContent = {
+                            DropdownMenuItem(
+                                onClick = {
+                                    val url = webViewState.webView?.url ?: initialUrl
+                                    TiebaUtil.copyText(context, url)
+                                    dismiss()
                                 }
+                            ) {
+                                Text(text = stringResource(id = R.string.title_copy_link))
+                            }
+                            DropdownMenuItem(
+                                onClick = {
+                                    val uri = (webViewState.webView?.url ?: initialUrl).toUri()
+                                    context.startActivity(
+                                        Intent(
+                                            Intent.ACTION_VIEW,
+                                            uri
+                                        )
+                                    )
+                                    dismiss()
+                                }
+                            ) {
+                                Text(text = stringResource(id = R.string.title_open_in_browser))
+                            }
+                            DropdownMenuItem(
+                                onClick = {
+                                    webViewNavigator.reload()
+                                    dismiss()
+                                }
+                            ) {
+                                Text(text = stringResource(id = R.string.title_refresh))
                             }
                         },
-                    )
-                }
-            ) { paddingValues ->
-                Box {
+                        menuState = menuState,
+                        triggerShape = CircleShape
+                    ) {
+                        Box(
+                            modifier = Modifier.size(48.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = PhosphorIcons["dots-three-vertical"] ?: Icons.Rounded.MoreVert,
+                                contentDescription = stringResource(id = R.string.btn_more)
+                            )
+                        }
+                    }
+                },
+            ) { padding ->
+                Box(modifier = Modifier.fillMaxSize().padding(padding)) {
                     WebView(
                         state = webViewState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
+                        modifier = Modifier.fillMaxSize(),
                         navigator = webViewNavigator,
                         onCreated = {
                             it.settings.apply {
@@ -263,7 +238,7 @@ fun WebViewPage(
                         client = remember(navigator) { MyWebViewClient(navigator) },
                         chromeClient = remember { MyWebChromeClient(context, coroutineScope) }
                     )
-    
+
                     if (isLoading) {
                         LinearProgressIndicator(
                             progress = animatedProgress,
@@ -272,6 +247,7 @@ fun WebViewPage(
                     }
                 }
             }
+
         }
 }
 
