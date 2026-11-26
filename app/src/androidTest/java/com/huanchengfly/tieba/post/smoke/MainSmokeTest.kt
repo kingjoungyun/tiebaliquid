@@ -276,24 +276,21 @@ class MainSmokeTest {
         }
         settingsEntry.clickOrTapByBounds()
 
-        val personalizationEntry = awaitObject("设置页「${str(R.string.title_settings_custom)}」入口") {
-            device.findObject(By.text(str(R.string.title_settings_custom)))
-        }
-        personalizationEntry.clickOrTapByBounds()
-
-        awaitObject("个性化页「${str(R.string.title_custom_font_size)}」行") {
+        // IA 六分组后，「个性化」二级页已下沉到设置主页，直接断言主页上的代表行。
+        val fontRow = awaitObject("设置页「${str(R.string.title_custom_font_size)}」行") {
             device.findObject(By.text(str(R.string.title_custom_font_size)))
         }
+        fontRow.recycle()
         assertTrue(
-            "个性化页应有「${str(R.string.title_settings_follow_system_night)}」行",
-            device.hasObject(By.text(str(R.string.title_settings_follow_system_night)))
-        )
-        assertTrue(
-            "个性化页应有「${str(R.string.settings_app_icon)}」行",
+            "设置页应有「${str(R.string.settings_app_icon)}」行",
             device.hasObject(By.text(str(R.string.settings_app_icon)))
         )
         assertTrue(
-            "个性化页应有返回钮",
+            "设置页应有「${str(R.string.settings_incognito_mode)}」行",
+            device.hasObject(By.text(str(R.string.settings_incognito_mode)))
+        )
+        assertTrue(
+            "设置页应有返回钮",
             device.hasObject(By.desc(str(R.string.button_back)))
         )
     }
