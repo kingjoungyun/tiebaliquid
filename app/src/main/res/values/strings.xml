@@ -11,6 +11,9 @@
     <string name="mine_group_general">通用</string>
     <string name="mine_group_more">更多</string>
     <string name="mine_group_tools">工具</string>
+    <string name="settings_group_read">阅读</string>
+    <string name="settings_group_about">关于</string>
+    <string name="title_check_update">检查更新</string>
     <string name="title_search">搜索</string>
     <string name="hint_search">发现更多</string>
     <string name="hint_search_in_ba">在 %1$s 吧内搜索</string>
