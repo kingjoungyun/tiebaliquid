@@ -46,11 +46,9 @@ fun rememberPrefsTitleCollapseProgress(listState: LazyListState): Float {
 /**
  * 列表顶部的大标题。
  *
- * - `PrefsUiStyle.GLASSMIO`：`IosTypography.largeTitle`（34/41、w700、鸿蒙字体），
- *   与 B 版样板页的大标题同源；
- * - `PrefsUiStyle.LEGACY`：FlClash 的 `pageTitle`（24sp / w600）。
+ * 玻璃版用 `IosTypography.largeTitle`（34/41、w700、鸿蒙字体），与其余二级页的大标题同源。
  *
- * 左右留白由 [PrefsScreen] 负责（Glasmio 路径 16dp、A 版 16dp contentPadding）。
+ * 左右留白由 [PrefsScreen] 负责（16dp contentPadding）。
  *
  * [progress] 是顶栏标题的淡入进度（0..1）；大标题按 `1 - progress` 反向淡出，
  * 免得起飞的大标题被顶栏压住后还留半截残字。
@@ -63,14 +61,11 @@ fun PrefsLargeTitle(text: String, progress: Float = 0f) {
             .padding(top = 4.dp, bottom = 4.dp)
             .graphicsLayer { alpha = (1f - progress).coerceIn(0f, 1f) }
     ) {
-        if (LocalPrefsUiStyle.current == PrefsUiStyle.GLASSMIO) {
-            CompositionLocalProvider(
-                LocalTextStyle provides IosTypography.largeTitle,
-                LocalContentColor provides GlasmioTheme.colors.content,
-            ) {
-                Text(text = text, maxLines = 1)
-            }
-        } else {
+        CompositionLocalProvider(
+            LocalTextStyle provides IosTypography.largeTitle,
+            LocalContentColor provides GlasmioTheme.colors.content,
+        ) {
+            Text(text = text, maxLines = 1)
             Text(
                 text = text,
                 style = GlassTokens.Typography.pageTitle.toTextStyle(glassColors().textPrimary),

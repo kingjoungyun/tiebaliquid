@@ -30,24 +30,5 @@ fun GroupHeader(
     title: String,
     color: Color = LocalGlassTokens.current.textSecondary
 ) {
-    if (LocalPrefsUiStyle.current == PrefsUiStyle.GLASSMIO) {
-        GlasmioPreferenceGroupTitle(title)
-        return
-    }
-    Box(
-        Modifier
-            .padding(start = PrefsCardDefaults.ContentPadding)
-            .fillMaxWidth(),
-        contentAlignment = Alignment.CenterStart
-    ) {
-        Text(
-            text = title,
-            color = color,
-            fontSize = GlassTokens.Typography.body.size,
-            lineHeight = GlassTokens.Typography.body.lineHeight,
-            fontWeight = GlassTokens.Typography.headline.weight,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
+    GlasmioPreferenceGroupTitle(title)
 }

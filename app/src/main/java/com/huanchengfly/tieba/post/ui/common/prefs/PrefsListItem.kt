@@ -82,36 +82,19 @@ fun PrefsListItem(
     onClick: (() -> Unit)? = null,
     text: @Composable () -> Unit
 ) {
-    if (LocalPrefsUiStyle.current == PrefsUiStyle.GLASSMIO) {
-        GlasmioPrefsRow(
-            modifier = modifier,
-            enabled = enabled,
-            darkenOnDisable = darkenOnDisable,
-            icon = icon,
-            summary = summary,
-            trailingValue = trailingValue,
-            trailing = trailing,
-            textColor = textColor,
-            showChevron = showChevron,
-            onClick = onClick,
-            text = text,
-        )
-    } else {
-        LegacyPrefsRow(
-            modifier = modifier,
-            enabled = enabled,
-            darkenOnDisable = darkenOnDisable,
-            icon = icon,
-            summary = summary,
-            trailingValue = trailingValue,
-            trailing = trailing,
-            textColor = textColor,
-            minimalHeight = minimalHeight,
-            showChevron = showChevron,
-            onClick = onClick,
-            text = text,
-        )
-    }
+    GlasmioPrefsRow(
+        modifier = modifier,
+        enabled = enabled,
+        darkenOnDisable = darkenOnDisable,
+        icon = icon,
+        summary = summary,
+        trailingValue = trailingValue,
+        trailing = trailing,
+        textColor = textColor,
+        showChevron = showChevron,
+        onClick = onClick,
+        text = text,
+    )
 }
 
 /**

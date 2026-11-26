@@ -186,41 +186,17 @@ internal fun PrefsCard(
     val autoFootnotes = LocalPrefsFootnotes.current?.ordered().orEmpty()
     val explicitFooter = footer?.takeIf { it.isNotBlank() }
 
-    if (LocalPrefsUiStyle.current == PrefsUiStyle.GLASSMIO) {
-        Column(modifier = modifier.fillMaxWidth()) {
-            if (header != null) {
-                if (headerTopSpacing > 0.dp) {
-                    Spacer(modifier = Modifier.height(headerTopSpacing))
-                }
-                header()
-            }
-            GlasmioGroupedList(content = content)
-            // 显式 footer 在自动 footnote 之前：前者是「这一组是什么」，后者是「某一行补充什么」
-            explicitFooter?.let { GlasmioGroupedTableFooter(it) }
-            autoFootnotes.forEach { GlasmioGroupedTableFooter(it) }
-        }
-        return
-    }
-
     Column(modifier = modifier.fillMaxWidth()) {
         if (header != null) {
             if (headerTopSpacing > 0.dp) {
                 Spacer(modifier = Modifier.height(headerTopSpacing))
             }
             header()
-            Spacer(modifier = Modifier.height(PrefsCardDefaults.HeaderGap))
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(PrefsCardShape)
-                .background(color = PrefsCardDefaults.surface())
-        ) {
-            Column(content = content)
-        }
-        // A 版没有 Glasmio 的 footnotes 组件，用同字号手绘：13sp / 次级色 / 左右 16dp / 上间距 8dp
-        explicitFooter?.let { PrefsFootnote(it) }
-        autoFootnotes.forEach { PrefsFootnote(it) }
+        GlasmioGroupedList(content = content)
+        // 显式 footer 在自动 footnote 之前：前者是「这一组是什么」，后者是「某一行补充什么」
+        explicitFooter?.let { GlasmioGroupedTableFooter(it) }
+        autoFootnotes.forEach { GlasmioGroupedTableFooter(it) }
     }
 }
 
