@@ -29,7 +29,6 @@ import com.huanchengfly.tieba.post.ui.common.prefs.dependNot
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.SwitchPref
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.page.destinations.AboutPageDestination
-import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
 import com.huanchengfly.tieba.post.utils.ImageCacheUtil
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.ramcosta.composedestinations.annotation.Destination
@@ -37,7 +36,8 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
 import kotlin.concurrent.thread
 import androidx.compose.ui.graphics.Color
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.SnackbarHostState
 
 @OptIn(ExperimentalMaterialApi::class)
 @Destination
@@ -46,10 +46,10 @@ fun MoreSettingsPage(
     navigator: DestinationsNavigator,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    // 仍需要 MyScaffold：它提供 LocalSnackbarHostState（清缓存后的提示用）。
-    // 但不再有 topBar，也不 apply paddingValues —— insets 统一由 PrefsScreen 处理。
-    MyScaffold(backgroundColor = Color.Transparent) { _ ->
-        val snackbarHostState = LocalSnackbarHostState.current
+    // T5/B4a：不再套 MyScaffold —— snackbar host 由 PrefsScreen 内部 GlassPage 的
+    // `snackbarHost` 槽挂（见 PrefsScreen(snackbarHostState = …)）。
+    Box(modifier = Modifier.fillMaxSize()) {
+        val snackbarHostState = remember { SnackbarHostState() }
         val context = LocalContext.current
         var cacheSize by remember { mutableStateOf("0.0B") }
         LaunchedEffect(Unit) {
@@ -59,6 +59,7 @@ fun MoreSettingsPage(
         }
         PrefsScreen(
             dataStore = LocalContext.current.dataStore,
+            snackbarHostState = snackbarHostState,
             modifier = Modifier.fillMaxSize(),
             onBack = { navigator.navigateUp() },
             title = stringResource(id = R.string.title_settings_more),

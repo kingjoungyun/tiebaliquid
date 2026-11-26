@@ -41,6 +41,8 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.Container
 import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import androidx.compose.material.SnackbarHostState
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassSnackbarHost
 
 lateinit var LocalPrefsDataStore: ProvidableCompositionLocal<DataStore<Preferences>>
 
@@ -81,6 +83,8 @@ fun PrefsScreen(
     /** Stage 3 试点：非空时启用 Glasmio 页面骨架（折叠大标题 + 顶栏按钮槽），大标题由骨架负责，
      *  此时 [header] 不再渲染。为 null 时完全走旧版式（回滚用）。 */
     title: String? = null,
+    /** 非空时把它挂到内部 GlassPage 的 snackbarHost 槽（页面就不必再套 MyScaffold 取 host）。 */
+    snackbarHostState: SnackbarHostState? = null,
     uiStyle: PrefsUiStyle = PrefsUi.DefaultStyle,
     content: PrefsScope.() -> Unit
 ) {
@@ -103,6 +107,7 @@ fun PrefsScreen(
                     title = title,
                     onBack = onBack,
                     modifier = modifier,
+                    snackbarHostState = snackbarHostState,
                 )
 
                 PrefsUiStyle.LEGACY -> LegacyPrefsPage(
@@ -154,6 +159,7 @@ private fun GlasmioPrefsPage(
     title: String?,
     onBack: (() -> Unit)?,
     modifier: Modifier,
+    snackbarHostState: SnackbarHostState? = null,
 ) {
     val colors = GlasmioTheme.colors
 
@@ -220,6 +226,7 @@ private fun GlasmioPrefsPage(
             onBack = onBack,
             modifier = modifier,
             listItems = listItems,
+            snackbarHostState = snackbarHostState,
         )
         return
     }
@@ -283,6 +290,7 @@ private fun GlassPrefsScaffold(
     onBack: (() -> Unit)?,
     modifier: Modifier,
     listItems: LazyListScope.() -> Unit,
+    snackbarHostState: SnackbarHostState? = null,
 ) {
     val collapsed = rememberGlassTitleCollapse(listState, largeTitleHeightPx = 0)
     val scrimAlpha by animateFloatAsState(
@@ -298,6 +306,9 @@ private fun GlassPrefsScaffold(
         modifier = modifier,
         collapsed = collapsed,
         scrimAlpha = scrimAlpha,
+        snackbarHost = snackbarHostState?.let { state ->
+            { GlassSnackbarHost(hostState = state) }
+        },
     ) { padding ->
         LazyColumn(
             state = listState,

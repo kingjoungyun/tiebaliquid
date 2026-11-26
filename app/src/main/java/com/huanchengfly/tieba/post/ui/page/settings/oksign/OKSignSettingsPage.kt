@@ -35,7 +35,6 @@ import com.huanchengfly.tieba.post.ui.common.prefs.depend
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.SwitchPref
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TimePickerPerf
-import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
 import com.huanchengfly.tieba.post.utils.isIgnoringBatteryOptimizations
 import com.huanchengfly.tieba.post.utils.powerManager
 import com.huanchengfly.tieba.post.utils.requestIgnoreBatteryOptimizations
@@ -43,8 +42,10 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
-import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.SnackbarHostState
+import androidx.compose.runtime.remember
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
 @Destination
@@ -53,14 +54,15 @@ fun OKSignSettingsPage(
     navigator: DestinationsNavigator,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    // 仍需要 MyScaffold：它提供 LocalSnackbarHostState（提示用）。
-    // 但不再有 topBar，也不 apply paddingValues —— insets 统一由 PrefsScreen 处理。
-    MyScaffold(backgroundColor = Color.Transparent) { _ ->
+    // T5/B4a：不再套 MyScaffold —— snackbar host 由 PrefsScreen 内部 GlassPage 的
+    // `snackbarHost` 槽挂（见 PrefsScreen(snackbarHostState = …)）。
+    Box(modifier = Modifier.fillMaxSize()) {
         val context = LocalContext.current
         val dataStore = context.dataStore
-        val snackbarHostState = LocalSnackbarHostState.current
+        val snackbarHostState = remember { SnackbarHostState() }
         PrefsScreen(
             dataStore = dataStore,
+            snackbarHostState = snackbarHostState,
             modifier = Modifier.fillMaxSize(),
             onBack = { navigator.navigateUp() },
             title = stringResource(id = R.string.title_oksign),
