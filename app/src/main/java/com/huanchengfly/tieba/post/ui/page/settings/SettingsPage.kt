@@ -67,6 +67,12 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import kotlinx.coroutines.launch
 import kotlin.concurrent.thread
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.Text
+import androidx.compose.material.TextButton
+import com.huanchengfly.tieba.post.utils.UpdateChecker
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 internal fun LeadingIcon(
@@ -148,6 +154,10 @@ fun SettingsPage(
     val groupAbout = stringResource(id = R.string.settings_group_about)
     // 安全模式的长解释（5 行）不再塞在行内，改作组尾 footnote：行内只剩「标题 + 开关」。
     val safeModeSummary = stringResource(id = R.string.summary_safe_mode)
+
+    // 检查更新（§21.5）：点一次读 GitHub Releases，有新版弹提示，否则 snackbar。
+    var checkingUpdate by remember { mutableStateOf(false) }
+    var latestRelease by remember { mutableStateOf<UpdateChecker.Release?>(null) }
 
     ProvideNavigator(navigator = navigator) {
         PrefsScreen(
@@ -585,14 +595,40 @@ fun SettingsPage(
                         leadingIcon = {
                             PrefsIcon("arrow.triangle.2.circlepath")
                         },
-                        enabled = true,
+                        enabled = !checkingUpdate,
                         title = stringResource(id = R.string.title_check_update),
+                        trailingValue = if (checkingUpdate) {
+                            stringResource(id = R.string.status_checking)
+                        } else {
+                            null
+                        },
                         onClick = {
-                            navigator.navigate(
-                                WebViewPageDestination(
-                                    initialUrl = "https://api.github.com/repos/kingjoungyun/tiebaliquid/releases/latest",
-                                )
-                            )
+                            if (checkingUpdate) return@TextPref
+                            checkingUpdate = true
+                            coroutineScope.launch {
+                                val result = withContext(Dispatchers.IO) {
+                                    UpdateChecker.fetchLatest()
+                                }
+                                checkingUpdate = false
+                                result
+                                    .onSuccess { release ->
+                                        if (UpdateChecker.isNewer(release.version)) {
+                                            latestRelease = release
+                                        } else {
+                                            snackbarHostState.showSnackbar(
+                                                context.getString(
+                                                    R.string.toast_already_latest,
+                                                    UpdateChecker.currentVersion(),
+                                                )
+                                            )
+                                        }
+                                    }
+                                    .onFailure {
+                                        snackbarHostState.showSnackbar(
+                                            context.getString(R.string.toast_check_update_failed)
+                                        )
+                                    }
+                            }
                         },
                     )
                 }
@@ -614,6 +650,43 @@ fun SettingsPage(
                     )
                 }
             }
+        }
+
+        // 有新版：弹玻璃风格对话框（显示版本号，「确定」打开发布页）
+        latestRelease?.let { release ->
+            AlertDialog(
+                onDismissRequest = { latestRelease = null },
+                title = { Text(text = stringResource(id = R.string.title_update_available)) },
+                text = {
+                    Text(
+                        text = stringResource(
+                            id = R.string.summary_update_available,
+                            release.version,
+                            UpdateChecker.currentVersion(),
+                        )
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            latestRelease = null
+                            runCatching {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW, Uri.parse(release.htmlUrl))
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                )
+                            }
+                        }
+                    ) {
+                        Text(text = stringResource(id = R.string.btn_update_now))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { latestRelease = null }) {
+                        Text(text = stringResource(id = R.string.button_cancel))
+                    }
+                },
+            )
         }
     }
 }

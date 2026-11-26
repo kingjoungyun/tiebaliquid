@@ -14,6 +14,12 @@
     <string name="settings_group_read">阅读</string>
     <string name="settings_group_about">关于</string>
     <string name="title_check_update">检查更新</string>
+    <string name="status_checking">检查中…</string>
+    <string name="toast_already_latest">已是最新版本（%1$s）</string>
+    <string name="toast_check_update_failed">检查失败，请稍后重试</string>
+    <string name="title_update_available">发现新版本</string>
+    <string name="summary_update_available">新版本 %1$s（当前 %2$s）</string>
+    <string name="btn_update_now">前往下载</string>
     <string name="title_search">搜索</string>
     <string name="hint_search">发现更多</string>
     <string name="hint_search_in_ba">在 %1$s 吧内搜索</string>
