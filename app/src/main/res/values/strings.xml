@@ -267,8 +267,8 @@
     <string name="title_settings_read_habit">使用习惯</string>
     <!-- 设置主页的分组标题（FlClash settings 组） -->
     <string name="settings_group_account">账号</string>
-    <string name="settings_group_security">安全</string>
-    <string name="settings_group_appearance">外观与通用</string>
+    <string name="settings_group_security">安全与隐私</string>
+    <string name="settings_group_appearance">外观</string>
     <string name="settings_collect_thread_see_lz">收藏贴自动开启只看楼主</string>
     <string name="tip_collect_thread_see_lz">开启后，从收藏进入的贴子将自动切换至只看楼主</string>
     <string name="tip_collect_thread_see_lz_on">从收藏进入的贴子将自动切换至只看楼主</string>
