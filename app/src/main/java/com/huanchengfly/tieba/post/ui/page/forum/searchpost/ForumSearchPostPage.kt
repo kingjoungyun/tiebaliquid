@@ -305,8 +305,7 @@ fun ForumSearchPostPage(
     }
     var expanded by remember { mutableStateOf(false) }
 
-    AppScaffold(
-        topBar = {
+    Column(modifier = Modifier.fillMaxSize()) {
             TopAppBarContainer(
                 topBar = {
                     Box(
@@ -365,12 +364,10 @@ fun ForumSearchPostPage(
                     }
                 }
             )
-        }
-    ) { paddingValues ->
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+                .fillMaxWidth()
+                .weight(1f)
         ) {
             ProvideNavigator(navigator = navigator) {
                 if (!isKeywordEmpty) {
@@ -620,4 +617,4 @@ fun ForumSearchPostPage(
             }
         }
     }
-}
+    }
