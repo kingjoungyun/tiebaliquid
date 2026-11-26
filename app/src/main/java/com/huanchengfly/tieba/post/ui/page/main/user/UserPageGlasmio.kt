@@ -71,7 +71,7 @@ import io.github.neoruaa.glasmio.ui.GlasmioGroupedList
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 /**
- * 「我的」页的 Glasmio 版（`UserPageUiStyle.GLASSMIO`）。
+ * 「我的」页的玻璃版。
  *
  * 版式对齐 iOS「设置」首页的账户区：
  *
