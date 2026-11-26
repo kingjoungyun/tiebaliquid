@@ -59,6 +59,8 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponent
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabRow
 import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 
 @OptIn(ExperimentalFoundationApi::class)
 @Destination(
@@ -86,24 +88,30 @@ fun NotificationsPage(
     LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
             ProvideNavigator(navigator = navigator) {
-                AppScaffold(
-                    backgroundColor = if (glassmio) GlasmioTheme.colors.groupedBackground
-                    else Color.Transparent,
-                    topBar = {
-                        NotificationsHeader(
-                            pagerState = pagerState,
-                            pages = pages,
-                            showBack = true,
-                            withStatusBarPadding = true,
-                            onBack = { navigator.navigateUp() },
-                            onSearch = { navigator.navigate(SearchPageDestination) },
-                        )
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                ) { paddingValues ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            if (glassmio) GlasmioTheme.colors.groupedBackground
+                            else Color.Transparent
+                        ),
+                ) {
+                    NotificationsHeader(
+                        pagerState = pagerState,
+                        pages = pages,
+                        showBack = true,
+                        withStatusBarPadding = true,
+                        onBack = { navigator.navigateUp() },
+                        onSearch = { navigator.navigate(SearchPageDestination) },
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
             LazyLoadHorizontalPager(
                 state = pagerState,
-                contentPadding = paddingValues,
+                contentPadding = PaddingValues(),
                 key = { pages[it].first },
                 modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.Top,
@@ -111,10 +119,11 @@ fun NotificationsPage(
             ) {
                 pages[it].second()
             }
+                    }
+                }
+            }
         }
     }
-}
-}
 }
 
 @OptIn(ExperimentalFoundationApi::class)
