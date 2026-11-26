@@ -97,8 +97,8 @@ private val PresetAccents = listOf(
  * 2. **深色**：沿用 App 原有的日夜切换（`ThemeUtil.switchNightMode()`），深色背景统一纯黑。
  *
  * 移除的东西：动态取色、自定义调色盘、半透明主题入口、按 theme id 的整套主题列表。
- * 半透明主题的引擎（`TranslucentThemeActivity` / `translucent_*` 分支）保持不动：
- * 如果进入本页时用户正处于半透明主题，选色只写 `translucentPrimaryColor`，不会破坏背景图。
+ * 旧主题字符串（`translucent_*`）的解析仍保留在 `ThemeUtil.isTranslucentTheme(...)`，
+ * 这样老用户存过的主题值不会崩；半透明主题的壁纸选择页已随壁纸链路一起删除（§21.6）。
  */
 @Destination
 @Composable
