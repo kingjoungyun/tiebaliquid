@@ -57,7 +57,7 @@ import io.github.neoruaa.glasmio.glass.GlassSurface
 import io.github.neoruaa.glasmio.ui.GlasmioIconButton
 
 /**
- * 帖子详情页的 Glasmio 外壳（`ThreadPageUiStyle.GLASMIO`）。
+ * 帖子详情页的 Glasmio 外壳。
  *
  * T1 之后帖子页本身已经改用统一的 `GlassPage`；这个薄壳仍被「热榜」页
  * （`HotTopicListPage`，属于长尾 11 页，留给 T5）使用，所以保留。
