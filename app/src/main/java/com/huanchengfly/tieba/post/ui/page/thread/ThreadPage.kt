@@ -210,6 +210,7 @@ import kotlin.math.max
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassPromptDialog
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassSnackbarHost
 
 private fun getDescText(
     time: Long?,
@@ -1594,6 +1595,9 @@ fun ThreadPage(
             actions = {
                 ThreadTopBarMenu(menuContent = { threadMenuContent { dismiss() } })
             },
+            snackbarHost = {
+                GlassSnackbarHost(hostState = scaffoldState.snackbarHostState)
+            },
             bottomBar = {
                 ThreadGlassBottomBar(
                     onClickReply = onReplyClick,
@@ -1637,292 +1641,277 @@ fun ThreadPage(
                 }
             ) {
                 CompositionLocalProvider(LocalThreadImagesEnabled provides imagesEnabled) {
-                MyScaffold(
-                    scaffoldState = scaffoldState,
-                    backgroundColor = Color.Transparent,
-                    topBar = {
-                        // GLASMIO 的顶栏是 overlay（见 GlassPage 的顶栏/center 槽），
-                        // Scaffold 这里不再占高度，内容才能从顶栏下穿过。
-                        
-                    },
-                bottomBar = {
-                    // GLASMIO 的底栏在 GlassPage 的 overlay 槽里（能采真实内容）；
-                    // 这里只给 LEGACY 保留旧的 Scaffold 底栏。
+            ModalBottomSheetLayout(
+                sheetState = bottomSheetState,
+                sheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+                sheetBackgroundColor = AppTokens.windowBackground,
+                sheetContent = {
+                    // LEGACY 仍然用这张 M2 bottom sheet；GLASMIO 走顶栏/底栏的 AppMenu，
+                    // sheet 永远保持隐藏（保留状态机只是为了不动旧分支）。
                     
                 },
-            ) { paddingValues ->
-                ModalBottomSheetLayout(
-                    sheetState = bottomSheetState,
-                    sheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
-                    sheetBackgroundColor = AppTokens.windowBackground,
-                    sheetContent = {
-                        // LEGACY 仍然用这张 M2 bottom sheet；GLASMIO 走顶栏/底栏的 AppMenu，
-                        // sheet 永远保持隐藏（保留状态机只是为了不动旧分支）。
-                        
-                    },
-                    scrimColor = Color.Transparent,
+                scrimColor = Color.Transparent,
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
+                        .pullRefresh(state = pullRefreshState, enabled = enablePullRefresh)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .pullRefresh(state = pullRefreshState, enabled = enablePullRefresh)
-                    ) {
-                        LoadMoreLayout(
-                            isLoading = isLoadingMore,
-                            onLoadMore = {
-                                if (hasMore) {
-                                    viewModel.send(
-                                        ThreadUiIntent.LoadMore(
-                                            threadId = threadId,
-                                            page = if (curSortType == ThreadSortType.SORT_TYPE_DESC) totalPage - currentPageMax
-                                            else currentPageMax + 1,
-                                            forumId = forumId,
-                                            postId = nextPagePostId,
-                                            seeLz = isSeeLz,
-                                            sortType = curSortType,
-                                            postIds = data.map { it.post.get { id } }
-                                        )
+                    LoadMoreLayout(
+                        isLoading = isLoadingMore,
+                        onLoadMore = {
+                            if (hasMore) {
+                                viewModel.send(
+                                    ThreadUiIntent.LoadMore(
+                                        threadId = threadId,
+                                        page = if (curSortType == ThreadSortType.SORT_TYPE_DESC) totalPage - currentPageMax
+                                        else currentPageMax + 1,
+                                        forumId = forumId,
+                                        postId = nextPagePostId,
+                                        seeLz = isSeeLz,
+                                        sortType = curSortType,
+                                        postIds = data.map { it.post.get { id } }
                                     )
-                                } else if (data.isNotEmpty() && curSortType != ThreadSortType.SORT_TYPE_DESC) {
-                                    viewModel.send(
-                                        ThreadUiIntent.LoadLatestPosts(
-                                            threadId = threadId,
-                                            curLatestPostId = data.last().post.get { id },
-                                            forumId = curForumId,
-                                            seeLz = isSeeLz,
-                                            sortType = curSortType
-                                        )
-                                    )
-                                }
-                            },
-                            loadEnd = loadMoreEnd,
-                            indicator = { isLoading, loadMoreEnd, willLoad ->
-                                ThreadLoadMoreIndicator(
-                                    isLoading,
-                                    loadMoreEnd,
-                                    willLoad,
-                                    hasMore
                                 )
-                            },
-                            lazyListState = lazyListState,
-                            isEmpty = data.isEmpty(),
-                            preloadCount = loadMorePreloadCount,
+                            } else if (data.isNotEmpty() && curSortType != ThreadSortType.SORT_TYPE_DESC) {
+                                viewModel.send(
+                                    ThreadUiIntent.LoadLatestPosts(
+                                        threadId = threadId,
+                                        curLatestPostId = data.last().post.get { id },
+                                        forumId = curForumId,
+                                        seeLz = isSeeLz,
+                                        sortType = curSortType
+                                    )
+                                )
+                            }
+                        },
+                        loadEnd = loadMoreEnd,
+                        indicator = { isLoading, loadMoreEnd, willLoad ->
+                            ThreadLoadMoreIndicator(
+                                isLoading,
+                                loadMoreEnd,
+                                willLoad,
+                                hasMore
+                            )
+                        },
+                        lazyListState = lazyListState,
+                        isEmpty = data.isEmpty(),
+                        preloadCount = loadMorePreloadCount,
+                    ) {
+                        MyLazyColumn(
+                            state = lazyListState,
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(
+                                top = threadTopInset,
+                                // overlay 底栏不再占 Scaffold 高度：把「胶囊 + 边距 + 导航栏」
+                                // 放进 contentPadding，最后一条能滚到胶囊上方，滚动时内容从底下穿过。
+                                bottom = threadBottomInset,
+                            ),
                         ) {
-                            MyLazyColumn(
-                                state = lazyListState,
-                                modifier = Modifier.fillMaxWidth(),
-                                contentPadding = PaddingValues(
-                                    top = threadTopInset,
-                                    // overlay 底栏不再占 Scaffold 高度：把「胶囊 + 边距 + 导航栏」
-                                    // 放进 contentPadding，最后一条能滚到胶囊上方，滚动时内容从底下穿过。
-                                    bottom = threadBottomInset,
-                                ),
-                            ) {
-                                item(key = "FirstPost") {
-                                    if (firstPost != null) {
-                                        Container {
-                                            Column {
-                                                PostCard(
-                                                    postHolder = firstPost!!,
-                                                    contentRenders = firstPostContentRenders,
-                                                    canDelete = { it.author_id == user.get { id } },
-                                                    immersiveMode = isImmersiveMode,
-                                                    isCollected = {
-                                                        it.id == thread?.get { collectMarkPid }
-                                                            ?.toLongOrNull()
-                                                    },
-                                                    showSubPosts = false,
-                                                    onUserClick = {
-                                                        navigator.navigate(
-                                                            UserProfilePageDestination(
-                                                                it.id
-                                                            )
-                                                        )
-                                                    },
-                                                    onReplyClick = {
-                                                        navigator.navigate(
-                                                            ReplyPageDestination(
-                                                                forumId = curForumId ?: 0,
-                                                                forumName = forum?.get { name }
-                                                                    .orEmpty(),
-                                                                threadId = threadId,
-                                                            )
-                                                        )
-                                                    },
-                                                    onMenuCopyClick = {
-                                                        navigator.navigate(
-                                                            CopyTextDialogPageDestination(it)
-                                                        )
-                                                    },
-                                                    onMenuFavoriteClick = {
-                                                        viewModel.send(
-                                                            ThreadUiIntent.AddFavorite(
-                                                                threadId,
-                                                                it.id,
-                                                                it.floor
-                                                            )
-                                                        )
-                                                    },
-                                                    glassmio = true,
-                                                ) {
-                                                    deletePost = null
-                                                    confirmDeleteDialogState.show()
-                                                }
-
-                                                thread?.getNullableImmutable { origin_thread_info }
-                                                    .takeIf { thread?.get { is_share_thread } == 1 }
-                                                    ?.let {
-                                                        OriginThreadCard(
-                                                            originThreadInfo = it,
-                                                            modifier = Modifier
-                                                                .padding(horizontal = 16.dp)
-                                                                .padding(bottom = 16.dp)
-                                                                .clip(RoundedCornerShape(6.dp))
-                                                                .background(AppTokens.floorCard)
-                                                                .debounceClickable(onClick = {
-                                                                    navigator.navigate(
-                                                                        ThreadPageDestination(
-                                                                            threadId = it.get { tid.toLong() },
-                                                                            forumId = it.get { fid },
-                                                                        )
-                                                                    )
-                                                                })
-                                                                .padding(16.dp)
-                                                        )
-                                                    }
-
-                                                thread?.let { resolvePollInfo(it.get()) }?.let { pollInfo ->
-                                                    PollWidget(
-                                                        pollInfo,
-                                                        { selectedIds ->
-                                                            viewModel.send(
-                                                                ThreadUiIntent.PollThread(
-                                                                    curForumId,
-                                                                    threadId,
-                                                                    selectedIds.joinToString(separator = ",")
-                                                                )
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                // 玻璃版：回复数 / 只看楼主 / 正序倒序 在底栏；这里保留 0 高度 item，
-                                // 维持 animateScrollToItem(1/2/+n) 的 index 语义。
-                                item(key = "ThreadHeader") {}
-                                if (curSortType == ThreadSortType.SORT_TYPE_DESC) {
-                                    latestPosts(true)
-                                }
-                                item(key = "LoadPreviousBtn") {
-                                    if (hasPrevious) {
-                                        Container {
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .debounceClickable(onClick = {
-                                                        viewModel.send(
-                                                            ThreadUiIntent.LoadPrevious(
-                                                                threadId,
-                                                                max(currentPageMax - 1, 1),
-                                                                forumId,
-                                                                postId = data
-                                                                    .first()
-                                                                    .post
-                                                                    .get { id },
-                                                                seeLz = isSeeLz,
-                                                                sortType = curSortType,
-                                                                postIds = data.map { it.post.get { id } }
-                                                            )
-                                                        )
-                                                    })
-                                                    .padding(8.dp),
-                                                horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Icon(
-                                                    imageVector = PhosphorIcons["arrow-line-up"] ?: Icons.Rounded.AlignVerticalTop,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(16.dp))
-                                                Text(
-                                                    text = stringResource(id = R.string.btn_load_previous),
-                                                    color = AppTokens.text,
-                                                    fontSize = 14.sp
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                                if (!isRefreshing && data.isEmpty()) {
-                                    item(key = "EmptyTip") {
-                                        Container {
-                                            TipScreen(
-                                                title = { Text(text = stringResource(id = R.string.title_empty)) },
-                                                image = {
-                                                    val composition by rememberLottieComposition(
-                                                        LottieCompositionSpec.RawRes(R.raw.lottie_empty_box)
-                                                    )
-                                                    LottieAnimation(
-                                                        composition = composition,
-                                                        iterations = LottieConstants.IterateForever,
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .aspectRatio(2f)
-                                                    )
-                                                },
-                                                actions = {
-                                                    if (canReload) {
-                                                        Button(onClick = { reload() }) {
-                                                            Text(text = stringResource(id = R.string.btn_refresh))
-                                                        }
-                                                    }
-                                                },
-                                                modifier = Modifier.fillMaxSize(),
-                                                scrollable = false
-                                            )
-                                        }
-                                    }
-                                } else {
-                                    items(
-                                        items = data,
-                                        key = { (item) -> "Post_${item.get { id }}" },
-                                        contentType = { "post" }
-                                    ) { postItem ->
-                                        // 命中屏蔽词的楼层直接不渲染
-                                        if (postItem.hidden) return@items
-                                        Container {
+                            item(key = "FirstPost") {
+                                if (firstPost != null) {
+                                    Container {
+                                        Column {
                                             PostCard(
-                                                postItem.post,
-                                                postItem.contentRenders,
-                                                postItem.subPosts,
-                                                postItem.blocked
-                                            )
+                                                postHolder = firstPost!!,
+                                                contentRenders = firstPostContentRenders,
+                                                canDelete = { it.author_id == user.get { id } },
+                                                immersiveMode = isImmersiveMode,
+                                                isCollected = {
+                                                    it.id == thread?.get { collectMarkPid }
+                                                        ?.toLongOrNull()
+                                                },
+                                                showSubPosts = false,
+                                                onUserClick = {
+                                                    navigator.navigate(
+                                                        UserProfilePageDestination(
+                                                            it.id
+                                                        )
+                                                    )
+                                                },
+                                                onReplyClick = {
+                                                    navigator.navigate(
+                                                        ReplyPageDestination(
+                                                            forumId = curForumId ?: 0,
+                                                            forumName = forum?.get { name }
+                                                                .orEmpty(),
+                                                            threadId = threadId,
+                                                        )
+                                                    )
+                                                },
+                                                onMenuCopyClick = {
+                                                    navigator.navigate(
+                                                        CopyTextDialogPageDestination(it)
+                                                    )
+                                                },
+                                                onMenuFavoriteClick = {
+                                                    viewModel.send(
+                                                        ThreadUiIntent.AddFavorite(
+                                                            threadId,
+                                                            it.id,
+                                                            it.floor
+                                                        )
+                                                    )
+                                                },
+                                                glassmio = true,
+                                            ) {
+                                                deletePost = null
+                                                confirmDeleteDialogState.show()
+                                            }
+
+                                            thread?.getNullableImmutable { origin_thread_info }
+                                                .takeIf { thread?.get { is_share_thread } == 1 }
+                                                ?.let {
+                                                    OriginThreadCard(
+                                                        originThreadInfo = it,
+                                                        modifier = Modifier
+                                                            .padding(horizontal = 16.dp)
+                                                            .padding(bottom = 16.dp)
+                                                            .clip(RoundedCornerShape(6.dp))
+                                                            .background(AppTokens.floorCard)
+                                                            .debounceClickable(onClick = {
+                                                                navigator.navigate(
+                                                                    ThreadPageDestination(
+                                                                        threadId = it.get { tid.toLong() },
+                                                                        forumId = it.get { fid },
+                                                                    )
+                                                                )
+                                                            })
+                                                            .padding(16.dp)
+                                                    )
+                                                }
+
+                                            thread?.let { resolvePollInfo(it.get()) }?.let { pollInfo ->
+                                                PollWidget(
+                                                    pollInfo,
+                                                    { selectedIds ->
+                                                        viewModel.send(
+                                                            ThreadUiIntent.PollThread(
+                                                                curForumId,
+                                                                threadId,
+                                                                selectedIds.joinToString(separator = ",")
+                                                            )
+                                                        )
+                                                    }
+                                                )
+                                            }
                                         }
                                     }
-                                }
-                                if (curSortType != ThreadSortType.SORT_TYPE_DESC) {
-                                    latestPosts(false)
                                 }
                             }
+                            // 玻璃版：回复数 / 只看楼主 / 正序倒序 在底栏；这里保留 0 高度 item，
+                            // 维持 animateScrollToItem(1/2/+n) 的 index 语义。
+                            item(key = "ThreadHeader") {}
+                            if (curSortType == ThreadSortType.SORT_TYPE_DESC) {
+                                latestPosts(true)
+                            }
+                            item(key = "LoadPreviousBtn") {
+                                if (hasPrevious) {
+                                    Container {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .debounceClickable(onClick = {
+                                                    viewModel.send(
+                                                        ThreadUiIntent.LoadPrevious(
+                                                            threadId,
+                                                            max(currentPageMax - 1, 1),
+                                                            forumId,
+                                                            postId = data
+                                                                .first()
+                                                                .post
+                                                                .get { id },
+                                                            seeLz = isSeeLz,
+                                                            sortType = curSortType,
+                                                            postIds = data.map { it.post.get { id } }
+                                                        )
+                                                    )
+                                                })
+                                                .padding(8.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = PhosphorIcons["arrow-line-up"] ?: Icons.Rounded.AlignVerticalTop,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(16.dp))
+                                            Text(
+                                                text = stringResource(id = R.string.btn_load_previous),
+                                                color = AppTokens.text,
+                                                fontSize = 14.sp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            if (!isRefreshing && data.isEmpty()) {
+                                item(key = "EmptyTip") {
+                                    Container {
+                                        TipScreen(
+                                            title = { Text(text = stringResource(id = R.string.title_empty)) },
+                                            image = {
+                                                val composition by rememberLottieComposition(
+                                                    LottieCompositionSpec.RawRes(R.raw.lottie_empty_box)
+                                                )
+                                                LottieAnimation(
+                                                    composition = composition,
+                                                    iterations = LottieConstants.IterateForever,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .aspectRatio(2f)
+                                                )
+                                            },
+                                            actions = {
+                                                if (canReload) {
+                                                    Button(onClick = { reload() }) {
+                                                        Text(text = stringResource(id = R.string.btn_refresh))
+                                                    }
+                                                }
+                                            },
+                                            modifier = Modifier.fillMaxSize(),
+                                            scrollable = false
+                                        )
+                                    }
+                                }
+                            } else {
+                                items(
+                                    items = data,
+                                    key = { (item) -> "Post_${item.get { id }}" },
+                                    contentType = { "post" }
+                                ) { postItem ->
+                                    // 命中屏蔽词的楼层直接不渲染
+                                    if (postItem.hidden) return@items
+                                    Container {
+                                        PostCard(
+                                            postItem.post,
+                                            postItem.contentRenders,
+                                            postItem.subPosts,
+                                            postItem.blocked
+                                        )
+                                    }
+                                }
+                            }
+                            if (curSortType != ThreadSortType.SORT_TYPE_DESC) {
+                                latestPosts(false)
+                            }
                         }
-
-                        PullRefreshIndicator(
-                            refreshing = isRefreshing,
-                            state = pullRefreshState,
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .padding(top = threadTopInset),
-                            backgroundColor = AppTokens.pullRefreshIndicator,
-                            contentColor = AppTokens.primary,
-                        )
                     }
+
+                    PullRefreshIndicator(
+                        refreshing = isRefreshing,
+                        state = pullRefreshState,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = threadTopInset),
+                        backgroundColor = AppTokens.pullRefreshIndicator,
+                        contentColor = AppTokens.primary,
+                    )
                 }
-                }
+            }
+            
             }
             }
         }
