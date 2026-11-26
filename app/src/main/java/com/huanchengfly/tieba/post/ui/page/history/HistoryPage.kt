@@ -60,6 +60,7 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import androidx.compose.foundation.layout.Box
 
 @OptIn(ExperimentalFoundationApi::class)
 @Destination(
@@ -82,11 +83,14 @@ fun HistoryPage(
 
     LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
-            AppScaffold(
-                backgroundColor = if (glassmio) GlasmioTheme.colors.groupedBackground
-                else Color.Transparent,
-                scaffoldState = scaffoldState,
-                topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        if (glassmio) GlasmioTheme.colors.groupedBackground
+                        else Color.Transparent
+                    ),
+            ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -194,8 +198,11 @@ fun HistoryPage(
                         }
                         }
                     }
-                }
-            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
                 ProvideNavigator(navigator = navigator) {
                     HorizontalPager(
                         state = pagerState,
@@ -210,6 +217,7 @@ fun HistoryPage(
                             HistoryListPage(type = HistoryUtil.TYPE_FORUM)
                         }
                     }
+                }
                 }
             }
         }
