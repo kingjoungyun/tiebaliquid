@@ -66,15 +66,13 @@ import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
-import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.Container
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.LoadMoreLayout
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyLazyColumn
-import com.huanchengfly.tieba.post.ui.widgets.compose.AppScaffold
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 import com.huanchengfly.tieba.post.ui.widgets.compose.PullToRefreshLayout
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
-import com.huanchengfly.tieba.post.ui.widgets.compose.Toolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.VerticalDivider
 import com.huanchengfly.tieba.post.ui.widgets.compose.states.StateScreen
 import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
@@ -174,17 +172,13 @@ fun TopicDetailPage(
                 )
             }
         ) {
-            AppScaffold(
-                scaffoldState = scaffoldState,
-                backgroundColor = Color.Transparent,
-                modifier = Modifier.fillMaxSize(),
-                topBar = {
-                    TopicToolbar(
-                        topicName = topicName,
-                        showTitle = !isShowTopBarArea,
-                        topicId = topicId
-                    )
-                }
+            GlassPage(
+                title = if (!isShowTopBarArea) {
+                    stringResource(id = R.string.title_topic, topicName)
+                } else {
+                    topicName
+                },
+                onBack = { navigator.navigateUp() },
             ) { contentPadding ->
                 var isFakeLoading by remember { mutableStateOf(false) }
                 LaunchedEffect(isFakeLoading) {
@@ -374,32 +368,6 @@ fun TopicDetailPage(
         }
     }
 }
-
-@Composable
-private fun TopicToolbar(
-    topicName: String,
-    showTitle: Boolean,
-    topicId: Long? = null,
-) {
-    val navigator = LocalNavigator.current
-    Toolbar(
-        title = {
-            if (showTitle) Text(
-                text = stringResource(
-                    id = R.string.title_topic,
-                    topicName
-                )
-            )
-        },
-        navigationIcon = {
-            BackNavigationIcon(onBackPressed = {
-                val navigateUp =
-                    navigator.navigateUp()
-            })
-        }
-    )
-}
-
 @Composable
 private fun TopicLoadMoreIndicator(
     isLoading: Boolean,
