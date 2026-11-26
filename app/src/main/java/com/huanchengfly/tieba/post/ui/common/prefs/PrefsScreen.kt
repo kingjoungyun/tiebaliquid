@@ -49,7 +49,7 @@ lateinit var LocalPrefsDataStore: ProvidableCompositionLocal<DataStore<Preferenc
 /**
  * Main preference screen which holds [PrefsListItem]s
  *
- * 两种渲染路径由 [PrefsUiStyle] 决定（默认 [PrefsUiStyle.GLASSMIO]，DSL 与 8 个业务页不变）：
+ * 渲染路径只有玻璃一套（开关已删除，DSL 与 8 个业务页不变）：
  *
  * - **GLASSMIO**：外层 `GlasmioTheme`（经 [LiquidGlassTheme] 适配层注入 accent / 鸿蒙字体 /
  *   纯黑深色底）+ `GlasmioBackdropHost`（Glasmio 的开关要从 backdrop 取像素，没有 host 会抛异常），
@@ -68,7 +68,6 @@ lateinit var LocalPrefsDataStore: ProvidableCompositionLocal<DataStore<Preferenc
  * @param listState 外部可观察的滚动状态
  * @param onBack 非空时在左上角画悬浮返回钮（传 `navigator.navigateUp()`）
  * @param header 列表最顶部的滚动内容（设置页的大标题）；它随列表一起滚走
- * @param uiStyle 渲染层实现，默认 [PrefsUi.DefaultStyle]（Glasmio）；出问题可切回 [PrefsUiStyle.LEGACY]
  * @param content 分组的 DSL
  */
 @Composable
@@ -85,7 +84,6 @@ fun PrefsScreen(
     title: String? = null,
     /** 非空时把它挂到内部 GlassPage 的 snackbarHost 槽（页面就不必再套 AppScaffold 取 host）。 */
     snackbarHostState: SnackbarHostState? = null,
-    uiStyle: PrefsUiStyle = PrefsUi.DefaultStyle,
     content: PrefsScope.() -> Unit
 ) {
     LocalPrefsDataStore = staticCompositionLocalOf { dataStore }
@@ -94,32 +92,19 @@ fun PrefsScreen(
     // Now the dataStore can be accessed by calling LocalPrefsDataStore.current from any child Pref
     CompositionLocalProvider(
         LocalPrefsDataStore provides dataStore,
-        LocalPrefsUiStyle provides uiStyle,
     ) {
         // 只在这一支包 GlasmioTheme：开关要读它的明暗令牌（明暗跟随 App 自己的
         // AppTokens.isNightMode，不是系统）。不包整个 App，避免 M3 主题污染其它页面。
         LiquidGlassTheme(accent = AppTokens.primary) {
-            when (uiStyle) {
-                PrefsUiStyle.GLASSMIO -> GlasmioPrefsPage(
-                    prefsScope = prefsScope,
-                    listState = listState,
-                    header = header,
-                    title = title,
-                    onBack = onBack,
-                    modifier = modifier,
-                    snackbarHostState = snackbarHostState,
-                )
-
-                PrefsUiStyle.LEGACY -> LegacyPrefsPage(
-                    prefsScope = prefsScope,
-                    listState = listState,
-                    header = header,
-                    onBack = onBack,
-                    modifier = modifier,
-                    dividerThickness = dividerThickness,
-                    dividerIndent = dividerIndent,
-                )
-            }
+            GlasmioPrefsPage(
+                prefsScope = prefsScope,
+                listState = listState,
+                header = header,
+                title = title,
+                onBack = onBack,
+                modifier = modifier,
+                snackbarHostState = snackbarHostState,
+            )
         }
     }
 }
@@ -328,7 +313,7 @@ private fun GlassPrefsScaffold(
 
 /**
  * 骨架开关的调试覆盖：`adb shell settings put global tieba_prefs_skeleton 0` 后重进页面即为旧版式
- * （同一 APK 免重装；release 恒为 true）。LEGACY 版式仍由 [PrefsUi.DefaultStyle] 控制，互不影响。
+ * （同一 APK 免重装；release 恒为 true）。**与已删除的 PrefsUiStyle 无关**，独立保留。
  */
 @Composable
 private fun prefsScaffoldSkeletonEnabled(): Boolean {
@@ -341,81 +326,3 @@ private fun prefsScaffoldSkeletonEnabled(): Boolean {
     }
 }
 
-/**
- * A 版（FlClash 卡片）渲染：保留原实现，只把 `footer` / `onBack` 一起传下去。
- *
- * 每张卡片 = 一个 LazyColumn item，卡片内部是普通 Column + 1dp 缩进分割线；
- * 卡片本身是不透明表层色 + 16dp 连续圆角 + 无阴影（玻璃只给浮层用）。
- * 顶栏同样去掉，返回用同一个悬浮圆钮，保证切回 A 版时页面不「丢导航」。
- */
-@Composable
-private fun LegacyPrefsPage(
-    prefsScope: PrefsScopeImpl,
-    listState: LazyListState,
-    header: (@Composable () -> Unit)?,
-    onBack: (() -> Unit)?,
-    modifier: Modifier,
-    dividerThickness: Dp,
-    dividerIndent: Dp,
-) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        // 页面底色：App 统一的渐变底（不是玻璃），白卡片压在上面才有层次
-        GlassAppBackground(modifier = Modifier.fillMaxSize())
-        Container {
-            LazyColumn(
-                state = listState,
-                modifier = modifier.fillMaxSize(),
-                contentPadding = prefsPageContentPadding(
-                    horizontal = PrefsCardDefaults.PagePadding,
-                    topGap = 0.dp,
-                    bottomGap = PrefsCardDefaults.PagePadding,
-                ),
-                verticalArrangement = Arrangement.spacedBy(PrefsCardDefaults.CardGap),
-            ) {
-                if (header != null) {
-                    item(key = "prefs-header") { header() }
-                }
-                items(
-                    count = prefsScope.sections.size,
-                    key = { index -> "prefs-card-$index" },
-                ) { index ->
-                    val section = prefsScope.sections[index]
-                    if (section.itemIndexes.isEmpty()) return@items
-                    // 一张卡片：可选分组标题 + 卡片本体（内部带分割线）
-                    val cardHeader: (@Composable () -> Unit)? =
-                        section.headerIndex?.let { headerIndex ->
-                            { prefsScope.getPrefsItem(headerIndex)() }
-                        }
-                    val footnotes = remember(index) { PrefsFootnoteState() }
-                    CompositionLocalProvider(LocalPrefsFootnotes provides footnotes) {
-                        PrefsCard(
-                            header = cardHeader,
-                            // 首组的上间距由 contentPadding 提供；其余组 = 组间距 8dp + 16dp = 24dp
-                            headerTopSpacing = if (index == 0) 0.dp
-                            else PrefsCardDefaults.HeaderTopSpacing,
-                            footer = section.footer,
-                        ) {
-                            section.itemIndexes.forEachIndexed { rowIndex, itemIndex ->
-                                if (rowIndex > 0 && dividerThickness > 0.dp) {
-                                    Divider(
-                                        thickness = dividerThickness,
-                                        indent = dividerIndent,
-                                        color = PrefsCardDefaults.divider(),
-                                    )
-                                }
-                                CompositionLocalProvider(
-                                    LocalPrefsRowIndex provides rowIndex
-                                ) {
-                                    prefsScope.getPrefsItem(itemIndex)()
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        if (onBack != null) {
-            PrefsBackButtonOverlay(onBack = onBack)
-        }
-    }
-}
