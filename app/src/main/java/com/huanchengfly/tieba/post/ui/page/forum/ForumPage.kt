@@ -709,7 +709,7 @@ fun ForumPage(
 
     val forumPageScaffold: @Composable (topBarSlot: @Composable () -> Unit, extraTop: Dp) -> Unit = { topBarSlot, extraTop ->
                 AppScaffold(
-                    scaffoldState = scaffoldState,
+                    snackbarHostState = snackbarHostState,
                     backgroundColor = Color.Transparent,
                     modifier = Modifier.fillMaxSize(),
                         topBar = topBarSlot,
