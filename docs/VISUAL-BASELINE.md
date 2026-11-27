@@ -64,3 +64,25 @@ python tools/pixel-diff.py --baseline tools/baseline --current shots/current
 - 自比对：12 张全部 `0.00` ✔
 - 注入「深色卡色偏蓝」：把 `settings_dark.png` 每个像素 B 通道 +40 → 平均差 **13.15 > 8** → 判 DIFF，
   差异图正常产出 ✔（改回去即恢复全绿）
+
+---
+
+## ROI（只看该看的地方）—— 2026-11-27 追加
+
+信息流内容每次都不一样，全屏 diff 噪声大。`pixel-diff.py` 现在按页面只比「固定不变」的区域：
+
+| 页面 | 比对区域 | 尺寸 |
+| --- | --- | --- |
+| `home` | `top_chrome` + `dock` | 前 200px / 底部 180px |
+| `thread` | `top_chrome` + `bottom_bar` | 前 200px / 底部 220px |
+| `notifications` | `top_chrome` | 前 200px |
+| `settings` / `mine` / `search` | `full` | 整屏 |
+
+`--full` 可以强制整屏比对（调试用）。
+
+### ROI 反验证（两条都做了）
+
+| 验证 | 手法 | 结果 |
+| --- | --- | --- |
+| 能抓白条 | `home_dark` / `thread_dark` / `notifications_dark` / `settings_dark` 顶部 200px 涂白 | `top_chrome` 平均差 **238.65 / 244.02 / 247.20** → 判 DIFF ✔ |
+| 能挡内容噪声 | 只把 `home_dark` / `thread_dark` 中间内容区（600~1800px）提亮 1.6x | ROI 模式 **0.00 全 OK**；`--full` 模式报 10.19 / 11.92 → DIFF ✔ |
