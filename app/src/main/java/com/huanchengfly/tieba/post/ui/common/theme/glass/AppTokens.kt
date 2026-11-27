@@ -174,11 +174,19 @@ object AppTokens {
         groupedBackground = if (isNightMode) Color.Black else Color(0xFFF2F2F7)
 
         // A2：深色统一纯黑（半透明主题有背景图，跳过）
+        // 卡色/文字同时归到 iOS 深色中性色板，与玻璃层的 DarkGlassTokens(#1C1C1E / #2C2C2E / 纯白)
+        // 完全对齐 —— 否则同一屏里「玻璃卡(中性灰) + M2 卡片(蓝调 #15202B)」会看出色相不一致。
         if (isNightMode && !com.huanchengfly.tieba.post.utils.ThemeUtil.isTranslucentTheme(nowTheme)) {
             background = Color.Black
             windowBackground = Color.Black
             topBar = Color.Black
             bottomBar = Color.Black
+            // 卡片：中性灰（原 XML 深色是 #15202B 蓝调 / AMOLED 是 #101010，这里统一覆盖）
+            card = Color(0xFF1C1C1E)
+            // 楼层比卡片高一层（原 #1A2A39 蓝调）
+            floorCard = Color(0xFF2C2C2E)
+            // 主文字纯白（原 textColor@87% ≈ #DEDEDE）
+            text = Color.White
         }
     }
 }
