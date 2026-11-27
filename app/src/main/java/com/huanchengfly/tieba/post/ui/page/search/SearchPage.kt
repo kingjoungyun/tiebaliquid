@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -116,6 +115,7 @@ import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponent
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabMenu
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabRow
 import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 
 @Immutable
 data class SearchPageItem(
@@ -252,19 +252,22 @@ fun SearchPage(
             val glassmio = SearchPageUi.DefaultStyle == SearchPageUiStyle.GLASMIO
             LiquidGlassTheme(accent = AppTokens.primary) {
                 HarmonyTextProvider {
+            // 与帖子页一致：GlassPage 的顶栏是 overlay（返回 + 大标题），
+            // header 只留搜索框 + tab 行；内容可滚动到状态栏与顶栏下方（不再裁在状态栏下）。
+            GlassPage(
+                title = stringResource(id = R.string.title_search),
+                onBack = { navigator.navigateUp() },
+                largeTitle = stringResource(id = R.string.title_search),
+            ) { _ ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        if (glassmio) GlasmioTheme.colors.groupedBackground
-                        else AppTokens.background
-                    ),
+                    .background(AppTokens.groupedBackground),
             ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(GlasmioTheme.colors.groupedBackground)
-                            .statusBarsPadding(),
+                            .background(AppTokens.groupedBackground),
                     ) {
                         SearchHeader(
                             title = stringResource(id = R.string.title_search),
@@ -275,6 +278,10 @@ fun SearchPage(
                                 viewModel.send(SearchUiIntent.SubmitKeyword(it))
                             },
                             glassmio = glassmio,
+                            // 返回钮 / 大标题由 GlassPage 的 overlay 顶栏负责，header 只留搜索框，
+                            // 避免「双标题 / 双返回」。
+                            showBack = false,
+                            showTitle = false,
                         )
                         if (!isKeywordEmpty) {
                             SearchTabRow(pagerState = pagerState, pages = pages)
@@ -335,6 +342,7 @@ fun SearchPage(
                         }
                     }
                 }
+            }
             }
         }
 }
