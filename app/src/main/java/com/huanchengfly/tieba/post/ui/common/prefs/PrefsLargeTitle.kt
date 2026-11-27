@@ -66,11 +66,6 @@ fun PrefsLargeTitle(text: String, progress: Float = 0f) {
             LocalContentColor provides GlasmioTheme.colors.content,
         ) {
             Text(text = text, maxLines = 1)
-            Text(
-                text = text,
-                style = GlassTokens.Typography.pageTitle.toTextStyle(glassColors().textPrimary),
-                maxLines = 1,
-            )
         }
     }
 }
