@@ -69,6 +69,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import androidx.compose.foundation.layout.PaddingValues
 
 @Composable
 private fun NavigationWrapper(
@@ -422,8 +423,11 @@ private fun MainPageScaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = bottomBar,
     ) { paddingValues ->
+        // 只把底部 inset 交给 pager；顶部不再下推：
+        // 各 tab 页自己会 `statusBarsPadding()`（内容留在状态栏下方），但**背景要铺到状态栏**，
+        // 否则状态栏那一条露出的是 MainPage 的 GlassAppBackground（更白），与页面底色形成分界线。
         LazyLoadHorizontalPager(
-            contentPadding = paddingValues,
+            contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding()),
             state = pagerState,
             key = { navigationItems[it].id },
             modifier = Modifier.fillMaxSize(),
