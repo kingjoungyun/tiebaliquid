@@ -61,6 +61,7 @@ import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabRow
 import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 
 @OptIn(ExperimentalFoundationApi::class)
 @Destination(
@@ -88,37 +89,47 @@ fun NotificationsPage(
     LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
             ProvideNavigator(navigator = navigator) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            if (glassmio) GlasmioTheme.colors.groupedBackground
-                            else Color.Transparent
-                        ),
-                ) {
-                    NotificationsHeader(
-                        pagerState = pagerState,
-                        pages = pages,
-                        showBack = true,
-                        withStatusBarPadding = true,
-                        onBack = { navigator.navigateUp() },
-                        onSearch = { navigator.navigate(SearchPageDestination) },
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                    ) {
-            LazyLoadHorizontalPager(
-                state = pagerState,
-                contentPadding = PaddingValues(),
-                key = { pages[it].first },
-                modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.Top,
-                userScrollEnabled = true,
-            ) {
-                pages[it].second()
-            }
+                // 与帖子页一致：GlassPage 负责返回 / 大标题 / 搜索钮（overlay），
+                // header 只保留分段控件；列表可滚动到状态栏与顶栏下方，背景铺满整屏。
+                GlassPage(
+                    title = stringResource(id = R.string.title_notifications),
+                    onBack = { navigator.navigateUp() },
+                    largeTitle = stringResource(id = R.string.title_notifications),
+                    actions = {
+                        GlassIconButton(
+                            onClick = { navigator.navigate(SearchPageDestination) },
+                            icon = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
+                            contentDescription = stringResource(id = R.string.title_search),
+                        )
+                    },
+                ) { _ ->
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        NotificationsHeader(
+                            pagerState = pagerState,
+                            pages = pages,
+                            showBack = false,
+                            withStatusBarPadding = false,
+                            onBack = {},
+                            onSearch = { navigator.navigate(SearchPageDestination) },
+                            showTitle = false,
+                            showSearch = false,
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        ) {
+                            LazyLoadHorizontalPager(
+                                state = pagerState,
+                                contentPadding = PaddingValues(),
+                                key = { pages[it].first },
+                                modifier = Modifier.fillMaxSize(),
+                                verticalAlignment = Alignment.Top,
+                                userScrollEnabled = true,
+                            ) {
+                                pages[it].second()
+                            }
+                        }
                     }
                 }
             }
@@ -182,6 +193,10 @@ private fun NotificationsHeader(
     withStatusBarPadding: Boolean,
     onBack: () -> Unit,
     onSearch: () -> Unit,
+    /** 二级页由 `GlassPage` 负责标题，header 不再画 34sp 大标题（否则重复）。 */
+    showTitle: Boolean = true,
+    /** 二级页由 `GlassPage.actions` 负责搜索钮，header 不再画（否则重复）。 */
+    showSearch: Boolean = true,
 ) {
     val coroutineScope = rememberCoroutineScope()
     // T3：TabRow 组件级回滚开关
@@ -192,37 +207,44 @@ private fun NotificationsHeader(
             .background(GlasmioTheme.colors.groupedBackground)
             .then(if (withStatusBarPadding) Modifier.statusBarsPadding() else Modifier),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (showBack) {
-                GlassIconButton(
-                    onClick = onBack,
-                    icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(id = R.string.button_back),
-                )
+        // 返回 / 搜索都关掉时整行不占高度（二级页的顶栏由 GlassPage 提供）
+        if (showBack || showSearch) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (showBack) {
+                    GlassIconButton(
+                        onClick = onBack,
+                        icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = stringResource(id = R.string.button_back),
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                if (showSearch) {
+                    GlassIconButton(
+                        onClick = onSearch,
+                        icon = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
+                        contentDescription = stringResource(id = R.string.title_search),
+                    )
+                }
             }
-            Spacer(modifier = Modifier.weight(1f))
-            GlassIconButton(
-                onClick = onSearch,
-                icon = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
-                contentDescription = stringResource(id = R.string.title_search),
+        }
+        if (showTitle) {
+            Text(
+                text = stringResource(id = R.string.title_notifications),
+                style = LocalTextStyle.current.copy(
+                    fontSize = 34.sp,
+                    lineHeight = 40.sp,
+                    fontWeight = FontWeight.Bold,
+                ),
+                color = AppTokens.text,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             )
         }
-        Text(
-            text = stringResource(id = R.string.title_notifications),
-            style = LocalTextStyle.current.copy(
-                fontSize = 34.sp,
-                lineHeight = 40.sp,
-                fontWeight = FontWeight.Bold,
-            ),
-            color = AppTokens.text,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-        )
         if (useGlassTabRow) {
             // T3：iOS 分段控件风格（灰色轨道 + 白色滑块）。回滚见下面的 else 分支。
             GlassTabRow(
