@@ -84,6 +84,7 @@ import io.github.neoruaa.glasmio.ui.GlasmioCard
 import kotlinx.collections.immutable.ImmutableList
 import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import androidx.compose.material.icons.rounded.Videocam
 
 /**
  * 首页信息流的「推特式」帖子卡（`PostCardUiStyle.TWITTER`）。
@@ -528,6 +529,11 @@ private fun PostMedia(
 
     if (videoInfo != null) {
         val thumbnailUrl = remember(videoInfo) { videoInfo.get { thumbnailUrl } }
+        // 信息流接口常常**不返回** `video_info.thumbnail_url`（只有视频帖详情页才有），
+        // 于是「播放按钮 + 空容器」= 用户报的「视频没封面」。降级：用帖子第一张图当封面。
+        val coverUrl = remember(thumbnailUrl, urls) {
+            thumbnailUrl?.takeIf { it.isNotBlank() } ?: urls.firstOrNull().orEmpty()
+        }
         val videoAspect = remember(videoInfo) {
             val w = videoInfo.get { thumbnailWidth }.toFloat()
             val h = videoInfo.get { thumbnailHeight }.toFloat()
@@ -541,14 +547,33 @@ private fun PostMedia(
                 .background(colors.container)
                 .debounceClickable(onClick = onOpenThread),
         ) {
-            if (thumbnailUrl.isNotBlank()) {
+            if (coverUrl.isNotBlank()) {
                 NetworkImage(
-                    imageUri = thumbnailUrl,
+                    imageUri = coverUrl,
                     contentDescription = stringResource(id = R.string.desc_video),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
                     enablePreview = false,
                 )
+            } else {
+                // 连配图都没有：给一个明确的「视频」占位，而不是空容器。
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Icon(
+                        imageVector = PhosphorIcons["video-camera"] ?: Icons.Rounded.Videocam,
+                        contentDescription = null,
+                        tint = colors.secondaryContent,
+                        modifier = Modifier.size(28.dp),
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(id = R.string.desc_video),
+                        fontSize = 13.sp,
+                        color = colors.secondaryContent,
+                    )
+                }
             }
             Box(
                 modifier = Modifier
