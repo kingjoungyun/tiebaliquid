@@ -133,6 +133,24 @@ Invoke-AppBuild -Tasks @(':app:connectedDebugAndroidTest')
 - **Dialogs.kt 仍是 Material 2 基类**：弹窗尚未换成玻璃外观，计划 v1.9.1 处理
 - **7 个页面仍有 LEGACY 分支**：Home / Explore / Search / Notifications / History / SearchUser / UserProfile 的
   `*UiStyle` 回滚开关仍在，计划 v1.9.1 清理
+- **未适配平板/折叠屏布局**：宽窗口（横屏 / 分屏 / 折叠屏展开）下按手机布局拉伸显示，
+  仅保证**不崩溃**（顶栏槽的玻璃控件有 backdrop host 兜底）；平板适配不在路线图内
+
+## 开发工具
+
+仓库 `tools/` 是工作区 `scripts/` 的**快照**（`docs/` 同理），方便换机器时不用重新找：
+
+| 脚本 | 作用 |
+| --- | --- |
+| `tools/run-smoke.ps1` | 主干冒烟：编译 → 装包 → 跑 `MainSmokeTest` + `PixelRegressionTest`，失败时把截图/语义树/logcat 拉到 `shots/smoke/<时间戳>/`。支持 `-Only <类名>` / `-Quick` |
+| `tools/env.ps1` | 设置 `JAVA_HOME` / `ANDROID_HOME` / `GRADLE_USER_HOME` 等（被其它脚本 dot-source） |
+| `tools/pixel-diff.py` | 截图基线对比（`docs/VISUAL-BASELINE.md`） |
+| `tools/set-theme.ps1` / `tools/capture-*.ps1` | 切浅色/深色、批量截图 |
+| `tools/perf-*.ps1` / `tools/perf_*.py` | 滚动性能采集与分析 |
+
+⚠️ **这些脚本要从工作区根执行**（与 `.toolchain/` 同级），仓库内副本仅作快照 —— 详见 `tools/README.md`。
+
+⚠️ **冒烟跑完会把 `com.tieba` 卸载**（UTP 行为），之后要重新 `adb install -r` 才能继续截图/自动化。
 
 ## 开发方式
 
