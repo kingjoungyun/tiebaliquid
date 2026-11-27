@@ -211,6 +211,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassPromptDialog
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassSnackbarHost
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageInsets
 
 private fun getDescText(
     time: Long?,
@@ -690,7 +691,7 @@ fun ThreadPage(
     }
     // GLASMIO 外壳：顶栏是 overlay，列表 contentPadding 只留「状态栏 + 顶栏」，
     // 首屏内容直接贴在悬浮控件下方，滚动时内容从顶栏下穿过。
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val statusBarTop = GlassPageInsets.statusBarTop()
     val threadTopInset = statusBarTop + ThreadTopBarHeight
     // 底栏在 overlay 层：列表 viewport 铺到屏幕底，用 contentPadding 让最后一条能滚到胶囊上方。
     val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()

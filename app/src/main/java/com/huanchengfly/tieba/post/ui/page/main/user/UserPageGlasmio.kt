@@ -72,6 +72,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.asPaddingValues
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageInsets
 
 /**
  * 「我的」页的玻璃版。
@@ -158,7 +159,7 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
         // 图标仍走 Glasmio 自带的 `SfIcon` → Material 解析表（本页没有自定义符号）。
         run {
             val colors = GlasmioTheme.colors
-            val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+            val statusBarTop = GlassPageInsets.statusBarTop()
             Box(
                 modifier = Modifier
                     .fillMaxSize()

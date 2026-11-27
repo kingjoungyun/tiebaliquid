@@ -31,6 +31,7 @@ import io.github.neoruaa.glasmio.core.systemGray5
 import io.github.neoruaa.glasmio.glass.render.backdrops.emptyBackdrop
 import io.github.neoruaa.glasmio.ui.GlasmioCard
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageInsets
 
 /**
  * 帖子详情首屏骨架。
@@ -58,7 +59,7 @@ fun ThreadSkeleton(
     } else {
         AppTokens.background
     }
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val statusBarTop = GlassPageInsets.statusBarTop()
     val topInset = statusBarTop + if (glassmio) ThreadTopBarHeight else 0.dp
 
     Column(

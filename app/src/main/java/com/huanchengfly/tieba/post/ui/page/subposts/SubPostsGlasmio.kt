@@ -46,6 +46,7 @@ import io.github.neoruaa.glasmio.core.GlasmioTheme
 import io.github.neoruaa.glasmio.core.IosTypography
 import io.github.neoruaa.glasmio.glass.GlassSurface
 import io.github.neoruaa.glasmio.ui.GlasmioIconButton
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageInsets
 
 /**
  * 楼中楼页的悬浮顶栏：返回 + 可选打开原帖 + 滚动后的紧凑标题。
@@ -62,7 +63,7 @@ fun SubPostsGlassTopBar(
     modifier: Modifier = Modifier,
 ) {
     val colors = GlasmioTheme.colors
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val statusBarTop = GlassPageInsets.statusBarTop()
     val scrimHeight = statusBarTop + 88.dp
     val scrimBrush = Brush.verticalGradient(
         0f to colors.groupedBackground.copy(alpha = 0.82f),

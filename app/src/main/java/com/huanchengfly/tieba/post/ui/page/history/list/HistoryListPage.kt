@@ -70,6 +70,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.rememberMenuState
 import com.huanchengfly.tieba.post.utils.DateTimeUtils
 import com.huanchengfly.tieba.post.utils.HistoryUtil
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageInsets
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -80,7 +81,7 @@ fun HistoryListPage(
         val glassmio = HistoryListUi.DefaultStyle == HistoryListUiStyle.GLASMIO
         val navigator = LocalNavigator.current
         val lazyListState = rememberLazyListState()
-        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        val statusBarTop = GlassPageInsets.statusBarTop()
         val topInset = statusBarTop + ThreadTopBarHeight
         val isCollapsed by remember {
             derivedStateOf {

@@ -160,6 +160,7 @@ import com.huanchengfly.tieba.post.ui.common.components.glass.GlassScrollableTab
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabLabel
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabMenu
 import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageInsets
 
 
 private val LoadDistance = 70.dp
@@ -681,10 +682,7 @@ fun ForumPage(
     // P2 试点：顶栏搬进 host 的 overlayContent（按钮才能采真实内容）。
     val overlayTopBar = useOverlayTopBarHost(GlassOverlayPage.FORUM)
     // 顶栏占位高度：状态栏 + 48dp（ForumTopBar 自己的高度），内容从顶栏下穿过
-    val forumTopBarInset = with(androidx.compose.ui.platform.LocalDensity.current) {
-        androidx.compose.foundation.layout.WindowInsets.statusBars
-            .getTop(this).toDp() + 48.dp
-    }
+    val forumTopBarInset = GlassPageInsets.contentTopPadding(48.dp)
     // 顶栏本体：玻璃分支是 ForumTopBar，老分支是 ForumToolbar。两种 host 方案共用同一个 lambda。
     val forumTopBarSlot: @Composable () -> Unit = {
 

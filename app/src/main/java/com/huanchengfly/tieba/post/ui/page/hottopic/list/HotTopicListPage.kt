@@ -68,6 +68,7 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageInsets
 
 @Composable
 private fun TopicImage(
@@ -184,7 +185,7 @@ fun HotTopicListPage(
         prop1 = HotTopicListUiState::topicList,
         initial = emptyList()
     )
-        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        val statusBarTop = GlassPageInsets.statusBarTop()
         val topInset = statusBarTop + ThreadTopBarHeight
         val pullRefreshState = rememberPullRefreshState(
             refreshing = isRefreshing,
