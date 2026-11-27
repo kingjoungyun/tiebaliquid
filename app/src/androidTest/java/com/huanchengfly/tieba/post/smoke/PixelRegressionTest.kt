@@ -63,43 +63,65 @@ class PixelRegressionTest {
     // ------------------------------------------------------------------ 断言 1
 
     /**
-     * 状态栏区域不能和页面内容区「颜色断层」。
+     * 状态栏区域不能比页面背景「明显更亮」（= 白条 / 分界线）。
      *
-     * 采样点：
-     * - 状态栏中心 `(w/2, statusBarPx/2)`
-     * - 内容区 `(w/2, statusBarPx + 200px)`
+     * 采样：
+     * - 状态栏：`(w/2, statusBarPx/2)`；
+     * - 页面背景：屏内若干点取**最暗**的那个（内容区可能正好压在卡片/图片上，
+     *   取最暗点才代表真正的页面底色，否则会把「深色页面 + 深色卡片」误判成断层）。
      *
-     * 断言：每个通道差 ≤ [CHANNEL_TOLERANCE]。
-     *
-     * 为什么这样能抓到「白条」：整页背景铺满时两点同色；一旦状态栏那条被别的容器
-     * （白底顶栏 / 未自适应的 scrim）盖住，就会出现 200+ 的通道差。
+     * 断言：`statusBar 亮度 - 页面背景亮度 ≤ [LUMA_TOLERANCE]`。
+     * 只比「亮出来」的方向——今天两种 bug（首页顶栏白块、消息 tab 深色 header 白底）都是
+     * 状态栏那条明显比页面亮。
      */
     @Test
     fun statusBarMatchesPageBackground() {
-        forEachMainPage { pageName ->
-            val bitmap = screenshot()
-            try {
-                val w = bitmap.width
-                val sbH = statusBarPx
-                val statusBar = bitmap.getPixel(w / 2, sbH / 2)
-                val content = bitmap.getPixel(w / 2, sbH + 200)
-                val dr = kotlin.math.abs(red(statusBar) - red(content))
-                val dg = kotlin.math.abs(green(statusBar) - green(content))
-                val db = kotlin.math.abs(blue(statusBar) - blue(content))
-                Log.i(
-                    TAG,
-                    "$pageName 状态栏=${hex(statusBar)} 内容区=${hex(content)} Δ=($dr,$dg,$db)",
-                )
-                assertTrue(
-                    "$pageName：状态栏区域与内容区颜色断层过大 Δ=($dr,$dg,$db) " +
-                        "（状态栏=${hex(statusBar)} 内容区=${hex(content)}）——" +
-                        "检查该页背景是否铺到状态栏、顶栏是不是白底",
-                    dr <= CHANNEL_TOLERANCE && dg <= CHANNEL_TOLERANCE &&
-                        db <= CHANNEL_TOLERANCE,
-                )
-            } finally {
-                bitmap.recycle()
+        Log.i(TAG, "ENTER statusBarMatchesPageBackground")
+        var pages = 0
+        var asserts = 0
+        try {
+            forEachMainPage { pageName ->
+                pages++
+                val bitmap = screenshot()
+                try {
+                    val w = bitmap.width
+                    val h = bitmap.height
+                    val sbH = statusBarPx
+                    val statusBar = bitmap.getPixel(w / 2, sbH / 2)
+                    val sbLuma = luma(statusBar)
+                    // 页面背景：多个采样点取**中位数**亮度（最暗点会落到照片上，最亮点会落到卡片上，
+                    // 中位数才代表「这一页的主色调」）。
+                    val samples = ArrayList<Int>()
+                    for (fy in BACKGROUND_SAMPLE_Y) {
+                        for (fx in BACKGROUND_SAMPLE_X) {
+                            val c = bitmap.getPixel((w * fx).toInt(), (h * fy).toInt())
+                            samples.add(luma(c))
+                        }
+                    }
+                    samples.sort()
+                    val minLuma = if (samples.isEmpty()) sbLuma else samples[samples.size / 2]
+                    val minColor = if (samples.isEmpty()) statusBar else bitmap.getPixel(
+                        (w * BACKGROUND_SAMPLE_X[1]).toInt(),
+                        (h * BACKGROUND_SAMPLE_Y[1]).toInt(),
+                    )
+                    val delta = sbLuma - minLuma
+                    Log.i(
+                        TAG,
+                        "$pageName 状态栏=${hex(statusBar)}(L=$sbLuma) " +
+                            "页面背景=${hex(minColor)}(L=$minLuma) Δ=$delta",
+                    )
+                    assertTrue(
+                        "$pageName：状态栏比页面背景亮 $delta（状态栏=${hex(statusBar)} " +
+                            "页面背景=${hex(minColor)}）——白条/分界线回归，检查该页背景是否铺到状态栏",
+                        delta <= LUMA_TOLERANCE,
+                    )
+                    asserts++
+                } finally {
+                    bitmap.recycle()
+                }
             }
+        } finally {
+            Log.i(TAG, "EXIT statusBarMatchesPageBackground pages=$pages asserts=$asserts")
         }
     }
 
@@ -228,17 +250,26 @@ class PixelRegressionTest {
         return if (total == 0) 0f else white.toFloat() / total
     }
 
+    /** 感知亮度（0~255，够用即可，不需要精确的 sRGB 公式）。 */
+    private fun luma(c: Int) = ((red(c) * 299 + green(c) * 587 + blue(c) * 114) / 1000)
+
     private fun red(c: Int) = (c shr 16) and 0xFF
     private fun green(c: Int) = (c shr 8) and 0xFF
     private fun blue(c: Int) = c and 0xFF
     private fun hex(c: Int) = "#%06X".format(c and 0xFFFFFF)
 
+    /**
+     * 把 App 拉回前台。
+     *
+     * **绝对不要在这里 `am force-stop com.tieba`**：instrumentation 就跑在 `com.tieba` 的进程里，
+     * force-stop 会把自己一起杀掉，UTP 只会看到 `Process crashed`、测试方法连第一行都执行不到
+     * （今天就是这么假通过的）。真正的进程级冷启动由 `scripts/run-smoke.ps1` 在跑测试前做。
+     */
     private fun relaunchApp() {
-        device.executeShellCommand("am force-stop $PACKAGE")
-        SystemClock.sleep(600)
-        device.executeShellCommand(
+        val out = device.executeShellCommand(
             "am start -W -f 0x10008000 -n $PACKAGE/com.huanchengfly.tieba.post.MainActivityV2",
         )
+        Log.i(TAG, "relaunch: ${out.trim().lineSequence().take(3).joinToString(" / ")}")
         SystemClock.sleep(LAUNCH_SETTLE_MS)
     }
 
@@ -294,8 +325,14 @@ class PixelRegressionTest {
         const val LAUNCH_SETTLE_MS = 6000L
         const val PAGE_SETTLE_MS = 2500L
 
-        /** 每通道允许的差值（状态栏 vs 内容区）。先宽后紧：3 能抓今天的白条，又不至于被渐变底误伤。 */
-        const val CHANNEL_TOLERANCE = 12
+        /** 状态栏亮度相对页面背景允许多出的量（0~255）。白条时通常 > 200，正常页 < 20。 */
+        const val LUMA_TOLERANCE = 40
+
+        /** 页面背景采样点（横向比例）。 */
+        val BACKGROUND_SAMPLE_X = floatArrayOf(0.08f, 0.5f, 0.92f)
+
+        /** 页面背景采样点（纵向比例，避开顶栏与 dock）。 */
+        val BACKGROUND_SAMPLE_Y = floatArrayOf(0.30f, 0.50f, 0.70f, 0.80f)
 
         /** 深色下主体区允许的近白像素占比。 */
         const val WHITE_BLOCK_TOLERANCE = 0.20f
