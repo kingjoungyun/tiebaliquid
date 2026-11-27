@@ -66,6 +66,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.AppScaffold
 import com.huanchengfly.tieba.post.utils.ThemeUtil
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
+import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
 
 /**
  * 主界面顶栏的运行状态。
@@ -201,14 +202,26 @@ fun MainTabScaffold(
     val state = LocalMainTopBarState.current
     val key = LocalMainTabKey.current
     if (state == null || key == null) {
-        // 防御：不在 MainPage 里（预览 / 单页调试）时退回实体顶栏，至少不丢内容。
+        // 防御：不在 MainPage 里（预览 / 单页调试 / 宽窗口走另一条布局）时退回实体顶栏，至少不丢内容。
         AppScaffold(
             modifier = modifier.fillMaxSize(),
             backgroundColor = Color.Transparent,
             topBar = {
                 Column(Modifier.background(AppTokens.topBar)) {
                     Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
-                    Box(Modifier.height(GlassTokens.Spacing.barHeight)) { topBar() }
+                    Box(Modifier.height(GlassTokens.Spacing.barHeight)) {
+                        // 顶栏槽里的内容（例如探索页顶部的玻璃搜索框）会用到 `GlassSurface` 等控件，
+                        // 而它们要求自己位于 `GlasmioBackdropHost`/`GlasmioBackdropProvider` 之内，
+                        // 否则抛 `IllegalStateException: Glass controls must be hosted by …`
+                        // （宽窗口下走这条防御分支时就会崩）。这里给槽内容补一个纯色 host。
+                        if (LocalLiquidGlassHosted.current) {
+                            topBar()
+                        } else {
+                            GlasmioBackdropHost(sampledColor = AppTokens.groupedBackground) {
+                                topBar()
+                            }
+                        }
+                    }
                 }
             },
         ) { paddings ->
@@ -348,7 +361,18 @@ fun MainTopBarHost(
                     // 会退回默认浅色调色板（深色下表现为白底 + 白字）。
                     // 这里给槽内容补一层调色板作用域，明暗跟随 AppTokens。
                     LiquidGlassTheme(accent = AppTokens.primary) {
-                        slot.invoke()
+                        // 同理，槽内容也不一定在 `GlasmioBackdropHost` 里（宽窗口/平板布局下
+                        // 页面不在 MainPageScaffold 的 host 内），而槽里的 `GlassSurface`
+                        // （首页/探索页顶部的玻璃搜索框）要求必须有 host，否则抛
+                        // `IllegalStateException: Glass controls must be hosted by …`。
+                        // 已在 host 内就沿用真实采样，否则自备一个纯色 host（仅影响材质观感）。
+                        if (LocalLiquidGlassHosted.current) {
+                            slot.invoke()
+                        } else {
+                            GlasmioBackdropHost(sampledColor = AppTokens.groupedBackground) {
+                                slot.invoke()
+                            }
+                        }
                     }
                 }
             }

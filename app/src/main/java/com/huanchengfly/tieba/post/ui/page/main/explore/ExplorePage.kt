@@ -56,6 +56,8 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
 
 
 @Immutable
@@ -130,29 +132,42 @@ fun ExplorePage() {
                         .height(56.dp)
                         .padding(horizontal = 16.dp, vertical = 4.dp)
                 ) {
-                    GlassSurface(
-                        modifier = Modifier.fillMaxSize(),
-                        shape = RoundedCornerShape(24.dp),
-                        onClick = { navigator.navigate(SearchPageDestination) },
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                    // 这个玻璃搜索框在「顶栏槽」里渲染，槽内容可能不在 `GlasmioBackdropHost` 之内
+                    // （宽窗口下顶栏槽走 MainTopBarHost 的 overlay 分支时就是这种情况），
+                    // 那样 GlassSurface 会抛 `IllegalStateException: Glass controls must be hosted by …`。
+                    // 已经处于 host 内就直接画（采样真实页面），否则自备一个纯色 host。
+                    val searchBox: @Composable () -> Unit = {
+                        GlassSurface(
+                            modifier = Modifier.fillMaxSize(),
+                            shape = RoundedCornerShape(24.dp),
+                            onClick = { navigator.navigate(SearchPageDestination) },
                         ) {
-                            Icon(
-                                imageVector = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
-                                contentDescription = null,
-                                tint = AppTokens.textSecondary,
-                                modifier = Modifier.size(18.dp),
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(id = R.string.title_search),
-                                fontSize = 15.sp,
-                                color = AppTokens.textSecondary,
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector = PhosphorIcons["magnifying-glass"] ?: Icons.Rounded.Search,
+                                    contentDescription = null,
+                                    tint = AppTokens.textSecondary,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = stringResource(id = R.string.title_search),
+                                    fontSize = 15.sp,
+                                    color = AppTokens.textSecondary,
+                                )
+                            }
+                        }
+                    }
+                    if (LocalLiquidGlassHosted.current) {
+                        searchBox()
+                    } else {
+                        GlasmioBackdropHost(sampledColor = AppTokens.groupedBackground) {
+                            searchBox()
                         }
                     }
                 }
