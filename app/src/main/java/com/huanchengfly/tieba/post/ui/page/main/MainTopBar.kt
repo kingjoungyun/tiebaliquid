@@ -65,6 +65,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.glass.isLiquidGlassSupported
 import com.huanchengfly.tieba.post.ui.widgets.compose.AppScaffold
 import com.huanchengfly.tieba.post.utils.ThemeUtil
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 
 /**
  * 主界面顶栏的运行状态。
@@ -342,7 +343,13 @@ fun MainTopBarHost(
             Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
             if (slot != null) {
                 CompositionLocalProvider(LocalMainTopBarCollapse provides collapse) {
-                    slot.invoke()
+                    // 顶栏槽是跨 composition 渲染的（各 tab 页只是把 @Composable 注册进来），
+                    // 拿不到页面自己的 `LiquidGlassTheme` —— 里面的 `GlasmioTheme.colors`
+                    // 会退回默认浅色调色板（深色下表现为白底 + 白字）。
+                    // 这里给槽内容补一层调色板作用域，明暗跟随 AppTokens。
+                    LiquidGlassTheme(accent = AppTokens.primary) {
+                        slot.invoke()
+                    }
                 }
             }
         }
