@@ -69,6 +69,9 @@ import io.github.neoruaa.glasmio.core.systemGray5
 import io.github.neoruaa.glasmio.icons.SfIcon
 import io.github.neoruaa.glasmio.ui.GlasmioGroupedList
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.asPaddingValues
 
 /**
  * 「我的」页的玻璃版。
@@ -155,6 +158,7 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
         // 图标仍走 Glasmio 自带的 `SfIcon` → Material 解析表（本页没有自定义符号）。
         run {
             val colors = GlasmioTheme.colors
+            val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -162,16 +166,14 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
                     .pullRefresh(pullRefreshState),
             ) {
                 MyLazyColumn(
-                    // 一级页没有顶栏：列表 viewport 裁在状态栏下方（滚动内容不会钻到状态栏图标下面），
-                    // 状态栏那一块仍由外层 Box 的 groupedBackground 铺满。
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .statusBarsPadding(),
+                    // 与帖子页（GlassPage）一致：列表铺满整屏，内容可以滚到状态栏下方，
+                    // 只把「状态栏高度」塞进 contentPadding，让首项起始位置在状态栏之下。
+                    modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
                         start = 16.dp,
                         end = 16.dp,
                         // 状态栏之下留 8dp 直接起大标题（PrefsLargeTitle 自己还有 4dp）。
-                        top = 8.dp,
+                        top = statusBarTop + 8.dp,
                         // 底部再叠加 LocalMainTabBottomInset（MyLazyColumn 自动加），让最后一行能滚到 dock 上方。
                         bottom = 24.dp,
                     ),
