@@ -204,7 +204,13 @@ private fun NotificationsHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(GlasmioTheme.colors.groupedBackground)
+            // 注意：这里不能用 `GlasmioTheme.colors.groupedBackground`。
+            // tab 版的 header 是通过 `MainTabScaffold` 放进 MainPage 的 overlay 槽渲染的，
+            // 那个 composition 不在本页的 `LiquidGlassTheme` 作用域里，`GlasmioTheme.colors`
+            // 会退回默认（浅色）调色板 → 深色模式下这块变成 #F2F2F7 的白底，
+            // 而标题用的是 `AppTokens.text`（深色=纯白）→ 白底白字看不见。
+            // `AppTokens.groupedBackground` 是全局、随明暗自适应的，用它对两个版本都正确。
+            .background(AppTokens.groupedBackground)
             .then(if (withStatusBarPadding) Modifier.statusBarsPadding() else Modifier),
     ) {
         // 返回 / 搜索都关掉时整行不占高度（二级页的顶栏由 GlassPage 提供）
