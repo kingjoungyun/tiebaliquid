@@ -232,8 +232,8 @@
         <item name="colorBackground">@color/theme_color_background_dark</item>
         <item name="colorChip">@color/theme_color_window_background_dark</item>
         <item name="colorUnselected">#415c68</item>
-        <item name="colorFloorCard">#FF1A2A39</item>
-        <item name="colorCard">#15202B</item>
+        <item name="colorFloorCard">#FF2C2C2E</item>
+        <item name="colorCard">#FF1C1C1E</item>
         <item name="shadow_color">#FE191919</item>
     </style>
 
@@ -275,8 +275,8 @@
         <item name="colorToolbarItem">#FFE6E7EE</item>
         <item name="colorToolbarItemActive">@color/white</item>
         <item name="colorToolbarItemSecondary">#CCE6E7EE</item>
-        <item name="colorFloorCard">#FF151515</item>
-        <item name="colorCard">#FF101010</item>
+        <item name="colorFloorCard">#FF2C2C2E</item>
+        <item name="colorCard">#FF1C1C1E</item>
         <item name="colorBackground">@color/theme_color_background_amoled_dark</item>
         <item name="colorChip">@color/theme_color_window_background_amoled_dark</item>
         <item name="colorNavBar">@color/black</item>
