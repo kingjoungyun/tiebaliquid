@@ -266,44 +266,16 @@ fun SearchPage(
                             .background(GlasmioTheme.colors.groupedBackground)
                             .statusBarsPadding(),
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(52.dp)
-                                .padding(horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            GlassIconButton(
-                                onClick = { navigator.navigateUp() },
-                                icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = stringResource(id = R.string.button_back),
-                            )
-                        }
-                        Text(
-                            text = stringResource(id = R.string.title_search),
-                            style = LocalTextStyle.current.copy(
-                                fontSize = 34.sp,
-                                lineHeight = 40.sp,
-                                fontWeight = FontWeight.Bold,
-                            ),
-                            color = AppTokens.text,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        SearchHeader(
+                            title = stringResource(id = R.string.title_search),
+                            onBack = { navigator.navigateUp() },
+                            keyword = inputKeyword,
+                            onKeywordChange = { inputKeyword = it },
+                            onKeywordSubmit = {
+                                viewModel.send(SearchUiIntent.SubmitKeyword(it))
+                            },
+                            glassmio = glassmio,
                         )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(44.dp)
-                                .padding(horizontal = 16.dp)
-                        ) {
-                            SearchTopBar(
-                                keyword = inputKeyword,
-                                onKeywordChange = { inputKeyword = it },
-                                onKeywordSubmit = {
-                                    viewModel.send(SearchUiIntent.SubmitKeyword(it))
-                                },
-                                glassmio = glassmio,
-                            )
-                        }
                         if (!isKeywordEmpty) {
                             SearchTabRow(pagerState = pagerState, pages = pages)
                         }
@@ -366,6 +338,66 @@ fun SearchPage(
             }
         }
 }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun SearchHeader(
+    title: String,
+    onBack: () -> Unit,
+    keyword: String,
+    onKeywordChange: (String) -> Unit,
+    onKeywordSubmit: (String) -> Unit,
+    glassmio: Boolean,
+    /** 迁 `GlassPage` 后由骨架负责返回钮，header 不再画。 */
+    showBack: Boolean = true,
+    /** 迁 `GlassPage` 后由骨架负责大标题，header 不再画。 */
+    showTitle: Boolean = true,
+    /** 迁 `GlassPage` 后如需把搜索框放别处，可关掉。 */
+    showSearchBox: Boolean = true,
+) {
+    if (showBack) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            GlassIconButton(
+                onClick = onBack,
+                icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                contentDescription = stringResource(id = R.string.button_back),
+            )
+        }
+    }
+    if (showTitle) {
+        Text(
+            text = title,
+            style = LocalTextStyle.current.copy(
+                fontSize = 34.sp,
+                lineHeight = 40.sp,
+                fontWeight = FontWeight.Bold,
+            ),
+            color = AppTokens.text,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        )
+    }
+    if (showSearchBox) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(44.dp)
+                .padding(horizontal = 16.dp)
+        ) {
+            SearchTopBar(
+                keyword = keyword,
+                onKeywordChange = onKeywordChange,
+                onKeywordSubmit = onKeywordSubmit,
+                glassmio = glassmio,
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
