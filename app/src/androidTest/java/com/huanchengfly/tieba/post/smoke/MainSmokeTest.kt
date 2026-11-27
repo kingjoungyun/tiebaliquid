@@ -296,6 +296,74 @@ class MainSmokeTest {
     }
 
     @Test
+    fun pageTitlesAreUnique() {
+        // 防回归：「同一标题被画两次」（PrefsLargeTitle 叠 Text、GlassPage + 页内 header 双标题）。
+        // 判定方式：uiautomator 能读到同文本的两个节点，所以直接数节点。
+        // 注意 tab 页的 dock 上也有同文本标签（「我的」「消息」），这里只数屏幕上方 70% 的节点。
+
+        // 1) 我的（tab 页）
+        tapDock(R.string.title_user)
+        awaitObject("我的页标题") {
+            device.findObject(By.text(str(R.string.mine_title)))
+        }
+        assertSingleVisibleTitle("我的页", str(R.string.mine_title))
+
+        // 2) 设置（二级页）
+        val settingsEntry = awaitObject("我的页「${str(R.string.my_info_settings)}」入口") {
+            device.findObject(By.text(str(R.string.my_info_settings)))
+        }
+        settingsEntry.clickOrTapByBounds()
+        awaitObject("设置页标题") {
+            device.findObject(By.text(str(R.string.title_settings)))
+        }
+        assertSingleVisibleTitle("设置页", str(R.string.title_settings))
+
+        // 3) 浏览记录（二级页，GlassPage）
+        device.pressBack()
+        SystemClock.sleep(1000)
+        val historyEntry = awaitObject("我的页「${str(R.string.title_history)}」入口") {
+            device.findObject(By.text(str(R.string.title_history)))
+        }
+        historyEntry.clickOrTapByBounds()
+        awaitObject("浏览记录页标题") {
+            device.findObject(By.text(str(R.string.title_history)))
+        }
+        assertSingleVisibleTitle("浏览记录页", str(R.string.title_history))
+        device.pressBack()
+        SystemClock.sleep(1000)
+
+        // 4) 消息（tab 页）
+        tapDock(R.string.title_notifications)
+        awaitObject("消息页标题") {
+            device.findObject(By.text(str(R.string.title_notifications)))
+        }
+        assertSingleVisibleTitle("消息页", str(R.string.title_notifications))
+    }
+
+    /**
+     * 断言「标题在可见区域（上方 70%）只出现 1 次」。
+     *
+     * - 排除 dock 上的同文本标签（它们在屏幕底部 30%）；
+     * - 找不到节点则失败（说明标题根本没渲染）。
+     */
+    private fun assertSingleVisibleTitle(page: String, title: String) {
+        val nodes = device.findObjects(By.text(title))
+        try {
+            val visible = nodes.filter { node ->
+                val bounds = node.visibleBounds
+                bounds != null && bounds.top < device.displayHeight * 0.7f
+            }
+            assertTrue(
+                "$page：标题「$title」应只出现 1 次，实际 ${visible.size} 次" +
+                    "（节点总数 ${nodes.size}）",
+                visible.size == 1,
+            )
+        } finally {
+            nodes.forEach { it.recycle() }
+        }
+    }
+
+    @Test
     fun nightModeToggleKeepsAppAlive() {
         // 10. 深色模式切换不崩：我的 → 主题选择 → 读当前开关状态 → 切到相反态 →
         //     断言进程存活 + 主题选择页仍在 → 切回原状态。
