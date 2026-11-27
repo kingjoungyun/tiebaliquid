@@ -46,7 +46,6 @@ import com.github.panpf.sketch.request.Depth
 import com.github.panpf.sketch.request.DisplayRequest
 import com.github.panpf.sketch.request.DisplayResult
 import com.github.panpf.sketch.stateimage.ThumbnailMemoryCacheStateImage
-import com.github.panpf.sketch.transform.MaskTransformation
 import com.huanchengfly.tieba.post.App
 import com.huanchengfly.tieba.post.arch.BaseComposeActivity.Companion.LocalWindowSizeClass
 import com.huanchengfly.tieba.post.goToActivity
