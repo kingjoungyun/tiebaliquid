@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -61,6 +60,8 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import androidx.compose.foundation.layout.Box
+import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPage
+import com.huanchengfly.tieba.post.ui.common.components.glass.GlassSnackbarHost
 
 @OptIn(ExperimentalFoundationApi::class)
 @Destination(
@@ -83,83 +84,55 @@ fun HistoryPage(
 
     LiquidGlassTheme(accent = AppTokens.primary) {
         HarmonyTextProvider {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        if (glassmio) GlasmioTheme.colors.groupedBackground
-                        else Color.Transparent
-                    ),
-            ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(GlasmioTheme.colors.groupedBackground)
-                            .statusBarsPadding(),
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(52.dp)
-                                .padding(horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            GlassIconButton(
-                                onClick = { navigator.navigateUp() },
-                                icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = stringResource(id = R.string.button_back),
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
-                            GlassIconButton(
-                                onClick = {
-                                    coroutineScope.launch {
-                                        HistoryUtil.deleteAll()
-                                        emitGlobalEvent(HistoryListUiEvent.DeleteAll)
-                                        launch {
-                                            scaffoldState.snackbarHostState.showSnackbar(
-                                                context.getString(R.string.toast_clear_success)
-                                            )
-                                        }
-                                    }
-                                },
-                                icon = PhosphorIcons["trash"] ?: Icons.Outlined.Delete,
-                                contentDescription = stringResource(id = R.string.title_history_delete),
-                            )
-                        }
-                        Text(
-                            text = stringResource(id = R.string.title_history),
-                            style = LocalTextStyle.current.copy(
-                                fontSize = 34.sp,
-                                lineHeight = 40.sp,
-                                fontWeight = FontWeight.Bold,
+            // 与帖子页一致：GlassPage 的顶栏是 overlay（返回 / 删除 / 大标题），
+            // 列表从状态栏下方起排、可滚动到状态栏与顶栏下方（不再用根布局的 statusBarsPadding 裁断）。
+            GlassPage(
+                title = stringResource(id = R.string.title_history),
+                onBack = { navigator.navigateUp() },
+                largeTitle = stringResource(id = R.string.title_history),
+                actions = {
+                    GlassIconButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                HistoryUtil.deleteAll()
+                                emitGlobalEvent(HistoryListUiEvent.DeleteAll)
+                                launch {
+                                    scaffoldState.snackbarHostState.showSnackbar(
+                                        context.getString(R.string.toast_clear_success)
+                                    )
+                                }
+                            }
+                        },
+                        icon = PhosphorIcons["trash"] ?: Icons.Outlined.Delete,
+                        contentDescription = stringResource(id = R.string.title_history_delete),
+                    )
+                },
+                snackbarHost = {
+                    GlassSnackbarHost(hostState = scaffoldState.snackbarHostState)
+                },
+            ) { _ ->
+                Column(modifier = Modifier.fillMaxSize()) {
+                    if (useGlassTabRow) {
+                        GlassTabRow(
+                            tabs = listOf(
+                                stringResource(id = R.string.title_history_thread),
+                                stringResource(id = R.string.title_history_forum),
                             ),
-                            color = AppTokens.text,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                            selectedTabIndex = pagerState.currentPage,
+                            onTabSelected = { index ->
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(index)
+                                }
+                            },
+                            modifier = Modifier.padding(
+                                start = 16.dp,
+                                end = 16.dp,
+                                top = 4.dp,
+                                bottom = 8.dp,
+                            ),
                         )
-                        if (useGlassTabRow) {
-                            // T2 试点：iOS 分段控件风格（灰色轨道 + 白色滑块）。
-                            // 回滚：`adb shell settings put global tieba_glass_tabrow 0`，或用下面那个
-                            // `else` 分支里的 M2 TabRow（代码原样保留）。
-                            GlassTabRow(
-                                tabs = listOf(
-                                    stringResource(id = R.string.title_history_thread),
-                                    stringResource(id = R.string.title_history_forum),
-                                ),
-                                selectedTabIndex = pagerState.currentPage,
-                                onTabSelected = { index ->
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(index)
-                                    }
-                                },
-                                modifier = Modifier.padding(
-                                    start = 16.dp,
-                                    end = 16.dp,
-                                    top = 4.dp,
-                                    bottom = 8.dp,
-                                ),
-                            )
-                        } else {
-                        // 回滚：M2 官方 TabRow（原来的 M2 分叉实现已随 Tabs.kt 删除）
+                    } else {
+                        // 回滚：M2 官方 TabRow
                         TabRow(
                             selectedTabIndex = pagerState.currentPage,
                             divider = {},
@@ -196,28 +169,28 @@ fun HistoryPage(
                                 )
                             }
                         }
-                        }
                     }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                ProvideNavigator(navigator = navigator) {
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier.fillMaxSize(),
-                        key = { it },
-                        verticalAlignment = Alignment.Top,
-                        userScrollEnabled = true,
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
                     ) {
-                        if (it == 0) {
-                            HistoryListPage(type = HistoryUtil.TYPE_THREAD)
-                        } else {
-                            HistoryListPage(type = HistoryUtil.TYPE_FORUM)
+                        ProvideNavigator(navigator = navigator) {
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxSize(),
+                                key = { it },
+                                verticalAlignment = Alignment.Top,
+                                userScrollEnabled = true,
+                            ) {
+                                if (it == 0) {
+                                    HistoryListPage(type = HistoryUtil.TYPE_THREAD)
+                                } else {
+                                    HistoryListPage(type = HistoryUtil.TYPE_FORUM)
+                                }
+                            }
                         }
                     }
-                }
                 }
             }
         }
