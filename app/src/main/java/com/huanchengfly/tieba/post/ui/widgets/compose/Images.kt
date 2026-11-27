@@ -58,6 +58,7 @@ import com.huanchengfly.tieba.post.utils.ImageUtil
 import com.huanchengfly.tieba.post.utils.NetworkUtil
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import androidx.compose.foundation.background
 
 fun shouldLoadImage(context: Context, skipNetworkCheck: Boolean): Boolean {
     val imageLoadSettings =
@@ -235,29 +236,30 @@ fun NetworkImage(
     var shouldLoad by remember { mutableStateOf(shouldLoadImage(context, skipNetworkCheck)) }
     val enableClick = remember(photoViewData, shouldLoad) { photoViewData != null || !shouldLoad }
 
-    val colorMask =
+    // BUG 5：原来用 Sketch 的 `MaskTransformation(Color(0x99000000))`，在深色模式下它会把**整张图涂黑**
+    // （结果仍是 `DisplayResult.Success`，所以日志上看不出错）。改成 Compose 层叠一层半透明黑，
+    // 零风险且与图片解码链路无关。
+    val darkenOverlay: androidx.compose.ui.graphics.Color? =
         if (AppTokens.isNightMode && context.appPreferences.imageDarkenWhenNightMode) {
-            MaskTransformation(Color.parseColor("#99000000"))
+            androidx.compose.ui.graphics.Color(0x99000000)
         } else null
 
     var layoutSize by remember { mutableStateOf(IntSize.Zero) }
 
     var layoutOffset by remember { mutableStateOf(Offset.Zero) }
 
-    val request = remember(imageUri, shouldLoad, colorMask) {
+    val request = remember(imageUri, shouldLoad) {
         DisplayRequest(context, imageUri) {
             placeholder(ThumbnailMemoryCacheStateImage())
             crossfade(fadeStart = false)
             if (!shouldLoad) {
                 depth(Depth.LOCAL)
             }
-            if (colorMask != null) {
-                transformations(colorMask)
-            }
         }
     }
 
     val state = rememberAsyncImageState()
+
     val imageAspectRatio by remember {
         derivedStateOf {
             with(state.result) {
@@ -328,6 +330,13 @@ fun NetworkImage(
             contentScale = contentScale,
             state = state,
         )
+        if (darkenOverlay != null) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(darkenOverlay)
+            )
+        }
     }
 }
 
