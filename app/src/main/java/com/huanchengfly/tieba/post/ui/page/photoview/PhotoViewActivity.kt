@@ -271,6 +271,7 @@ class PhotoViewActivity : BaseComposeActivityWithParcelable<PhotoViewData>() {
                         hostFill = Color.Black,
                         modifier = Modifier
                             .align(Alignment.TopStart)
+                            // insets：这里属于【顶栏/悬浮控件自身】，勿改（见 docs/INSETS-WHITELIST.md）
                             .statusBarsPadding()
                             .padding(start = 12.dp, top = 6.dp),
                     )

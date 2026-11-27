@@ -158,6 +158,7 @@ fun NavigationDrawerContent(
             Column(
                 modifier = Modifier
                     .layoutId(LayoutType.HEADER)
+                    // insets：这里属于【顶栏/悬浮控件自身】，勿改（见 docs/INSETS-WHITELIST.md）
                     .statusBarsPadding(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp) // NavigationRailVerticalPadding
@@ -312,6 +313,7 @@ fun NavigationRail(
         contentColor = AppTokens.unselected,
         modifier = Modifier
             .fillMaxHeight()
+            // insets：这里属于【顶栏/悬浮控件自身】，勿改（见 docs/INSETS-WHITELIST.md）
             .statusBarsPadding(),
         elevation = 0.dp,
         header = {

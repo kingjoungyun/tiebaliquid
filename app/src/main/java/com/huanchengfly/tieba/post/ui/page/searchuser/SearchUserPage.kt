@@ -160,6 +160,7 @@ fun SearchUserPage(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(GlasmioTheme.colors.groupedBackground)
+                        // insets：这里属于【顶栏/悬浮控件自身】，勿改（见 docs/INSETS-WHITELIST.md）
                         .statusBarsPadding(),
                 ) {
                     Row(

@@ -118,6 +118,7 @@ fun LoginPage(
                 val snackbarHostState = remember { SnackbarHostState() }
                 Column(modifier = Modifier.fillMaxSize()) {
                     // 大标题 + 悬浮返回（登录页原来是 M2 Toolbar，这里统一成二级页的大标题范式）
+                    // insets：这里属于【顶栏/悬浮控件自身】，勿改（见 docs/INSETS-WHITELIST.md）
                     Column(modifier = Modifier.statusBarsPadding()) {
                         Box(
                             modifier = Modifier

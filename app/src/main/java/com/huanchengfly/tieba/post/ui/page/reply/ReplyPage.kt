@@ -496,6 +496,7 @@ internal fun ReplyPageContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                // insets：这里属于【顶栏/悬浮控件自身】，勿改（见 docs/INSETS-WHITELIST.md）
                 .then(if (isDialog) Modifier else Modifier.statusBarsPadding())
                 .padding(start = 8.dp, end = 16.dp, top = 6.dp, bottom = 2.dp),
             verticalAlignment = Alignment.CenterVertically

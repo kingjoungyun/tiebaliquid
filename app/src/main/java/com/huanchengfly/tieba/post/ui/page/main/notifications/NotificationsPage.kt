@@ -211,6 +211,7 @@ private fun NotificationsHeader(
             // 而标题用的是 `AppTokens.text`（深色=纯白）→ 白底白字看不见。
             // `AppTokens.groupedBackground` 是全局、随明暗自适应的，用它对两个版本都正确。
             .background(AppTokens.groupedBackground)
+            // insets：这里属于【顶栏/悬浮控件自身】，勿改（见 docs/INSETS-WHITELIST.md）
             .then(if (withStatusBarPadding) Modifier.statusBarsPadding() else Modifier),
     ) {
         // 返回 / 搜索都关掉时整行不占高度（二级页的顶栏由 GlassPage 提供）

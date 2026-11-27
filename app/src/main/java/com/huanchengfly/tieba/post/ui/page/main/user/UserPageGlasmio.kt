@@ -326,6 +326,7 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
                     state = pullRefreshState,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
+                        // insets：这里属于【顶栏/悬浮控件自身】，勿改（见 docs/INSETS-WHITELIST.md）
                         .statusBarsPadding(),
                     backgroundColor = colors.elevatedBackground,
                     contentColor = colors.accent,

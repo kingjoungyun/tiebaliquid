@@ -578,6 +578,7 @@ private fun UserProfileContentNormal(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        // insets：这里属于【顶栏/悬浮控件自身】，勿改（见 docs/INSETS-WHITELIST.md）
                         .statusBarsPadding()
                         .height(52.dp)
                         .padding(horizontal = 8.dp),
