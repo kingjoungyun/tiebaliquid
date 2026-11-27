@@ -14,6 +14,8 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.AppSwitch
 import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
 import io.github.neoruaa.glasmio.ui.GlasmioSwitch
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 
 /**
  * 设置页的开关（Glasmio 优先）。
@@ -55,9 +57,13 @@ fun PrefsSwitch(
             // 已经在玻璃 host 里（例如将来的底部导航容器内）：直接采样真实页面
             switch()
         } else {
+            // BUG 4：host 的采样层是**矩形**，比开关胶囊大的直角部分会露出来（深色下看起来像
+            // 开关后面有一块白/浅色矩形）。这里把 host 裁成胶囊形状，采样层就完全被开关盖住了。
             GlasmioBackdropHost(
                 sampledColor = PrefsCardDefaults.surface(),
-                modifier = modifier.size(SwitchWidth, SwitchHeight),
+                modifier = modifier
+                    .size(SwitchWidth, SwitchHeight)
+                    .clip(RoundedCornerShape(percent = 50)),
             ) {
                 switch()
             }
