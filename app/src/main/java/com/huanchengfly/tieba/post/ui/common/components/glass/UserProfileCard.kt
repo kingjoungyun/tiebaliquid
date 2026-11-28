@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -173,15 +174,12 @@ fun UserProfileCard(
                             .clickable(onClick = onCopyIdClick),
                     )
                 }
-            }
-
-        }
-
-        // 数据行铺满卡片宽度：手机宽度只有 411dp，塞进「头像右侧那一列」会被挤成竖排。
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(top = 3.dp),
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    // 光学间距微调：两档行高（26sp vs 18sp）行内留白不同，实测「ID→数据」的墨迹间隙
+                    // 比「名字→ID」大 5px，往上挪 1.9dp 补齐（目标差 ≤ 2px）。
+                    modifier = Modifier.padding(top = 3.dp).offset(y = (-1.9).dp),
         ) {
             ProfileStat(
                 label = stringResource(id = R.string.text_stat_follow),
@@ -196,6 +194,10 @@ fun UserProfileCard(
                 label = stringResource(id = R.string.text_stat_agrees),
                 value = spec.agreeNum.getShortNumString(),
             )
+        }
+
+            }
+
         }
 
         Row(
