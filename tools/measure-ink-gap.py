@@ -2,7 +2,8 @@
 
 做法（按 lead 的要求，不猜坐标）：
 1. 从 `uiautomator dump` 的 XML 里取三处文本节点的 bounds（名字 / ID 行 / 数据行的「关注」标签）；
-2. 在每个节点的 bounds（左右各内缩 2px）内逐行扫描像素，找出「第一行有墨迹」和「最后一行有墨迹」；
+2. 在每个节点的 bounds（左右各内缩 2px、上下各外扩 `--pad`）内逐行扫描像素，
+   找出「第一行有墨迹」和「最后一行有墨迹」；背景色取窗口内出现次数最多的颜色；
 3. 间隙 = 下一块的首墨迹行 − 上一块的末墨迹行 − 1；
 4. 断言两者差 ≤ 2px。
 
@@ -30,15 +31,27 @@ def parse_bounds(text: str):
     return tuple(int(v) for v in m.groups())  # left, top, right, bottom
 
 
-def ink_rows(image: Image.Image, box, threshold: int = 60):
-    """返回 (首墨迹行, 末墨迹行)；用「与卡片主色差 > threshold」判定墨迹。"""
+def ink_rows(image: Image.Image, box, threshold: int = 60, pad: int = 2):
+    """返回 (首墨迹行, 末墨迹行)；用「与卡片主色差 > threshold」判定墨迹。
+
+    pad：把扫描窗口上下左右各外扩几个像素。墨迹盒紧贴字形时（见
+    UserProfileCard 的 InkLine），墨迹会顶到节点 bounds 的边上，外扩 2px 才不会切掉首末行。
+
+    背景色不再取「两个角」——那是老版本的取巧做法，墨迹贴边时角上就是字形本身。
+    改成取整个窗口里出现次数最多的颜色（卡片底色，字形只占少数像素）。
+    """
     left, top, right, bottom = box
-    left += 2
-    right -= 2
+    left += 2 - pad
+    right -= 2 - pad
+    top -= pad
+    bottom += pad
     px = image.load()
-    # 采样卡片主色（用右上角一小块，避开文字）
-    bg_samples = [px[right - 4, top + 2], px[left + 2, bottom - 2]]
-    bg = max(set(bg_samples), key=bg_samples.count)
+    hist = {}
+    for y in range(top, bottom, 2):
+        for x in range(left, right, 2):
+            c = px[x, y]
+            hist[c] = hist.get(c, 0) + 1
+    bg = max(hist, key=hist.get)
     rows = []
     for y in range(top, bottom):
         count = 0
@@ -60,6 +73,7 @@ def main() -> int:
     ap.add_argument('--name', default='特没谱先生')
     ap.add_argument('--meta-prefix', default='ID ')
     ap.add_argument('--stat', default='关注')
+    ap.add_argument('--pad', type=int, default=2, help='扫描窗口外扩像素（默认 2）')
     args = ap.parse_args()
 
     root = ET.parse(args.xml).getroot()
@@ -92,7 +106,7 @@ def main() -> int:
     for key, box in nodes.items():
         if key == 'avatar':
             continue
-        found = ink_rows(image, box)
+        found = ink_rows(image, box, pad=args.pad)
         if not found:
             print(f'{key} 的 bounds 内没找到墨迹', file=sys.stderr)
             return 2
@@ -104,7 +118,7 @@ def main() -> int:
     name_top_delta = ink['name'][0] - avatar_top
     stat_bottom_delta = avatar_bottom - ink['stat'][1]
     print(f'节点 bounds      : name={nodes["name"]} meta={nodes["meta"]} stat={nodes["stat"]}')
-    print(f'墨迹行（首,末）   : name={ink["name"]} meta={ink["meta"]} stat={ink["stat"]}')
+    print(f'墨迹行（首,末）   : name={ink["name"]} meta={ink["meta"]} stat={ink["stat"]}  (窗口外扩 {args.pad}px)')
     print(f'name→id 墨迹间隙  : {gap1} px')
     print(f'id→stat 墨迹间隙  : {gap2} px')
     print(f'差值             : {abs(gap1 - gap2)} px')
