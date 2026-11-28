@@ -62,6 +62,9 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.runtime.CompositionLocalProvider
+import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
 
 @Composable
 fun DialogScope.DialogPositiveButton(
@@ -372,7 +375,7 @@ fun Dialog(
                         bottom.linkTo(buttonsRef.top, margin = 16.dp, goneMargin = 0.dp)
                         start.linkTo(parent.start)
                         end.linkTo(parent.end)
-                        height = Dimension.preferredWrapContent
+                        height = Dimension.wrapContent
                     }
             ) {
                 content()
@@ -384,6 +387,10 @@ fun Dialog(
                         end.linkTo(parent.end)
                         bottom.linkTo(parent.bottom)
                         width = Dimension.fillToConstraints
+                        // 注意：这里**不能**再加 top.linkTo(contentRef.bottom)。
+                        // ConstraintLayout 里同时给上下两条约束又没给高度 = 按钮区被拉伸，
+                        // 卡片底部会出现一大块空白（本轮踩过）。底部对齐 parent.bottom + 卡片
+                        // 高度 wrapContent 时，按钮天然贴在内容下方。
                     }
                     .drawBehind {
                         // 内容与按钮区之间的发丝线（按钮自身再各画一条顶部线）
@@ -411,15 +418,20 @@ fun Dialog(
             )
             .padding(16.dp)
         if (dialogUsesGlassShell()) {
-            LiquidGlassSurface(
-                modifier = cardOuterModifier,
-                shape = RoundedCornerShape(26.dp),
-                // 苹果的 alert 是很厚的材质：Medium 档（文档口径「Medium 服务菜单和 alert」）
-                material = NavigationGlassMaterial.RegularMedium,
-                innerGlow = true,
-            ) {
-                // 正文可读性优先：玻璃下面垫一层 elevatedBackground 的高不透明度实底，
-                // 玻璃只负责质感 + 边缘高光/折射。不做这层的话背景文字会透上来（文字叠文字）。
+            val cardShape = RoundedCornerShape(26.dp)
+            // 关键：玻璃表面必须放在 matchParentSize() 层，**不参与测量**。
+            // 一旦把它当容器（内容放它里面），它会被外层撑成一屏高 —— 卡片底部就出现一大块空白
+            // （列表弹窗上最明显）。这里用 Box 让 cardOuterModifier（wrapContentHeight）决定高度，
+            // 玻璃与可读性实底都铺在它上面 —— 与 GlassDialogCard 同一套结构。
+            Box(modifier = cardOuterModifier) {
+                LiquidGlassSurface(
+                    modifier = Modifier.matchParentSize(),
+                    shape = cardShape,
+                    // 苹果的 alert 是很厚的材质：Medium 档（文档口径「Medium 服务菜单和 alert」）
+                    material = NavigationGlassMaterial.RegularMedium,
+                    innerGlow = true,
+                ) {}
+                // 可读性实底：玻璃只负责质感 + 边缘高光/折射，正文要能读清
                 Box(
                     modifier = Modifier
                         .matchParentSize()
@@ -427,10 +439,15 @@ fun Dialog(
                             color = AppTokens.windowBackground.copy(
                                 alpha = if (AppTokens.isNightMode) 0.72f else 0.62f
                             ),
-                            shape = RoundedCornerShape(24.dp),
+                            shape = cardShape,
                         )
                 )
-                cardContent(Modifier.fillMaxWidth().padding(vertical = 24.dp))
+                // 弹窗是独立 Window，不在页面的 backdrop host 里。
+                // 这里给卡片内容补一个 host，弹窗内**所有**玻璃控件（输入框 / 开关 / 勾选行）
+                // 就都有采样源，不用逐个兜底（同 PrefsSwitch 的修法）。
+                GlasmioBackdropHost(sampledColor = AppTokens.windowBackground) {
+                    cardContent(Modifier.fillMaxWidth())
+                }
             }
         } else {
             // 降级 / A-B：改造前的白框

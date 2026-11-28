@@ -349,8 +349,14 @@ class MainSmokeTest {
     private fun assertSingleVisibleTitle(page: String, title: String) {
         val nodes = device.findObjects(By.text(title))
         try {
+            // 读 visibleBounds 时节点可能已经因为重绘失效（StaleObjectException），
+            // 这种节点直接跳过——不能让它把断言变成 flaky 失败。
             val visible = nodes.filter { node ->
-                val bounds = node.visibleBounds
+                val bounds = try {
+                    node.visibleBounds
+                } catch (e: androidx.test.uiautomator.StaleObjectException) {
+                    null
+                }
                 bounds != null && bounds.top < device.displayHeight * 0.7f
             }
             assertTrue(

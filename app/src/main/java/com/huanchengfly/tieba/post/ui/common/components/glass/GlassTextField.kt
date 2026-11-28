@@ -254,7 +254,9 @@ fun GlassTextField(
                 Box(
                     modifier = Modifier
                         .matchParentSize()
-                        .border(width = 1.5.dp, color = AppTokens.primary, shape = corner)
+                        // 聚焦提示改成**细描边 + 半透明 accent**：1.5dp 实心蓝看起来像 M3 的
+                        // OutlinedTextField（弹窗里最明显），和玻璃材质不搭。
+                        .border(width = 1.dp, color = AppTokens.primary.copy(alpha = 0.55f), shape = corner)
                 )
             }
         }

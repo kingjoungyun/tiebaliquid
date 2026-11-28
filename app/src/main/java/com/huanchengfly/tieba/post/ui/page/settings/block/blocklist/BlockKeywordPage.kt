@@ -4,6 +4,8 @@ import com.huanchengfly.tieba.post.ui.common.icons.PhosphorIcons
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,7 +22,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Checkbox
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
@@ -74,6 +75,8 @@ import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassSnackbarHost
+import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.rounded.Check
 
 /**
  * 屏蔽词管理：独立页面，与「黑名单」分开。
@@ -113,12 +116,46 @@ fun BlockKeywordPage(
                 Column {
                     Text(text = stringResource(id = R.string.tip_add_keyword))
                     Spacer(modifier = Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = isRegex,
-                            onCheckedChange = { isRegex = it }
+                    // 方案 A：整行可点的「✓ 作为正则表达式」——勾选态用 accent 勾 + accent 文字，
+                    // 不再用 M2 Checkbox（蓝方块与玻璃弹窗割裂）。
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { isRegex = !isRegex }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier.size(22.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (isRegex) {
+                                Icon(
+                                    imageVector = PhosphorIcons["check"] ?: Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    tint = AppTokens.primary,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            } else {
+                                // 未选中：给一个空框，保留下手感（纯文字会让人不知道能点）
+                                Box(
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .border(
+                                            width = 1.5.dp,
+                                            color = AppTokens.textSecondary,
+                                            shape = RoundedCornerShape(4.dp),
+                                        )
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "作为正则表达式",
+                            fontSize = 15.sp,
+                            color = if (isRegex) AppTokens.primary else AppTokens.text,
                         )
-                        Text(text = "作为正则表达式")
                     }
                 }
             }
