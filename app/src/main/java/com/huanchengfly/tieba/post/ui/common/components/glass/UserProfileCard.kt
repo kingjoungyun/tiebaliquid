@@ -34,6 +34,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.huanchengfly.tieba.post.R
@@ -43,6 +45,9 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.utils.StringUtil
 import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
 import io.github.neoruaa.glasmio.core.GlasmioTheme
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 
 /**
  * 个人主页「资料卡」的数据：把 `User` 拍平成基础类型，便于**复用**（真实页面 + debug 预览）。
@@ -75,6 +80,8 @@ data class UserProfileCardSpec(
     val hasConcerned: Int,
     /** 吧务等级 / 神认证之类的一行徽标文字（没有就 null）。 */
     val badgeText: String? = null,
+    /** 仅 debug 预览用：本地 drawable 资源 id（非 null 时优先于 [portraitUrl]）。 */
+    val portraitRes: Int? = null,
 )
 
 /**
@@ -95,6 +102,8 @@ data class UserProfileCardSpec(
 @Composable
 fun UserProfileCard(
     spec: UserProfileCardSpec,
+    avatarSize: Dp = AvatarSize,
+    nameSp: TextUnit = 22.sp,
     onBtnClick: () -> Unit,
     onCopyIdClick: () -> Unit,
     onFollowListClick: () -> Unit,
@@ -125,23 +134,34 @@ fun UserProfileCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             // 头像：主页这一处 80dp 圆形（其它页面仍按原规则）
-            Avatar(
-                data = spec.portraitUrl,
-                size = AvatarSize,
-                contentDescription = stringResource(id = R.string.user_portrait),
-                modifier = Modifier
-                    .clip(CircleShape),
-            )
+            if (spec.portraitRes != null) {
+                // 预览用本地资源：ndroid.resource:// 在 Coil 里不稳，直接 painterResource
+                Image(
+                    painter = painterResource(id = spec.portraitRes),
+                    contentDescription = stringResource(id = R.string.user_portrait),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(avatarSize)
+                        .clip(CircleShape),
+                )
+            } else {
+                Avatar(
+                    data = spec.portraitUrl,
+                    size = avatarSize,
+                    contentDescription = stringResource(id = R.string.user_portrait),
+                    modifier = Modifier
+                        .clip(CircleShape),
+                )
+            }
 
             // 文字列高度钉死成头像高度（80dp），内部 SpaceBetween：
             // 名字顶 ↔ 头像顶、数据底 ↔ 头像底 自动对齐，中间的 ID 行落在正中。
+            // 容器高 = 头像高；SpaceBetween 把剩余空间均分 →
+            // 名字天然顶对齐、数据天然底对齐、两处间隙自动相等（不需要任何 offset / 公式）。
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .height(AvatarSize)
-                    // 整列上移 5.7dp：22sp 的行盒在墨迹上方留了 ~15px 的 leading，
-                    // 不补偿的话名字墨迹顶会比头像顶低 15px（实测）。
-                    .offset(y = (-5.7).dp),
+                    .height(avatarSize),
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
                 Row(
@@ -151,8 +171,8 @@ fun UserProfileCard(
                     Text(
                         text = spec.name,
                         style = LocalTextStyle.current.copy(
-                            fontSize = 22.sp,
-                            lineHeight = 26.sp,
+                            fontSize = nameSp,
+                            lineHeight = nameSp * 1.18f,
                             fontWeight = FontWeight.SemiBold,
                         ),
                         maxLines = 1,

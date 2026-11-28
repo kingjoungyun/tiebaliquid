@@ -25,6 +25,10 @@ import com.huanchengfly.tieba.post.ui.common.components.glass.UserProfileCard
 import com.huanchengfly.tieba.post.ui.common.components.glass.UserProfileCardSpec
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.unit.sp
 
 /**
  * **仅 debug 包**的弹窗预览（设置 → 关于组末尾的三行入口）。
@@ -83,10 +87,45 @@ fun DebugDialogPreviewDialogs(
             DialogNegativeButton(text = stringResource(id = R.string.button_cancel))
         },
     ) {
+        var avatarSize by remember { mutableStateOf(80) }
+        var nameSp by remember { mutableStateOf(22) }
+        // 仅 debug：三组对比（B = 22sp/80dp、B2 = 26sp/76dp、B3 = 30sp/80dp）
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(bottom = 4.dp),
+        ) {
+            listOf(22, 26, 30).forEach { size ->
+                Text(
+                    text = "名字 ${size}sp",
+                    fontSize = 13.sp,
+                    color = if (nameSp == size) AppTokens.primary else AppTokens.textSecondary,
+                    modifier = Modifier
+                        .clickable { nameSp = size }
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                )
+            }
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(bottom = 8.dp),
+        ) {
+            listOf(80, 76, 74).forEach { size ->
+                Text(
+                    text = "头像 ${size}dp",
+                    fontSize = 13.sp,
+                    color = if (avatarSize == size) AppTokens.primary else AppTokens.textSecondary,
+                    modifier = Modifier
+                        .clickable { avatarSize = size }
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                )
+            }
+        }
         // 弹窗是独立 Window，拿不到页面的 LiquidGlassTheme：不补这层的话
         // GlasmioTheme.colors 会退回**默认浅色**，深色下就是「白卡 + 白字」。
         LiquidGlassTheme(accent = AppTokens.primary) {
         UserProfileCard(
+            avatarSize = avatarSize.dp,
+            nameSp = nameSp.sp,
             spec = UserProfileCardSpec(
                 name = "特没谱先生",
                 sex = 2,
@@ -97,8 +136,9 @@ fun DebugDialogPreviewDialogs(
                 fansNum = 0,
                 agreeNum = 9055,
                 intro = "别泥吗点关注我！",
-                // 用现有 drawable 当头像，避免预览里是个空灰圆
-                portraitUrl = "android.resource://com.tieba/drawable/ic_launcher_new_round",
+                portraitUrl = "",
+                // 预览用本地 drawable，保证能看到真实图片（不是空灰圆）
+                portraitRes = com.huanchengfly.tieba.post.R.drawable.ic_launcher_new_round,
                 showBtn = true,
                 isSelf = false,
                 hasConcerned = 0,
