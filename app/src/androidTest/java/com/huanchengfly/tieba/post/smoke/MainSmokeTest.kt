@@ -301,6 +301,8 @@ class MainSmokeTest {
         // 判定方式：uiautomator 能读到同文本的两个节点，所以直接数节点。
         // 注意 tab 页的 dock 上也有同文本标签（「我的」「消息」），这里只数屏幕上方 70% 的节点。
 
+        SmokeReset.ensureForeground(device)
+
         // 1) 我的（tab 页）
         tapDock(R.string.title_user)
         awaitObject("我的页标题") {
@@ -347,10 +349,15 @@ class MainSmokeTest {
      * - 找不到节点则失败（说明标题根本没渲染）。
      */
     private fun assertSingleVisibleTitle(page: String, title: String) {
-        val nodes = device.findObjects(By.text(title))
-        try {
-            // 读 visibleBounds 时节点可能已经因为重绘失效（StaleObjectException），
-            // 这种节点直接跳过——不能让它把断言变成 flaky 失败。
+        // 节点会在重绘时失效（StaleObjectException → visibleBounds 读不到），也会在页面切换动画
+        // 中间态短暂"存在但不可见"。所以这里**整体重试**：每次重新 findObjects + 重新读 bounds，
+        // 而不是把失效节点当成"0 个可见"直接判失败（会变成假 flake）。
+        var lastVisible = -1
+        var lastTotal = -1
+        var lastBounds = ""
+        repeat(5) { attempt ->
+            val nodes = device.findObjects(By.text(title))
+            lastTotal = nodes.size
             val visible = nodes.filter { node ->
                 val bounds = try {
                     node.visibleBounds
@@ -359,14 +366,21 @@ class MainSmokeTest {
                 }
                 bounds != null && bounds.top < device.displayHeight * 0.7f
             }
-            assertTrue(
-                "$page：标题「$title」应只出现 1 次，实际 ${visible.size} 次" +
-                    "（节点总数 ${nodes.size}）",
-                visible.size == 1,
-            )
-        } finally {
+            lastVisible = visible.size
+            if (attempt == 0) {
+                lastBounds = device.findObjects(By.text(title)).joinToString(" | ") { n ->
+                    runCatching { n.visibleBounds.toString() }.getOrDefault("stale")
+                }
+            }
             nodes.forEach { it.recycle() }
+            if (lastVisible == 1) return
+            SystemClock.sleep(400)
         }
+        assertTrue(
+            "$page：标题「$title」应只出现 1 次，实际 $lastVisible 次" +
+                "（节点总数 $lastTotal；bounds=$lastBounds）",
+            lastVisible == 1,
+        )
     }
 
     @Test

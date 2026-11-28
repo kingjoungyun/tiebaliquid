@@ -62,10 +62,30 @@ object SmokeReset {
         }
         SystemClock.sleep(500)
 
+        // 5) 兜底：BACK 可能把 App 退到桌面（残留页数判断失误时），确保前台还是我们
+        ensureForeground(device)
+
         Log.i(
             TAG,
             "RESET theme=${if (ThemeUtil.isNightMode()) "dark" else "light"}" +
                 " action=$action back=$backs",
         )
+    }
+
+    /**
+     * 保证 [PACKAGE] 在前台；不在就重新冷启。
+     *
+     * 历史坑：`pageTitlesAreUnique` 曾因为多次 BACK 退到桌面而失败（失败现场是 Launcher 的图标），
+     * 断言本身没问题，是"App 根本不在前台"。这里把判定收敛成一个可复用的前置。
+     */
+    fun ensureForeground(device: UiDevice) {
+        val top = runCatching {
+            device.executeShellCommand("dumpsys activity activities | grep topResumedActivity")
+        }.getOrDefault("")
+        if (!top.contains(PACKAGE)) {
+            Log.i(TAG, "FOREGROUND not ours, relaunching. top=${top.take(160)}")
+            device.executeShellCommand("am start -W -f 0x10008000 -n $PACKAGE/$MAIN_ACTIVITY")
+            SystemClock.sleep(LAUNCH_SETTLE_MS)
+        }
     }
 }
