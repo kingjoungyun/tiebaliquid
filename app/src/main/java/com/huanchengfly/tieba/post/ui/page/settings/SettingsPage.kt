@@ -157,6 +157,7 @@ fun SettingsPage(
     val debugListDialog = rememberDialogState()
     val debugPromptDialog = rememberDialogState()
     val debugConfirmDialog = rememberDialogState()
+    val debugProfileCardDialog = rememberDialogState()
     // 安全模式的长解释（5 行）不再塞在行内，改作组尾 footnote：行内只剩「标题 + 开关」。
     val safeModeSummary = stringResource(id = R.string.summary_safe_mode)
 
@@ -681,6 +682,14 @@ fun SettingsPage(
                             onClick = { debugConfirmDialog.show() },
                         )
                     }
+                    prefsItem {
+                        TextPref(
+                            leadingIcon = { PrefsIcon("person.crop.circle") },
+                            enabled = true,
+                            title = "预览：个人主页资料卡",
+                            onClick = { debugProfileCardDialog.show() },
+                        )
+                    }
                 }
             }
         }
@@ -690,6 +699,7 @@ fun SettingsPage(
                 listDialogState = debugListDialog,
                 promptDialogState = debugPromptDialog,
                 confirmDialogState = debugConfirmDialog,
+                profileCardDialogState = debugProfileCardDialog,
             )
         }
 

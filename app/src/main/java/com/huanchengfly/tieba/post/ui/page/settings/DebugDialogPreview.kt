@@ -20,6 +20,11 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.DialogPositiveButton
 import com.huanchengfly.tieba.post.ui.widgets.compose.DialogState
 import com.huanchengfly.tieba.post.ui.widgets.compose.picker.ListSinglePicker
 import kotlinx.collections.immutable.persistentListOf
+import androidx.compose.foundation.layout.fillMaxWidth
+import com.huanchengfly.tieba.post.ui.common.components.glass.UserProfileCard
+import com.huanchengfly.tieba.post.ui.common.components.glass.UserProfileCardSpec
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 
 /**
  * **仅 debug 包**的弹窗预览（设置 → 关于组末尾的三行入口）。
@@ -36,6 +41,7 @@ fun DebugDialogPreviewDialogs(
     listDialogState: DialogState,
     promptDialogState: DialogState,
     confirmDialogState: DialogState,
+    profileCardDialogState: DialogState,
 ) {
     // ── 列表选择：4 项，默认选中第 2 项（验证 accent 文字 + 勾、无高亮底）
     var selected by remember { mutableStateOf(1) }
@@ -66,6 +72,41 @@ fun DebugDialogPreviewDialogs(
     ) {
         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
             Text("固定假数据：这里是一段说明文字，用来检查正文 15sp / 次级色的观感。")
+        }
+    }
+
+    // ── 个人主页资料卡（固定假数据，含「关注」按钮态）：不走真实用户导航也能验收布局
+    Dialog(
+        dialogState = profileCardDialogState,
+        title = { GlassDialogTitle { Text("资料卡预览") } },
+        buttons = {
+            DialogNegativeButton(text = stringResource(id = R.string.button_cancel))
+        },
+    ) {
+        // 弹窗是独立 Window，拿不到页面的 LiquidGlassTheme：不补这层的话
+        // GlasmioTheme.colors 会退回**默认浅色**，深色下就是「白卡 + 白字」。
+        LiquidGlassTheme(accent = AppTokens.primary) {
+        UserProfileCard(
+            spec = UserProfileCardSpec(
+                name = "特没谱先生",
+                sex = 2,
+                id = 1234567L,
+                ipAddress = "河北",
+                tbAge = "10.1",
+                concernNum = 220,
+                fansNum = 0,
+                agreeNum = 9055,
+                intro = "别泥吗点关注我！",
+                portraitUrl = "",
+                showBtn = true,
+                isSelf = false,
+                hasConcerned = 0,
+            ),
+            onBtnClick = {},
+            onCopyIdClick = {},
+            onFollowListClick = {},
+            modifier = Modifier.fillMaxWidth(),
+        )
         }
     }
 

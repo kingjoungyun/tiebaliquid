@@ -167,6 +167,8 @@ import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponent
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassScrollableTabRow
 import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabLabel
 import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
+import com.huanchengfly.tieba.post.ui.common.components.glass.UserProfileCard
+import com.huanchengfly.tieba.post.ui.common.components.glass.UserProfileCardSpec
 
 @ExperimentalMaterialApi
 @Destination
@@ -1117,248 +1119,38 @@ private fun UserProfileDetail(
     onCopyIdClick: () -> Unit = {},
 ) {
     val navigator = LocalNavigator.current
-    val containerModifier = if (glassmio) {
-        modifier
-            .clip(RoundedCornerShape(26.dp))
-            .background(GlasmioTheme.colors.elevatedBackground)
-            .padding(16.dp)
-    } else {
-        modifier
-    }
-    Column(
-        modifier = containerModifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-//            Avatar(
-//                data = StringUtil.getBigAvatarUrl(user.get { portrait }),
-//                size = 96.dp,
-//                contentDescription = null,
-//                modifier = Modifier.padding(bottom = 16.dp)
-//            )
-            Box(
-                modifier = Modifier
-                    .padding(bottom = if (glassmio) 0.dp else 16.dp)
-                    .size(if (glassmio) 64.dp else 96.dp)
-                    .clip(if (glassmio) RoundedCornerShape(16.dp) else CircleShape)
-            ) {
-                val imageUri = StringUtil.getBigAvatarUrl(user.get { portrait })
-                NetworkImage(
-                    imageUri = imageUri,
-                    contentDescription = stringResource(id = R.string.user_portrait),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .focusable(),
-                    //构造PhotoViewData复用NetworkImage，实现头像查看和下载
-                    photoViewData = PhotoViewData(
-                        picItems = listOf(
-                            PicItem(
-                                picId = "0",
-                                picIndex = 0,
-                                url = imageUri,
-                                originUrl = imageUri,
-                                showOriginBtn = false,
-                                originSize = 960
-                            )
-                        ),
-                        index = 0,
-                    ),
-                    enablePreview = true
-                )
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            if (showBtn) {
-                Button(
-                    onClick = onBtnClick,
-                    colors = if (user.get { has_concerned } == 0 || isSelf) {
-                        ButtonDefaults.buttonColors()
-                    } else {
-                        ButtonDefaults.outlinedButtonColors()
-                    },
-                    border = if (user.get { has_concerned } == 0 || isSelf) {
-                        null
-                    } else {
-                        ButtonDefaults.outlinedBorder
-                    },
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        if (isSelf) {
-                            Icon(imageVector = PhosphorIcons["pencil-simple"] ?: Icons.Rounded.Edit, contentDescription = null)
-                            Text(text = stringResource(id = R.string.menu_edit_info))
-                        } else if (user.get { has_concerned } == 0) {
-                            Icon(imageVector = PhosphorIcons["plus"] ?: Icons.Rounded.Add, contentDescription = null)
-                            Text(text = stringResource(id = R.string.button_follow))
-                        } else {
-                            Text(text = stringResource(id = R.string.button_unfollow))
-                        }
-                    }
-                }
-            }
-        }
-        Text(
-            text = StringUtil.getUsernameAnnotatedString(
-                LocalContext.current,
-                user.get { name },
-                user.get { nameShow },
-                LocalContentColor.current
-            ),
-            style = if (glassmio) {
-                LocalTextStyle.current.copy(fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
-            } else {
-                MaterialTheme.typography.h6
-            },
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            fontWeight = FontWeight.Bold
-        )
-        ProvideTextStyle(value = MaterialTheme.typography.body2) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.height(IntrinsicSize.Min)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.clickable {
-                        navigator.navigate(FollowListPageDestination(user.get { id }))
-                    }
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.text_stat_follow),
-                        color = AppTokens.textSecondary
-                    )
-                    Text(
-                        text = user.get { concern_num }.getShortNumString(),
-                        color = AppTokens.text,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                HorizontalDivider(modifier = Modifier.fillMaxHeight())
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.text_stat_fans),
-                        color = AppTokens.textSecondary
-                    )
-                    Text(
-                        text = user.get { fans_num }.getShortNumString(),
-                        color = AppTokens.text,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                HorizontalDivider(modifier = Modifier.fillMaxHeight())
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.text_stat_agrees),
-                        color = AppTokens.textSecondary
-                    )
-                    Text(
-                        text = user.get { total_agree_num }.getShortNumString(),
-                        color = AppTokens.text,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-        Text(
-            text = user.get { intro }.takeIf { it.isNotEmpty() }
-                ?: stringResource(id = R.string.tip_no_intro),
-            style = MaterialTheme.typography.body2,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        user.getNullableImmutable { bazhu_grade }
-            ?.takeIf { it.get { desc }.isNotBlank() }
-            ?.let {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        imageVector = PhosphorIcons["seal-check"] ?: Icons.Rounded.Verified,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = AppTokens.primary,
-                    )
-                    Text(
-                        text = it.get { desc },
-                        style = MaterialTheme.typography.body2,
-                        color = AppTokens.primary,
-                    )
-                }
-            } ?: user.getNullableImmutable { new_god_data }
+    // 资料区拍平成 UserProfileCardSpec，交给 UserProfileCard 渲染（预览入口复用同一个组件）。
+    val badgeText = user.getNullableImmutable { bazhu_grade }
+        ?.takeIf { it.get { desc }.isNotBlank() }
+        ?.get { desc }
+        ?: user.getNullableImmutable { new_god_data }
             ?.takeIf { it.get { status } != 0 }
-            ?.let {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        imageVector = PhosphorIcons["seal-check"] ?: Icons.Rounded.Verified,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = AppTokens.primary,
-                    )
-                    Text(
-                        text = stringResource(id = R.string.text_god_verify, it.get { field_name }),
-                        style = MaterialTheme.typography.body2,
-                        color = AppTokens.primary,
-                    )
-                }
-            }
-        val sexEmoji = when (user.get { sex }) {
-            1 -> "♂"
-            2 -> "♀"
-            else -> "?"
-        }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Chip(text = sexEmoji, invertColor = true)
-            Chip(
-                // 显示与复制必须一致：这里显示的就是「用户 ID」(user.id)。
-                // 查人接口 profile/friend_uid 认的正是这个 ID，所以复制这条即可闭环查询。
-                text = stringResource(
-                    id = R.string.text_profile_user_id,
-                    user.get { id }.toString()
-                ),
-                appendIcon = {
-                    Icon(
-                        imageVector = PhosphorIcons["copy"] ?: Icons.Outlined.ContentCopy,
-                        contentDescription = null
-                    )
-                },
-                onClick = onCopyIdClick
-            )
-            if (user.get { ip_address }.isNotEmpty()) {
-                Chip(
-                    text = stringResource(
-                        id = R.string.text_profile_ip_location,
-                        user.get { ip_address }
-                    ),
-                )
-            }
-            Chip(
-                text = stringResource(
-                    id = R.string.text_profile_tb_age,
-                    user.get { tb_age }
-                )
-            )
-        }
-    }
+            ?.let { stringResource(id = R.string.text_god_verify, it.get { field_name }) }
+    val spec = UserProfileCardSpec(
+        name = user.get { name },
+        sex = user.get { sex },
+        id = user.get { id },
+        ipAddress = user.get { ip_address },
+        tbAge = user.get { tb_age },
+        concernNum = user.get { concern_num },
+        fansNum = user.get { fans_num },
+        agreeNum = user.get { total_agree_num },
+        intro = user.get { intro },
+        portraitUrl = StringUtil.getBigAvatarUrl(user.get { portrait }),
+        showBtn = showBtn,
+        isSelf = isSelf,
+        hasConcerned = user.get { has_concerned },
+        badgeText = badgeText,
+    )
+    UserProfileCard(
+        spec = spec,
+        onBtnClick = onBtnClick,
+        onCopyIdClick = onCopyIdClick,
+        onFollowListClick = {
+            navigator.navigate(FollowListPageDestination(user.get { id }))
+        },
+        modifier = modifier,
+    )
 }
 
 /**
