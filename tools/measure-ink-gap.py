@@ -76,14 +76,22 @@ def main() -> int:
             if box and ('stat' not in nodes or box[1] < nodes['stat'][1]):
                 nodes['stat'] = box
 
-    missing = [k for k in ('name', 'meta', 'stat') if k not in nodes]
+    for node in root.iter('node'):
+        if (node.get('content-desc') or '') == '用户头像':
+            nodes['avatar'] = parse_bounds(node.get('bounds'))
+            break
+
+    missing = [k for k in ('name', 'meta', 'stat', 'avatar') if k not in nodes]
     if missing:
         print(f'缺少节点：{missing}', file=sys.stderr)
         return 2
 
     image = Image.open(args.shot).convert('RGB')
     ink = {}
+    # 头像只取 bounds（用来对齐），不做墨迹检测（它是照片，没有统一背景色）
     for key, box in nodes.items():
+        if key == 'avatar':
+            continue
         found = ink_rows(image, box)
         if not found:
             print(f'{key} 的 bounds 内没找到墨迹', file=sys.stderr)
@@ -92,14 +100,23 @@ def main() -> int:
 
     gap1 = ink['meta'][0] - ink['name'][1] - 1
     gap2 = ink['stat'][0] - ink['meta'][1] - 1
+    avatar_top, avatar_bottom = nodes['avatar'][1], nodes['avatar'][3]
+    name_top_delta = ink['name'][0] - avatar_top
+    stat_bottom_delta = avatar_bottom - ink['stat'][1]
     print(f'节点 bounds      : name={nodes["name"]} meta={nodes["meta"]} stat={nodes["stat"]}')
     print(f'墨迹行（首,末）   : name={ink["name"]} meta={ink["meta"]} stat={ink["stat"]}')
     print(f'name→id 墨迹间隙  : {gap1} px')
     print(f'id→stat 墨迹间隙  : {gap2} px')
     print(f'差值             : {abs(gap1 - gap2)} px')
-    ok = abs(gap1 - gap2) <= 2
-    print('[OK] 两处视觉间隙一致（差 ≤ 2px）' if ok else '[FAIL] 两处视觉间隙差 > 2px')
-    return 0 if ok else 1
+    print(f'名字墨迹顶 - 头像顶 : {name_top_delta} px（要求 |Δ| ≤ 2）')
+    print(f'头像底 - 数据墨迹底 : {stat_bottom_delta} px（要求 |Δ| ≤ 2）')
+    ok_gap = abs(gap1 - gap2) <= 2
+    ok_top = abs(name_top_delta) <= 2
+    ok_bottom = abs(stat_bottom_delta) <= 2
+    print(('[OK] ' if ok_gap else '[FAIL] ') + '两处视觉间隙差 ≤ 2px')
+    print(('[OK] ' if ok_top else '[FAIL] ') + '名字顶与头像顶平齐（±2px）')
+    print(('[OK] ' if ok_bottom else '[FAIL] ') + '数据底与头像底平齐（±2px）')
+    return 0 if (ok_gap and ok_top and ok_bottom) else 1
 
 
 if __name__ == '__main__':

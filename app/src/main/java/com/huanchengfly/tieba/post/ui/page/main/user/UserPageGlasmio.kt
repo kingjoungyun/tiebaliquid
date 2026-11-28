@@ -178,7 +178,7 @@ internal fun GlasmioUserPage(viewModel: UserViewModel) {
                         // 底部再叠加 LocalMainTabBottomInset（MyLazyColumn 自动加），让最后一行能滚到 dock 上方。
                         bottom = 24.dp,
                     ),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(com.huanchengfly.tieba.post.ui.page.main.home.PostCardTokens.CardGap),
                 ) {
                     item(key = "mine-title") {
                         PrefsLargeTitle(text = stringResource(id = R.string.mine_title))

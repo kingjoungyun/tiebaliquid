@@ -855,7 +855,9 @@ private fun ImmutableHolder<Media>.singleAspectRatio(): Float {
 }
 
 /** 卡片内部的所有尺寸 / 间距，集中一处，方便和设计稿逐条对。 */
-private object PostCardTokens {
+internal object PostCardTokens {
+    /** 列表里相邻卡片的间距（首页 / 吧页 / 主页统一）。 */
+    val CardGap = 10.dp
     val CardRadius = 26.dp
     val AvatarSize = 40.dp
     val AvatarGutter = 10.dp

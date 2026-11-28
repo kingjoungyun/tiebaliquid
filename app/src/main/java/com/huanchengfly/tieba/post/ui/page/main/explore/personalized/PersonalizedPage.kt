@@ -385,7 +385,7 @@ private fun TwitterFeedList(
             top = 10.dp,
             bottom = 16.dp,
         ),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(com.huanchengfly.tieba.post.ui.page.main.home.PostCardTokens.CardGap),
     ) {
         items(
             items = visibleItems,

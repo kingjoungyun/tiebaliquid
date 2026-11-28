@@ -78,6 +78,7 @@ class PixelRegressionTest {
         Log.i(TAG, "ENTER statusBarMatchesPageBackground")
         var pages = 0
         var asserts = 0
+        var retried = 0
         try {
             forEachMainPage { pageName ->
                 pages++
@@ -113,6 +114,7 @@ class PixelRegressionTest {
                     // 超阈值时等 800ms 重采样一次；**重试必须打日志**，两次都超才算失败
                     // （这不是放宽断言：真实白条重试后仍然超）。
                     if (delta > LUMA_TOLERANCE) {
+                        retried++
                         SystemClock.sleep(RETRY_SETTLE_MS)
                         val again = screenshot()
                         try {
@@ -153,6 +155,8 @@ class PixelRegressionTest {
                 }
             }
         } finally {
+            val hitRate = if (pages == 0) 0 else retried * 100 / pages
+            Log.i(TAG, "RETRY stats: attempts=$pages retried=$retried hitRate=${hitRate}%")
             Log.i(TAG, "EXIT statusBarMatchesPageBackground pages=$pages asserts=$asserts")
         }
     }

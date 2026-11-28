@@ -97,7 +97,8 @@ fun DebugDialogPreviewDialogs(
                 fansNum = 0,
                 agreeNum = 9055,
                 intro = "别泥吗点关注我！",
-                portraitUrl = "",
+                // 用现有 drawable 当头像，避免预览里是个空灰圆
+                portraitUrl = "android.resource://com.tieba/drawable/ic_launcher_new_round",
                 showBtn = true,
                 isSelf = false,
                 hasConcerned = 0,

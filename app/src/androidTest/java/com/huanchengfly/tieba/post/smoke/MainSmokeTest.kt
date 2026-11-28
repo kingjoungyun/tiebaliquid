@@ -208,7 +208,8 @@ class MainSmokeTest {
         // 资料区（ID 行）是主页独有的结构；昵称本身是网络内容，不做文字断言。
         assertTrue(
             "用户主页应有资料区（ID 行）",
-            device.hasObject(By.text(Pattern.compile("ID: .+")))
+            // v1.9.2 起资料区的 ID 文案改成「ID xxx」（去掉冒号）
+                device.hasObject(By.text(Pattern.compile("ID .+")))
         )
     }
 

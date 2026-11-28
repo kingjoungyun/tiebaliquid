@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -49,6 +50,15 @@ import io.github.neoruaa.glasmio.core.GlasmioTheme
  * 为什么单独抽出来：预览入口要能显示完整资料区（含关注按钮状态），但造一个假 `User`
  * 需要填几十个接口字段。拍平成 [UserProfileCardSpec] 后，预览只要给几个字符串。
  */
+/** 头像尺寸（主页这一处 80dp 圆形）。 */
+val AvatarSize = 80.dp
+
+/** 「名字 → ID 行」的布局间距（SpaceBetween 之外的固定补偿，实测墨迹间隙 ≈ 8dp）。 */
+private val META_TOP_GAP = 3.5.dp
+
+/** 「ID 行 → 数据行」的布局间距。 */
+private val STAT_TOP_GAP = 3.dp
+
 data class UserProfileCardSpec(
     val name: String,
     val sex: Int,
@@ -117,15 +127,22 @@ fun UserProfileCard(
             // 头像：主页这一处 80dp 圆形（其它页面仍按原规则）
             Avatar(
                 data = spec.portraitUrl,
-                size = 80.dp,
+                size = AvatarSize,
                 contentDescription = stringResource(id = R.string.user_portrait),
                 modifier = Modifier
                     .clip(CircleShape),
             )
 
+            // 文字列高度钉死成头像高度（80dp），内部 SpaceBetween：
+            // 名字顶 ↔ 头像顶、数据底 ↔ 头像底 自动对齐，中间的 ID 行落在正中。
             Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(3.5.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(AvatarSize)
+                    // 整列上移 5.7dp：22sp 的行盒在墨迹上方留了 ~15px 的 leading，
+                    // 不补偿的话名字墨迹顶会比头像顶低 15px（实测）。
+                    .offset(y = (-5.7).dp),
+                verticalArrangement = Arrangement.SpaceBetween,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -177,9 +194,6 @@ fun UserProfileCard(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    // 光学间距微调：两档行高（26sp vs 18sp）行内留白不同，实测「ID→数据」的墨迹间隙
-                    // 比「名字→ID」大 5px，往上挪 1.9dp 补齐（目标差 ≤ 2px）。
-                    modifier = Modifier.padding(top = 3.dp).offset(y = (-1.9).dp),
         ) {
             ProfileStat(
                 label = stringResource(id = R.string.text_stat_follow),

@@ -194,7 +194,7 @@ private fun ThreadList(
             top = 10.dp,
             bottom = navigationBarBottom + 16.dp,
         ),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(com.huanchengfly.tieba.post.ui.page.main.home.PostCardTokens.CardGap),
     ) {
         if (!forumRuleTitle.isNullOrEmpty()) {
             item(key = "ForumRule") {
