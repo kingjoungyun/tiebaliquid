@@ -155,7 +155,8 @@ fun ProfileHeaderTabs(
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .height(48.dp)
+                                    // 40dp：比原来的 48dp 更贴近玻璃轨道(36dp)的高度
+                                    .height(40.dp)
                                     .padding(horizontal = 16.dp)
                             ) {
                                 Text(

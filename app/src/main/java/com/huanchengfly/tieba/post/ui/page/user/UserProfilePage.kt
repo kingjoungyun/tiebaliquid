@@ -571,6 +571,10 @@ private fun UserProfileContentNormal(
     }
 
     AppScaffold(
+        // 页面底用 groupedBackground（#F2F2F7 / 黑）：资料卡是白卡，白压白就看不见边界了。
+        // 原来 AppScaffold 默认吃 MaterialTheme.colors.background（浅色 = 纯白），
+        // 把 GlassPageHost 那层 #F2F2F7 盖掉了 —— 这就是「卡片和页面底色一样」的根因。
+        backgroundColor = AppTokens.groupedBackground,
         topBar = {
             if (glassmio) {
                 Box(
@@ -862,6 +866,8 @@ private fun UserProfileContentExpanded(
     val navigator = LocalNavigator.current
 
     AppScaffold(
+        // 同 UserProfileContentNormal：灰底才能看出白卡边界
+        backgroundColor = AppTokens.groupedBackground,
         topBar = {
             UserProfileToolbar(
                 user = user,

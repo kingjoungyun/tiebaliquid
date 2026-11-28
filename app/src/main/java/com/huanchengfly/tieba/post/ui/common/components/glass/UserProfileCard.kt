@@ -1,6 +1,7 @@
 package com.huanchengfly.tieba.post.ui.common.components.glass
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -206,6 +207,9 @@ fun UserProfileCard(
         modifier = modifier
             .clip(RoundedCornerShape(26.dp))
             .background(colors.elevatedBackground)
+            // 1dp 细描边：浅色下白卡叠在 #F2F2F7 页底上本来就有对比，但深色下
+            // 卡片(#1C1C1E)与页底(纯黑)只差一点，加一道 8%/10% 的 hairline 才「一眼看出边界」。
+            .border(width = 1.dp, color = colors.subtleStroke, shape = RoundedCornerShape(26.dp))
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {

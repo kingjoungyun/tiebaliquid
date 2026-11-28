@@ -21,6 +21,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.DialogState
 import com.huanchengfly.tieba.post.ui.widgets.compose.picker.ListSinglePicker
 import kotlinx.collections.immutable.persistentListOf
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import com.huanchengfly.tieba.post.ui.common.components.glass.ProfileAction
 import com.huanchengfly.tieba.post.ui.common.components.glass.ProfileActionPill
 import com.huanchengfly.tieba.post.ui.common.components.glass.ProfileHeaderTabs
@@ -29,7 +30,10 @@ import com.huanchengfly.tieba.post.ui.common.components.glass.UserProfileCardSpe
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.unit.sp
@@ -91,11 +95,12 @@ fun DebugDialogPreviewDialogs(
             DialogNegativeButton(text = stringResource(id = R.string.button_cancel))
         },
     ) {
-        var avatarSize by remember { mutableStateOf(80) }
+        // 头像固定 80dp（AvatarSize）：v1.9.2 已定「资料卡头像 = 80dp」，不再做 76/74 变体
+        val avatarSize = 80
         var nameSp by remember { mutableStateOf(22) }
         var action by remember { mutableStateOf(ProfileAction.Follow) }
         var tabIndex by remember { mutableStateOf(0) }
-        // 仅 debug：三组对比（B = 22sp/80dp、B2 = 26sp/76dp、B3 = 30sp/80dp）
+        // 名字字号三档（22 / 26 / 30sp）；头像已固定 80dp，胶囊三态在下面一行
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(bottom = 4.dp),
@@ -106,23 +111,12 @@ fun DebugDialogPreviewDialogs(
                     fontSize = 13.sp,
                     color = if (nameSp == size) AppTokens.primary else AppTokens.textSecondary,
                     modifier = Modifier
-                        .clickable { nameSp = size }
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                )
-            }
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(bottom = 4.dp),
-        ) {
-            listOf(80, 76, 74).forEach { size ->
-                Text(
-                    text = "头像 ${size}dp",
-                    fontSize = 13.sp,
-                    color = if (avatarSize == size) AppTokens.primary else AppTokens.textSecondary,
-                    modifier = Modifier
-                        .clickable { avatarSize = size }
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                        // 28dp：debug 开关不该按 48dp 触摸区撑高，否则弹窗放不下卡片 + tab 行
+                        .height(28.dp)
+                        // pointerInput 而不是 clickable：clickable 会按 48dp 最小触摸区撑高，
+                        // 弹窗高度不够时会把下面的资料卡挤扁（实测卡片少 62px、数据行只剩 1px）
+                        .pointerInput(size) { detectTapGestures { nameSp = size } }
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
                 )
             }
         }
@@ -141,8 +135,10 @@ fun DebugDialogPreviewDialogs(
                     fontSize = 13.sp,
                     color = if (action == a) AppTokens.primary else AppTokens.textSecondary,
                     modifier = Modifier
-                        .clickable { action = a }
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                        // 28dp：debug 开关不该按 48dp 触摸区撑高，否则弹窗放不下卡片 + tab 行
+                        .height(28.dp)
+                        .pointerInput(a) { detectTapGestures { action = a } }
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
                 )
             }
         }
@@ -153,6 +149,9 @@ fun DebugDialogPreviewDialogs(
         // 少了这层，预览会用系统兜底 CJK 字体，行盒 1.42em vs 真实页 1.172em —— 量出来的
         // 墨迹位置和真实页完全不是一回事（2026-11-28 踩过）。
         HarmonyTextProvider {
+        // 注意：这里**不**模拟页底灰（groupedBackground）。弹窗高度有限，多一层灰底 + 上下留白
+        // 会把资料卡压扁（实测卡片少 62px、数据行只剩 1px）。卡片边界请在真实主页看：
+        // 真实页 AppScaffold 已经是 groupedBackground（见 UserProfilePage）。
         Column(modifier = Modifier.fillMaxWidth()) {
         UserProfileCard(
             avatarSize = avatarSize.dp,
