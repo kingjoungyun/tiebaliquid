@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.huanchengfly.tieba.post.BuildConfig
 import com.huanchengfly.tieba.post.R
+import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import com.huanchengfly.tieba.post.dataStore
 import com.huanchengfly.tieba.post.models.database.Account
 import com.huanchengfly.tieba.post.ui.common.prefs.PrefsLargeTitle
@@ -152,6 +153,10 @@ fun SettingsPage(
     val groupRead = stringResource(id = R.string.settings_group_read)
     val groupGeneral = stringResource(id = R.string.mine_group_general)
     val groupAbout = stringResource(id = R.string.settings_group_about)
+    // 仅 debug：弹窗预览用的三个状态
+    val debugListDialog = rememberDialogState()
+    val debugPromptDialog = rememberDialogState()
+    val debugConfirmDialog = rememberDialogState()
     // 安全模式的长解释（5 行）不再塞在行内，改作组尾 footnote：行内只剩「标题 + 开关」。
     val safeModeSummary = stringResource(id = R.string.summary_safe_mode)
 
@@ -649,7 +654,43 @@ fun SettingsPage(
                         },
                     )
                 }
+                // ── 仅 debug：弹窗预览（列表选择 / 文本输入 / 确认）─────────────
+                // 目的：UI 验收时不用再靠业务入口（登录态 / 收藏 / 关注吧）才能截到弹窗。
+                if (BuildConfig.DEBUG) {
+                    prefsItem {
+                        TextPref(
+                            leadingIcon = { PrefsIcon("rectangle.on.rectangle") },
+                            enabled = true,
+                            title = "预览：列表选择弹窗",
+                            onClick = { debugListDialog.show() },
+                        )
+                    }
+                    prefsItem {
+                        TextPref(
+                            leadingIcon = { PrefsIcon("rectangle.on.rectangle") },
+                            enabled = true,
+                            title = "预览：文本输入弹窗",
+                            onClick = { debugPromptDialog.show() },
+                        )
+                    }
+                    prefsItem {
+                        TextPref(
+                            leadingIcon = { PrefsIcon("rectangle.on.rectangle") },
+                            enabled = true,
+                            title = "预览：确认弹窗",
+                            onClick = { debugConfirmDialog.show() },
+                        )
+                    }
+                }
             }
+        }
+
+        if (BuildConfig.DEBUG) {
+            DebugDialogPreviewDialogs(
+                listDialogState = debugListDialog,
+                promptDialogState = debugPromptDialog,
+                confirmDialogState = debugConfirmDialog,
+            )
         }
 
         // 有新版：弹玻璃风格对话框（显示版本号，「确定」打开发布页）

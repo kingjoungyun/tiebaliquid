@@ -62,22 +62,28 @@
 - **冒烟跑完 `com.tieba` 会被卸载**（UTP 行为），继续截图前要重新 `adb install -r`；
 - 截图前用 `dumpsys activity activities | Select-String topResumedActivity` 确认前台是 `com.tieba`。
 
-## 6. 玻璃表面不能当「容器」用（弹窗那次踩的坑）
+## 6. 玻璃容器有两个「会撑满」的坑（弹窗连踩三次）
 
-`LiquidGlassSurface` / `GlassComponentSurface` 如果被当成容器（**内容写在它的 content lambda 里**），
-它会被外层约束撑满可用高度 —— 在弹窗里的表现就是「卡片一屏高 + 内容与按钮之间一大片空白」。
+弹窗卡片一度变成「一屏高的白板、圆角全丢」，最后定位到**两个**独立原因，都跟「谁决定高度」有关：
 
-正确写法（`Dialog` / `GlassDialogCard` 现在都是这样）：
+### 6.1 LiquidGlassSurface / GlassComponentSurface 不能当容器
+内容写在它的 content lambda 里时，它会被外层约束撑满可用高度。
+必须：玻璃表面 matchParentSize() 铺底，内容放在普通 wrapContentHeight() 容器里。
 
-```kotlin
-Box(modifier = Modifier.wrapContentHeight()) {          // 高度由内容决定
-    LiquidGlassSurface(Modifier.matchParentSize(), shape = cardShape) {}   // 只铺底，不参与测量
-    Box(Modifier.matchParentSize().background(readableTint, cardShape))    // 可读性实底
-    Column(Modifier.wrapContentHeight()) { /* 真正的内容 */ }
+### 6.2 GlasmioBackdropHost 也不能当容器
+它的实现是 Box { Box(Modifier.fillMaxSize().layerBackdrop(...)) + overlayContent } ——
+里面那个 **illMaxSize 子项**会把外层 Box 的测量结果也撑满。也就是说：
+
+`kotlin
+Box(Modifier.wrapContentHeight()) {
+    GlasmioBackdropHost(sampledColor = …) {   // ← 卡片会被撑成一屏高
+        Column { … }
+    }
 }
-```
+`
 
-规则：
-- **玻璃表面 + 可读性实底一律 `matchParentSize()`**；
-- 决定高度的那层必须是 `wrapContentHeight()` 的普通 `Column`/`Box`；
-- 弹窗里还要给内容补 `GlasmioBackdropHost`（独立 Window 不在页面 host 里）。
+**弹窗里的正确做法**：卡片直接用实底（ackground(windowBackground) + clip(26dp) + 1dp divider 描边），
+玻璃控件（GlassTextField 等）自己会开 host，**不要**再给卡片内容包一层 GlasmioBackdropHost。
+
+> 需要「卡片内一整块玻璃」的场景（例如 GlassDialogCard），用 GlassComponentSurface(modifier = 明确尺寸)
+> 那条路径，它把尺寸 modifier 传给宿主，不会撑满。

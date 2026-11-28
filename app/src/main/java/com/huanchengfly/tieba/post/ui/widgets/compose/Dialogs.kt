@@ -65,6 +65,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.CompositionLocalProvider
 import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 
 @Composable
 fun DialogScope.DialogPositiveButton(
@@ -316,149 +320,91 @@ fun Dialog(
     content: @Composable (DialogScope.() -> Unit),
 ) {
     val windowWidthSizeClass = LocalWindowSizeClass.current.widthSizeClass
+    val compact = windowWidthSizeClass == WindowWidthSizeClass.Compact
+    val dialogScope = remember(dialogState) {
+        DialogScope(onDismiss = { dialogState.show = false })
+    }
     BaseDialog(
         modifier = modifier,
         dialogState = dialogState,
         onDismiss = onDismiss,
-        direction = if (windowWidthSizeClass == WindowWidthSizeClass.Compact) {
-            DirectionState.BOTTOM
-        } else {
-            DirectionState.CENTER
-        },
+        direction = if (compact) DirectionState.BOTTOM else DirectionState.CENTER,
         cancelable = cancelable,
         cancelableOnTouchOutside = cancelableOnTouchOutside,
     ) {
-        // P2：共享弹窗外壳（玻璃 / 老白框共用同一份布局，只是外壳不同）。
-        // 所有 AlertDialog / ConfirmDialog / PromptDialog / TimePickerDialog 都走这里，
-        // 所以玻璃化只改这一处，业务调用点零改动。
-        val cardContent: @Composable (Modifier) -> Unit = { cardModifier ->
-            ConstraintLayout(modifier = cardModifier) {
-            val (titleRef, contentRef, buttonsRef) = createRefs()
-            Column(
-                modifier = Modifier
-                    .constrainAs(titleRef) {
-                        top.linkTo(parent.top)
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                        width = Dimension.fillToConstraints
-                        visibility = if (title == null) {
-                            Visibility.Gone
-                        } else {
-                            Visibility.Visible
-                        }
-                    }
-            ) {
-                if (title != null) {
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 24.dp)
-                            .align(Alignment.CenterHorizontally)
-                    ) {
-                        ProvideTextStyle(
-                            value = androidx.compose.ui.text.TextStyle(
-                                fontSize = 17.sp,
-                                lineHeight = 22.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = AppTokens.text,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            )
+        // 卡片形态（v1.9.2）：**实底卡片**，不再用 LiquidGlassSurface 铺底。
+        //
+        // 为什么放弃玻璃底：`LiquidGlassSurface` 一旦参与测量（哪怕是 matchParentSize 铺在
+        // Box 里），在 `AnyPopDialog` 里都会被撑成整屏高 —— 卡片变成「一张通栏白/黑板」，
+        // 圆角和内边距全丢（本轮踩了两次，列表/确认弹窗都复现）。iOS 的 alert 本身就是
+        // 近乎不透明的卡，实底 + 1dp 发丝描边已经足够，且测量行为完全可预期。
+        //
+        // 卡片里仍然给内容补 `GlasmioBackdropHost`：输入框 / 开关 / 勾选行这些玻璃控件
+        // 需要采样源（独立 Dialog 窗口不在页面 host 里）。
+        val shape = RoundedCornerShape(26.dp)
+        Box(
+            modifier = modifier
+                .wrapContentHeight()
+                .animateContentSize()
+                .fillMaxWidth(if (compact) 1f else 0.6f)
+                .padding(16.dp)
+                .clip(shape)
+                .background(AppTokens.windowBackground)
+                .border(width = 1.dp, color = AppTokens.divider, shape = shape),
+        ) {
+            // 注意：这里**不能**再包 GlasmioBackdropHost。
+            // 它的实现是 Box { Box(Modifier.fillMaxSize()…) + content }，
+            // 里面那个 fillMaxSize 会把卡片撑成整屏高（本轮第三次踩：卡片变通栏白板、圆角丢失）。
+            // 弹窗里的玻璃控件（GlassTextField 等）自己会开 host，不需要外层再包。
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    if (title != null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 20.dp),
+                            contentAlignment = Alignment.Center,
                         ) {
-                            title()
+                            ProvideTextStyle(
+                                TextStyle(
+                                    fontSize = 17.sp,
+                                    lineHeight = 22.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = AppTokens.text,
+                                    textAlign = TextAlign.Center,
+                                )
+                            ) {
+                                with(dialogScope) { title() }
+                            }
                         }
                     }
-                }
-            }
-            Column(
-                modifier = Modifier
-                    .constrainAs(contentRef) {
-                        top.linkTo(titleRef.bottom, margin = 16.dp, goneMargin = 0.dp)
-                        bottom.linkTo(buttonsRef.top, margin = 16.dp, goneMargin = 0.dp)
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                        height = Dimension.wrapContent
-                    }
-            ) {
-                content()
-            }
-            Column(
-                modifier = Modifier
-                    .constrainAs(buttonsRef) {
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                        bottom.linkTo(parent.bottom)
-                        width = Dimension.fillToConstraints
-                        // 注意：这里**不能**再加 top.linkTo(contentRef.bottom)。
-                        // ConstraintLayout 里同时给上下两条约束又没给高度 = 按钮区被拉伸，
-                        // 卡片底部会出现一大块空白（本轮踩过）。底部对齐 parent.bottom + 卡片
-                        // 高度 wrapContent 时，按钮天然贴在内容下方。
-                    }
-                    .drawBehind {
-                        // 内容与按钮区之间的发丝线（按钮自身再各画一条顶部线）
-                        drawLine(
-                            color = AppTokens.divider,
-                            strokeWidth = 1.dp.toPx() / 2f,
-                            start = Offset(0f, 0f),
-                            end = Offset(size.width, 0f),
-                        )
-                    },
-            ) {
-                buttons()
-            }
-            }
-        }
-        val cardOuterModifier = modifier
-            .wrapContentHeight()
-            .animateContentSize()
-            .fillMaxWidth(
-                fraction = if (windowWidthSizeClass == WindowWidthSizeClass.Compact) {
-                    1f
-                } else {
-                    0.6f
-                }
-            )
-            .padding(16.dp)
-        if (dialogUsesGlassShell()) {
-            val cardShape = RoundedCornerShape(26.dp)
-            // 关键：玻璃表面必须放在 matchParentSize() 层，**不参与测量**。
-            // 一旦把它当容器（内容放它里面），它会被外层撑成一屏高 —— 卡片底部就出现一大块空白
-            // （列表弹窗上最明显）。这里用 Box 让 cardOuterModifier（wrapContentHeight）决定高度，
-            // 玻璃与可读性实底都铺在它上面 —— 与 GlassDialogCard 同一套结构。
-            Box(modifier = cardOuterModifier) {
-                LiquidGlassSurface(
-                    modifier = Modifier.matchParentSize(),
-                    shape = cardShape,
-                    // 苹果的 alert 是很厚的材质：Medium 档（文档口径「Medium 服务菜单和 alert」）
-                    material = NavigationGlassMaterial.RegularMedium,
-                    innerGlow = true,
-                ) {}
-                // 可读性实底：玻璃只负责质感 + 边缘高光/折射，正文要能读清
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(
-                            color = AppTokens.windowBackground.copy(
-                                alpha = if (AppTokens.isNightMode) 0.72f else 0.62f
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                start = 24.dp,
+                                end = 24.dp,
+                                top = if (title == null) 20.dp else 0.dp,
+                                bottom = 8.dp,
                             ),
-                            shape = cardShape,
-                        )
-                )
-                // 弹窗是独立 Window，不在页面的 backdrop host 里。
-                // 这里给卡片内容补一个 host，弹窗内**所有**玻璃控件（输入框 / 开关 / 勾选行）
-                // 就都有采样源，不用逐个兜底（同 PrefsSwitch 的修法）。
-                GlasmioBackdropHost(sampledColor = AppTokens.windowBackground) {
-                    cardContent(Modifier.fillMaxWidth())
+                    ) {
+                        with(dialogScope) { content() }
+                    }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp)
+                            .drawBehind {
+                                drawLine(
+                                    color = AppTokens.divider,
+                                    strokeWidth = 1.dp.toPx() / 2f,
+                                    start = Offset(0f, 0f),
+                                    end = Offset(size.width, 0f),
+                                )
+                            },
+                    ) {
+                        with(dialogScope) { buttons() }
+                    }
                 }
-            }
-        } else {
-            // 降级 / A-B：改造前的白框
-            cardContent(
-                cardOuterModifier
-                    .background(
-                        color = AppTokens.windowBackground,
-                        shape = RoundedCornerShape(24.dp)
-                    )
-                    .padding(vertical = 24.dp)
-            )
         }
     }
 }
