@@ -61,3 +61,23 @@
   并发会让 Gradle 缓存互相踩（`Could not get file mode for …`）；
 - **冒烟跑完 `com.tieba` 会被卸载**（UTP 行为），继续截图前要重新 `adb install -r`；
 - 截图前用 `dumpsys activity activities | Select-String topResumedActivity` 确认前台是 `com.tieba`。
+
+## 6. 玻璃表面不能当「容器」用（弹窗那次踩的坑）
+
+`LiquidGlassSurface` / `GlassComponentSurface` 如果被当成容器（**内容写在它的 content lambda 里**），
+它会被外层约束撑满可用高度 —— 在弹窗里的表现就是「卡片一屏高 + 内容与按钮之间一大片空白」。
+
+正确写法（`Dialog` / `GlassDialogCard` 现在都是这样）：
+
+```kotlin
+Box(modifier = Modifier.wrapContentHeight()) {          // 高度由内容决定
+    LiquidGlassSurface(Modifier.matchParentSize(), shape = cardShape) {}   // 只铺底，不参与测量
+    Box(Modifier.matchParentSize().background(readableTint, cardShape))    // 可读性实底
+    Column(Modifier.wrapContentHeight()) { /* 真正的内容 */ }
+}
+```
+
+规则：
+- **玻璃表面 + 可读性实底一律 `matchParentSize()`**；
+- 决定高度的那层必须是 `wrapContentHeight()` 的普通 `Column`/`Box`；
+- 弹窗里还要给内容补 `GlasmioBackdropHost`（独立 Window 不在页面 host 里）。
