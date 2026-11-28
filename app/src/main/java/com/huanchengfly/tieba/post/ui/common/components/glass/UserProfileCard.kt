@@ -64,32 +64,35 @@ val AvatarSize = 80.dp
  * - [inkHeight]：这一行墨迹的高度；
  * - [inkTop]：字形墨迹在行盒内的顶部留白。
  *
- * 为什么需要它（2026-11-28 实测，1080×2400 / 420dpi / HarmonyOS Sans SC）：
+ * 为什么需要它（2026-11-28 实测，1080×2400 / 420dpi / **HarmonyOS Sans SC**）：
  *
- * | 字号 | lineHeight 设 | 实际行盒 |
+ * | 字号 | `lineHeight` 设 | 实际行盒 |
  * | --- | --- | --- |
- * | 22sp | 26sp（1.18×） | 83px = 1.437em |
- * | 22sp | 22sp（1.0×） | 82px = 1.420em |
- * | 13sp | 18sp | 49px = 1.436em |
- * | 13sp | 13sp | 49px = 1.436em |
+ * | 22sp | 22sp（1.0×，58px） | 68px = 1.172em |
+ * | 13sp | 13sp（34px） | 40px = 1.172em |
+ * | 15sp | 15sp（39px） | 48px = 1.172em |
  *
- * 也就是说：**`lineHeight = 字号` 和 `includeFontPadding = false` 都压不矮行盒**，
- * Compose 单行文本的下限就是字体自然高（HarmonyOS Sans SC 的 ascent+descent ≈ 1.44em）。
- * 行盒压不矮 → `SpaceBetween` 均分的仍是「行盒间隙」，三行留白不同 → 墨迹永远不齐。
+ * 也就是说：**`lineHeight = 字号` 压不矮行盒**（鸿蒙字族 ascent 0.928 + descent 0.244
+ * = 1.172em 就是下限；Compose 单行文本按字体自然高排版），`includeFontPadding = false`
+ * 也只削掉 1px。行盒压不矮 → `SpaceBetween` 均分的仍是「行盒间隙」，三行留白不同 → 墨迹永远不齐。
  *
  * 所以这里反过来做：**自己造一个高度 = 墨迹高的盒子**，把字形整体上移 [inkTop] 塞进去，
  * 盒子的上下边就恰好是墨迹的上下边。这样 `SpaceBetween` 均分的才是真正的墨迹间隙。
+ *
+ * ⚠️ 系数是**按鸿蒙字族**量的。预览入口（`DebugDialogPreview`）必须包
+ * `HarmonyTextProvider`，否则会退回系统兜底 CJK 字体（行盒 1.42em、墨迹系数完全不同），
+ * 量出来的数字和真实页对不上 —— 2026-11-28 就踩过这个坑。
  */
 private data class InkMetrics(val inkHeight: Float, val inkTop: Float)
 
-/** 名字：22sp 时墨迹 57px/57.75px、顶留白 15px。 */
-private val NameInk = InkMetrics(inkHeight = 0.99f, inkTop = 0.26f)
+/** 名字：22sp 时墨迹顶缩进 5px（0.087em）、墨迹高 0.935em。 */
+private val NameInk = InkMetrics(inkHeight = 0.94f, inkTop = 0.09f)
 
-/** ID 行：13sp 时墨迹 32px/34.125px、顶留白 10px。 */
-private val MetaInk = InkMetrics(inkHeight = 0.94f, inkTop = 0.29f)
+/** ID 行：13sp 时墨迹顶缩进 3px（0.088em）、墨迹高 0.938em。 */
+private val MetaInk = InkMetrics(inkHeight = 0.94f, inkTop = 0.09f)
 
-/** 数据行：15sp 时墨迹 38px/39.375px、顶留白 11px。 */
-private val StatInk = InkMetrics(inkHeight = 0.96f, inkTop = 0.28f)
+/** 数据行：15sp 时墨迹顶缩进 4px（0.102em）、墨迹高 0.914em。 */
+private val StatInk = InkMetrics(inkHeight = 0.91f, inkTop = 0.10f)
 
 /**
  * 把一行内容装进「墨迹盒」：盒子 = 墨迹大小，内容上移 [InkMetrics.inkTop]。
@@ -123,7 +126,7 @@ private fun InkLine(
 /**
  * 三行文字的基础样式：`includeFontPadding = false` + 行高 = 字号（1.0 倍）。
  *
- * **它本身解决不了墨迹对齐**（见 [InkMetrics] 的实测表：行盒仍被钳在 1.44em），
+ * **它本身解决不了墨迹对齐**（见 [InkMetrics] 的实测表：行盒仍被钳在 1.172em），
  * 保留它只为了两件事：去掉 Android 的字形上下留白（实测 1px）、行高不再比字号更松，
  * 让 [InkMetrics] 的 em 系数稳定、可预测。真正的对齐交给 [InkLine] 的墨迹盒。
  *

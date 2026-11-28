@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import com.huanchengfly.tieba.post.ui.common.components.glass.UserProfileCard
 import com.huanchengfly.tieba.post.ui.common.components.glass.UserProfileCardSpec
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
 import com.huanchengfly.tieba.post.ui.common.theme.glass.LiquidGlassTheme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -123,6 +124,10 @@ fun DebugDialogPreviewDialogs(
         // 弹窗是独立 Window，拿不到页面的 LiquidGlassTheme：不补这层的话
         // GlasmioTheme.colors 会退回**默认浅色**，深色下就是「白卡 + 白字」。
         LiquidGlassTheme(accent = AppTokens.primary) {
+        // 必须补 HarmonyTextProvider：真实主页在 GlassPage 里，M2 Text 用的是鸿蒙字族；
+        // 少了这层，预览会用系统兜底 CJK 字体，行盒 1.42em vs 真实页 1.172em —— 量出来的
+        // 墨迹位置和真实页完全不是一回事（2026-11-28 踩过）。
+        HarmonyTextProvider {
         UserProfileCard(
             avatarSize = avatarSize.dp,
             nameSp = nameSp.sp,
@@ -148,6 +153,7 @@ fun DebugDialogPreviewDialogs(
             onFollowListClick = {},
             modifier = Modifier.fillMaxWidth(),
         )
+        }
         }
     }
 
