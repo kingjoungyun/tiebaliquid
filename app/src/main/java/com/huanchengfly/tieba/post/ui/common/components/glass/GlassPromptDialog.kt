@@ -24,6 +24,8 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.ProvideContentColor
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import io.github.neoruaa.glasmio.glass.GlasmioBackdropHost
+import com.huanchengfly.tieba.post.ui.common.theme.glass.LocalLiquidGlassHosted
 
 /**
  * 带输入框的玻璃弹窗（T2）：`AnyPopDialog` + 玻璃卡片 + [GlassTextField] + 两个玻璃按钮。
@@ -81,20 +83,29 @@ fun GlassPromptDialog(
 
         val focusRequester = remember { FocusRequester() }
         val softwareKeyboardController = LocalSoftwareKeyboardController.current
-        GlassTextField(
-            value = textVal,
-            onValueChange = {
-                if (onValueChange.invoke(it, textVal)) textVal = it
-            },
-            modifier = Modifier.fillMaxWidth(),
-            maxLines = 1,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(
-                onDone = { softwareKeyboardController?.hide() }
-            ),
-            focusRequester = focusRequester,
-            hostFill = AppTokens.windowBackground,
-        )
+        // 输入框自己不会开 host：弹窗里若没有 backdrop（实测会退化成蓝色描边的 M3 输入框，
+        // 与玻璃弹窗风格割裂），就在这里补一个纯色 host。
+        val field = @Composable {
+            GlassTextField(
+                value = textVal,
+                onValueChange = {
+                    if (onValueChange.invoke(it, textVal)) textVal = it
+                },
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 1,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = { softwareKeyboardController?.hide() }
+                ),
+                focusRequester = focusRequester,
+                hostFill = AppTokens.windowBackground,
+            )
+        }
+        if (LocalLiquidGlassHosted.current) {
+            field()
+        } else {
+            GlasmioBackdropHost(sampledColor = AppTokens.windowBackground) { field() }
+        }
         LaunchedEffect(focusRequester, dialogState.show) {
             if (!dialogState.show) return@LaunchedEffect
             focusRequester.requestFocus()

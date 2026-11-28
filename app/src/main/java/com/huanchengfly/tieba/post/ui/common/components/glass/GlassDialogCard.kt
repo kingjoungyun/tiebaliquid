@@ -36,6 +36,11 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.DialogState
 import com.huanchengfly.tieba.post.ui.widgets.compose.dialogs.AnyPopDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.dialogs.AnyPopDialogProperties
 import com.huanchengfly.tieba.post.ui.widgets.compose.dialogs.DirectionState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 
 /** 玻璃弹窗的圆角。 */
 val GlassDialogCorner = 24.dp
@@ -174,30 +179,87 @@ fun GlassDialogButtons(
     cancelTextEnabled: Boolean = true,
     confirmEnabled: Boolean = true,
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
+    // 与 `Dialogs.kt` 的弹窗按钮统一成同一套视觉：**文字按钮**（不是胶囊实底）——
+    // 一行两个、等分、52dp 高、中间一条竖向发丝线；取消用主文字色、确定用 accent。
+    // 之前这里是「取消 = 灰胶囊 / 确定 = 蓝色胶囊」，和 `Dialog()` 的新按钮两套外观并存，已统一。
+    Row(modifier = modifier.fillMaxWidth()) {
         if (cancelText != null) {
-            GlassDialogButton(
+            GlassDialogTextButton(
                 text = cancelText,
                 onClick = { onCancel?.invoke() },
                 enabled = cancelTextEnabled,
-                primary = false,
-                modifier = Modifier.weight(1f),
+                accent = false,
+                modifier = Modifier
+                    .weight(1f)
+                    .drawBehind {
+                        drawLine(
+                            color = AppTokens.divider,
+                            strokeWidth = 1.dp.toPx() / 2f,
+                            start = Offset(size.width, 0f),
+                            end = Offset(size.width, size.height),
+                        )
+                    },
             )
         }
-        GlassDialogButton(
+        GlassDialogTextButton(
             text = confirmText,
             onClick = onConfirm,
             enabled = confirmEnabled,
-            primary = true,
+            accent = true,
             modifier = Modifier.weight(1f),
         )
     }
 }
 
-/** 单个弹窗按钮。 */
+/** 文字按钮（无底、按下 6% 压底），与 `Dialogs.kt` 的 `DialogTextButton` 同款。 */
+@Composable
+private fun GlassDialogTextButton(
+    text: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    accent: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val color = when {
+        !enabled -> AppTokens.textDisabled
+        accent -> AppTokens.primary
+        else -> AppTokens.text
+    }
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(GlassDialogTextButtonHeight)
+            .background(
+                color = if (pressed && enabled) {
+                    AppTokens.text.copy(alpha = 0.06f)
+                } else {
+                    Color.Transparent
+                }
+            )
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                enabled = enabled,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Medium,
+            color = color,
+            maxLines = 1,
+        )
+    }
+}
+
+/** 弹窗文字按钮高度（与 `Dialogs.kt` 的按钮一致）。 */
+val GlassDialogTextButtonHeight = 52.dp
+
+/** 单个弹窗按钮（胶囊实底版，保留给需要强调主次的地方）。 */
 @Composable
 fun GlassDialogButton(
     text: String,

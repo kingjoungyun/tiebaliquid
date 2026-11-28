@@ -13,13 +13,9 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
-import androidx.compose.material.TextButton
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -59,31 +55,27 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.picker.TimePicker
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
 fun DialogScope.DialogPositiveButton(
     text: String,
     onClick: () -> Unit = {}
 ) {
-    TextButton(
+    DialogTextButton(
+        text = text,
+        color = AppTokens.primary,
         onClick = {
             onClick()
             dismiss()
         },
-        modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(100),
-        colors = ButtonDefaults.textButtonColors(
-            backgroundColor = MaterialTheme.colors.secondary,
-            contentColor = MaterialTheme.colors.onSecondary
-        ),
-    ) {
-        Text(
-            text = text,
-            fontSize = 16.sp,
-            modifier = Modifier.padding(vertical = 4.dp),
-        )
-    }
+    )
 }
 
 @Composable
@@ -91,24 +83,64 @@ fun DialogScope.DialogNegativeButton(
     text: String,
     onClick: (() -> Unit)? = null
 ) {
-    TextButton(
+    DialogTextButton(
+        text = text,
+        color = AppTokens.text,
         onClick = {
             dismiss()
             onClick?.invoke()
         },
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(100),
-        colors = ButtonDefaults.textButtonColors(
-            backgroundColor = AppTokens.text.copy(
-                alpha = 0.1f
+    )
+}
+
+/**
+ * 弹窗里的一个文字按钮（iOS action-sheet 风格）。
+ *
+ * 选这个形态而不是「两个胶囊按钮」的原因：本工程的 `AnyPopDialog` 在手机上是从**底部**弹出的
+ * （`DirectionState.BOTTOM`），和 iOS action sheet 一致；action sheet 的按钮就是「整宽、文字居中、
+ * 相邻按钮之间一条 0.5dp 分隔线」，不需要实色底。宽屏居中时同一套按钮仍然成立（只是变成弹窗底部两行）。
+ *
+ * 交互：52dp 行高、按下时 6% 主文字色压底（无涟漪）、禁用态不在此处理。
+ */
+@Composable
+private fun DialogTextButton(
+    text: String,
+    color: Color,
+    onClick: () -> Unit,
+) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .background(
+                color = if (pressed) AppTokens.text.copy(alpha = 0.06f) else Color.Transparent
+            )
+            .drawBehind {
+                // 顶部发丝线：相邻按钮之间自然形成分隔（第一个按钮由容器再补一条）
+                drawLine(
+                    color = AppTokens.divider,
+                    strokeWidth = 1.dp.toPx() / 2f,
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, 0f),
+                )
+            }
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                onClick = onClick,
             ),
-            contentColor = AppTokens.text
-        ),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
-            fontSize = 16.sp,
-            modifier = Modifier.padding(vertical = 4.dp),
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Medium,
+            color = color,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 16.dp),
         )
     }
 }
@@ -132,7 +164,13 @@ fun AlertDialog(
         },
     ) {
         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-            ProvideTextStyle(value = MaterialTheme.typography.body1) {
+            ProvideTextStyle(
+                value = androidx.compose.ui.text.TextStyle(
+                    fontSize = 15.sp,
+                    lineHeight = 21.sp,
+                    color = AppTokens.textSecondary,
+                )
+            ) {
                 ProvideContentColor(color = AppTokens.text) {
                     content()
                 }
@@ -158,7 +196,13 @@ fun AlertDialog(
         buttons = buttons,
     ) {
         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-            ProvideTextStyle(value = MaterialTheme.typography.body1) {
+            ProvideTextStyle(
+                value = androidx.compose.ui.text.TextStyle(
+                    fontSize = 15.sp,
+                    lineHeight = 21.sp,
+                    color = AppTokens.textSecondary,
+                )
+            ) {
                 ProvideContentColor(color = AppTokens.text) {
                     content()
                 }
@@ -190,7 +234,13 @@ fun ConfirmDialog(
         },
     ) {
         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-            ProvideTextStyle(value = MaterialTheme.typography.body1) {
+            ProvideTextStyle(
+                value = androidx.compose.ui.text.TextStyle(
+                    fontSize = 15.sp,
+                    lineHeight = 21.sp,
+                    color = AppTokens.textSecondary,
+                )
+            ) {
                 ProvideContentColor(color = AppTokens.text) {
                     content()
                 }
@@ -301,7 +351,15 @@ fun Dialog(
                             .padding(horizontal = 24.dp)
                             .align(Alignment.CenterHorizontally)
                     ) {
-                        ProvideTextStyle(value = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold)) {
+                        ProvideTextStyle(
+                            value = androidx.compose.ui.text.TextStyle(
+                                fontSize = 17.sp,
+                                lineHeight = 22.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = AppTokens.text,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            )
+                        ) {
                             title()
                         }
                     }
@@ -327,8 +385,15 @@ fun Dialog(
                         bottom.linkTo(parent.bottom)
                         width = Dimension.fillToConstraints
                     }
-                    .padding(horizontal = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .drawBehind {
+                        // 内容与按钮区之间的发丝线（按钮自身再各画一条顶部线）
+                        drawLine(
+                            color = AppTokens.divider,
+                            strokeWidth = 1.dp.toPx() / 2f,
+                            start = Offset(0f, 0f),
+                            end = Offset(size.width, 0f),
+                        )
+                    },
             ) {
                 buttons()
             }
@@ -348,7 +413,7 @@ fun Dialog(
         if (dialogUsesGlassShell()) {
             LiquidGlassSurface(
                 modifier = cardOuterModifier,
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(26.dp),
                 // 苹果的 alert 是很厚的材质：Medium 档（文档口径「Medium 服务菜单和 alert」）
                 material = NavigationGlassMaterial.RegularMedium,
                 innerGlow = true,
@@ -360,7 +425,7 @@ fun Dialog(
                         .matchParentSize()
                         .background(
                             color = AppTokens.windowBackground.copy(
-                                alpha = if (AppTokens.isNightMode) 0.86f else 0.85f
+                                alpha = if (AppTokens.isNightMode) 0.72f else 0.62f
                             ),
                             shape = RoundedCornerShape(24.dp),
                         )

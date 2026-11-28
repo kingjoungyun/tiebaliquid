@@ -27,6 +27,9 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.TextWithMinWidth
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentMapOf
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
 
 @Composable
 fun <ItemValue> ListSinglePicker(
@@ -51,12 +54,10 @@ fun <ItemValue> ListSinglePicker(
         repeat(itemTitles.size) {
             val selected = it == selectedPosition
             Row(
+                // iOS 风格：行高 52dp、无选中高亮底、选中 = accent 文字 + 勾
                 modifier = Modifier
-                    .background(
-                        color = colors.selectedItemColor(enabled = enabled).value.copy(
-                            alpha = if (selectedPosition == it) 0.1f else 0f
-                        )
-                    )
+                    .fillMaxWidth()
+                    .height(52.dp)
                     .clickable(enabled = enabled) {
                         onItemSelected(
                             it,
@@ -65,27 +66,25 @@ fun <ItemValue> ListSinglePicker(
                             it != selectedPosition
                         )
                     }
-                    .padding(vertical = 16.dp, horizontal = 24.dp),
+                    .padding(horizontal = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 itemIcons[itemValues[it]]?.invoke()
                 ProvideContentColor(
-                    color = if (selected) colors.selectedItemColor(enabled).value else colors.itemColor(
-                        enabled
-                    ).value
+                    color = if (selected) AppTokens.primary else AppTokens.text
                 ) {
                     CompositionLocalProvider(LocalContentAlpha provides 1f) {
                         TextWithMinWidth(
                             text = itemTitles[it],
                             modifier = Modifier.weight(1f),
                             fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                             minLength = itemTitleMaxWidth
                         )
-                        if (selectedPosition == it) {
+                        if (selected) {
                             Box(modifier = Modifier.align(Alignment.CenterVertically)) {
-                                ProvideContentColor(color = colors.selectedItemColor(enabled = enabled).value) {
+                                ProvideContentColor(color = AppTokens.primary) {
                                     selectedIndicator()
                                 }
                             }
