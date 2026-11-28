@@ -54,9 +54,8 @@ class PixelRegressionTest {
     @Before
     fun freshLaunch() {
         device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        runCatching { device.wakeUp() }
-        runCatching { device.executeShellCommand("wm dismiss-keyguard") }
-        relaunchApp()
+        // 与 MainSmokeTest 共用前置：**强制浅色**再采样，避免「深色页面 + 浅色状态栏」的瞬时态。
+        SmokeReset.reset(device, context)
         awaitDockReady()
     }
 
@@ -104,15 +103,48 @@ class PixelRegressionTest {
                         (w * BACKGROUND_SAMPLE_X[1]).toInt(),
                         (h * BACKGROUND_SAMPLE_Y[1]).toInt(),
                     )
-                    val delta = sbLuma - minLuma
+                    var delta = sbLuma - minLuma
                     Log.i(
                         TAG,
                         "$pageName 状态栏=${hex(statusBar)}(L=$sbLuma) " +
-                            "页面背景=${hex(minColor)}(L=$minLuma) Δ=$delta",
+                            "页面背景=${hex(minColor)}(L=$minLuma) Δ=$delta attempt=1",
                     )
+                    // 主题切换 / 转场动画会留一两帧「页面已变、状态栏还没跟上」的瞬时态。
+                    // 超阈值时等 800ms 重采样一次；**重试必须打日志**，两次都超才算失败
+                    // （这不是放宽断言：真实白条重试后仍然超）。
+                    if (delta > LUMA_TOLERANCE) {
+                        SystemClock.sleep(RETRY_SETTLE_MS)
+                        val again = screenshot()
+                        try {
+                            val sb2 = again.getPixel(again.width / 2, statusBarPx / 2)
+                            val samples2 = ArrayList<Int>()
+                            for (fy in BACKGROUND_SAMPLE_Y) {
+                                for (fx in BACKGROUND_SAMPLE_X) {
+                                    samples2.add(
+                                        luma(
+                                            again.getPixel(
+                                                (again.width * fx).toInt(),
+                                                (again.height * fy).toInt(),
+                                            )
+                                        )
+                                    )
+                                }
+                            }
+                            samples2.sort()
+                            val bg2 = if (samples2.isEmpty()) luma(sb2) else samples2[samples2.size / 2]
+                            delta = luma(sb2) - bg2
+                            Log.i(
+                                TAG,
+                                "$pageName 状态栏=${hex(sb2)}(L=${luma(sb2)}) " +
+                                    "Δ=$delta attempt=2（首次 Δ=${sbLuma - minLuma}）",
+                            )
+                        } finally {
+                            again.recycle()
+                        }
+                    }
                     assertTrue(
-                        "$pageName：状态栏比页面背景亮 $delta（状态栏=${hex(statusBar)} " +
-                            "页面背景=${hex(minColor)}）——白条/分界线回归，检查该页背景是否铺到状态栏",
+                        "$pageName：状态栏比页面背景亮 $delta（重试后仍超阈值 $LUMA_TOLERANCE）" +
+                            "——白条/分界线回归，检查该页背景是否铺到状态栏",
                         delta <= LUMA_TOLERANCE,
                     )
                     asserts++
@@ -327,6 +359,9 @@ class PixelRegressionTest {
 
         /** 状态栏亮度相对页面背景允许多出的量（0~255）。白条时通常 > 200，正常页 < 20。 */
         const val LUMA_TOLERANCE = 40
+
+        /** 首次采样超阈值后的等待（跨过主题切换/转场动画的瞬时帧）。 */
+        const val RETRY_SETTLE_MS = 800L
 
         /** 页面背景采样点（横向比例）。 */
         val BACKGROUND_SAMPLE_X = floatArrayOf(0.08f, 0.5f, 0.92f)

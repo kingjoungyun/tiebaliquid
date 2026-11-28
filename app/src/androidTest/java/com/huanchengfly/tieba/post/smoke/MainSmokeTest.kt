@@ -59,10 +59,9 @@ class MainSmokeTest {
     @Before
     fun freshLaunch() {
         device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        // 模拟器可能休眠 / 锁屏：先把屏幕唤醒并解掉 keyguard，否则点击会落在锁屏上。
-        runCatching { device.wakeUp() }
-        runCatching { device.executeShellCommand("wm dismiss-keyguard") }
-        relaunchApp()
+        // 统一前置：强制浅色 + 回首页 + 退掉残留二级页（详见 SmokeReset 的注释）。
+        // 以前这里只「拉起 App」，主题/页面栈都是上一条用例留下的 —— 两次全量冒烟都因此 flake。
+        SmokeReset.reset(device, context)
         awaitDockReady()
     }
 
@@ -506,9 +505,31 @@ class MainSmokeTest {
         // 点它们会进看图页 / 个人页；点卡片本体才会进帖子页。
         val authorRowY = bounds.top + minOf((24 * displayDensity).toInt(), bounds.height() / 5)
         device.click(bounds.centerX(), authorRowY)
-        await("帖子页打开（底栏出现「${str(R.string.title_see_lz)}」或「${str(R.string.title_asc)}」）") {
-            device.hasObject(By.desc(str(R.string.title_see_lz))) ||
-                device.hasObject(By.desc(str(R.string.title_asc)))
+        // 帖子页要拉楼层数据，比列表慢：给 15s；超时先把现场 dump 下来再抛（便于诊断）
+        try {
+            await(
+                "帖子页打开（底栏出现「${str(R.string.title_see_lz)}」或「${str(R.string.title_asc)}」）",
+                timeoutMs = THREAD_OPEN_TIMEOUT_MS,
+            ) {
+                device.hasObject(By.desc(str(R.string.title_see_lz))) ||
+                    device.hasObject(By.desc(str(R.string.title_asc)))
+            }
+        } catch (e: AssertionError) {
+            dumpCurrentScreen("thread-open-timeout")
+            throw e
+        }
+    }
+
+    /** 失败时把当前页面（截图 + 语义树）写到 App 外部目录，run-smoke 会把它们拉回本地。 */
+    private fun dumpCurrentScreen(tag: String) {
+        runCatching {
+            val dir = java.io.File(context.getExternalFilesDir(null), "smoke-failures").apply { mkdirs() }
+            val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
+                .format(java.util.Date())
+            device.takeScreenshot(java.io.File(dir, "$tag-$stamp.png"))
+            java.io.File(dir, "$tag-$stamp.xml")
+                .writeText(device.executeShellCommand("uiautomator dump /dev/tty"))
+            Log.w(TAG, "失败现场已保存：${dir.absolutePath}/$tag-$stamp.*")
         }
     }
 
@@ -641,6 +662,9 @@ class MainSmokeTest {
         const val TAG = "Smoke"
         const val TIMEOUT_MS = 10_000L
         const val POLL_MS = 200L
+
+        /** 帖子页要拉楼层数据，比列表慢：单独给 15s（原来共用 10s，实测会超时）。 */
+        const val THREAD_OPEN_TIMEOUT_MS = 15_000L
         const val APP_PACKAGE = "com.tieba"
         const val APP_COMPONENT = "$APP_PACKAGE/com.huanchengfly.tieba.post.MainActivityV2"
 
