@@ -59,11 +59,15 @@
 
 ### T1. 个人主页资料卡（进行中）
 - 头像 80dp 圆形（只改他人主页 `UserProfilePage`，不动其他页）
-- 排版用 **`Row` + `Column(height = 头像高, Arrangement.SpaceBetween)`** —— 三段自动顶/底对齐且间隙相等
+- **墨迹对齐已收口（2026-11-28，commit 462f4f6）**：行盒压不矮（`lineHeight`/`includeFontPadding`
+  都无效），改成 `InkLine` 墨迹盒；三变体 nameTop−avatarTop / avatarBottom−statBottom / Δgap
+  全部 ≤1px。实测与选型见 `docs/PROFILE-CARD-INK.md`，别再用公式推 offset。
 - 文案：`ID 1234567 · 河北 · 10.1 YEAR`（去掉"IP 属地："与"吧龄…年"）
-- 名字字号待定（22sp / 26sp / 30sp 三变体对比），头像 76/80dp 两档
-- **关注按钮移到「帖子 / 关注吧」tab 行右侧**：胶囊 32dp 高、16dp 圆角、14dp 水平内边距、15sp Medium；三态（未关注 accent 填充 / 已关注描边 / isSelf 编辑资料）
-- 验收：`nameTop−avatarTop` 与 `avatarBottom−statBottom` 各 ≤2px；两处 gap 差 ≤2px；预览截图含 tab 行与胶囊；胶囊高 ≈88px
+- 名字字号：22/26/30sp 三变体可切；**推荐 26sp 配 80dp**（差值 1/1/Δ1，间隙 37/36px），待用户确认
+- **下一步：关注按钮移到「帖子 / 关注吧」tab 行右侧**：胶囊 32dp 高、16dp 圆角、14dp 水平内边距、
+  15sp Medium；三态（未关注 accent 填充 / 已关注描边 / isSelf 编辑资料）
+- 验收：`nameTop−avatarTop` 与 `avatarBottom−statBottom` 各 ≤2px；两处 gap 差 ≤2px；
+  预览截图含 tab 行与胶囊；胶囊高 ≈88px
 
 ### T2. 剩余欠账
 - `tools/baseline/profile_*.png` 基线（用 debug 预览拍）
