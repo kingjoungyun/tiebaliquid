@@ -21,6 +21,9 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.DialogState
 import com.huanchengfly.tieba.post.ui.widgets.compose.picker.ListSinglePicker
 import kotlinx.collections.immutable.persistentListOf
 import androidx.compose.foundation.layout.fillMaxWidth
+import com.huanchengfly.tieba.post.ui.common.components.glass.ProfileAction
+import com.huanchengfly.tieba.post.ui.common.components.glass.ProfileActionPill
+import com.huanchengfly.tieba.post.ui.common.components.glass.ProfileHeaderTabs
 import com.huanchengfly.tieba.post.ui.common.components.glass.UserProfileCard
 import com.huanchengfly.tieba.post.ui.common.components.glass.UserProfileCardSpec
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
@@ -90,6 +93,8 @@ fun DebugDialogPreviewDialogs(
     ) {
         var avatarSize by remember { mutableStateOf(80) }
         var nameSp by remember { mutableStateOf(22) }
+        var action by remember { mutableStateOf(ProfileAction.Follow) }
+        var tabIndex by remember { mutableStateOf(0) }
         // 仅 debug：三组对比（B = 22sp/80dp、B2 = 26sp/76dp、B3 = 30sp/80dp）
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -108,7 +113,7 @@ fun DebugDialogPreviewDialogs(
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(bottom = 8.dp),
+            modifier = Modifier.padding(bottom = 4.dp),
         ) {
             listOf(80, 76, 74).forEach { size ->
                 Text(
@@ -121,6 +126,26 @@ fun DebugDialogPreviewDialogs(
                 )
             }
         }
+        // 动作胶囊三态（v1.9.2：胶囊已从卡片挪到 tab 行右侧）
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(bottom = 8.dp),
+        ) {
+            listOf(
+                ProfileAction.Follow to "动作 未关注",
+                ProfileAction.Following to "动作 已关注",
+                ProfileAction.EditProfile to "动作 编辑资料",
+            ).forEach { (a, label) ->
+                Text(
+                    text = label,
+                    fontSize = 13.sp,
+                    color = if (action == a) AppTokens.primary else AppTokens.textSecondary,
+                    modifier = Modifier
+                        .clickable { action = a }
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                )
+            }
+        }
         // 弹窗是独立 Window，拿不到页面的 LiquidGlassTheme：不补这层的话
         // GlasmioTheme.colors 会退回**默认浅色**，深色下就是「白卡 + 白字」。
         LiquidGlassTheme(accent = AppTokens.primary) {
@@ -128,6 +153,7 @@ fun DebugDialogPreviewDialogs(
         // 少了这层，预览会用系统兜底 CJK 字体，行盒 1.42em vs 真实页 1.172em —— 量出来的
         // 墨迹位置和真实页完全不是一回事（2026-11-28 踩过）。
         HarmonyTextProvider {
+        Column(modifier = Modifier.fillMaxWidth()) {
         UserProfileCard(
             avatarSize = avatarSize.dp,
             nameSp = nameSp.sp,
@@ -144,15 +170,24 @@ fun DebugDialogPreviewDialogs(
                 portraitUrl = "",
                 // 预览用本地 drawable，保证能看到真实图片（不是空灰圆）
                 portraitRes = com.huanchengfly.tieba.post.R.drawable.ic_launcher_new_round,
-                showBtn = true,
-                isSelf = false,
-                hasConcerned = 0,
             ),
-            onBtnClick = {},
             onCopyIdClick = {},
             onFollowListClick = {},
             modifier = Modifier.fillMaxWidth(),
         )
+        // tab 行 + 右侧动作胶囊（真实页的玻璃轨道在弹窗里没有 backdrop host，
+        // 这里用 M2 样式画同一套布局：滚动区域 + 胶囊位置/尺寸可验）
+        ProfileHeaderTabs(
+            labels = persistentListOf("贴子 36", "关注吧 69"),
+            selectedIndex = tabIndex,
+            onSelected = { tabIndex = it },
+            glass = false,
+            action = {
+                ProfileActionPill(action = action, onClick = {})
+            },
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        }
         }
         }
     }

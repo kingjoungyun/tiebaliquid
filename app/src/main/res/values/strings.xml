@@ -175,6 +175,8 @@
     <string name="title_sort_by_send">发贴时间排序</string>
     <string name="button_follow">关注</string>
     <string name="button_unfollow">取消关注</string>
+    <!-- 资料页动作胶囊的「已关注」态（点一下仍是取消关注，只是文案按状态显示） -->
+    <string name="button_followed">已关注</string>
     <string name="title_follow_list">全部关注</string>
     <string name="text_follow_list_count">共关注%1$d个吧友</string>
     <string name="title_fans_list">我的粉丝</string>

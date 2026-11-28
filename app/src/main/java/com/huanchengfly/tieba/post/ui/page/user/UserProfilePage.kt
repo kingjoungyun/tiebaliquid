@@ -37,7 +37,6 @@ import androidx.compose.material.LocalContentColor
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
-import androidx.compose.material.Tab
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Article
@@ -79,7 +78,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.util.fastForEachIndexed
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassIconButton
 import com.huanchengfly.tieba.post.ui.common.theme.glass.GlassPageHost
 import com.huanchengfly.tieba.post.ui.common.theme.glass.HarmonyTextProvider
@@ -131,7 +129,6 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.AppScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.NetworkImage
 import com.huanchengfly.tieba.post.ui.widgets.compose.ProvideContentColor
 import com.huanchengfly.tieba.post.ui.widgets.compose.PullToRefreshLayout
-import androidx.compose.material.ScrollableTabRow
 import com.huanchengfly.tieba.post.ui.widgets.compose.Sizes
 import com.huanchengfly.tieba.post.ui.common.prefs.widgets.PrefsSwitch
 import com.huanchengfly.tieba.post.ui.widgets.compose.Toolbar
@@ -163,10 +160,9 @@ import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
 import com.huanchengfly.tieba.post.ui.common.theme.glass.AppTokens
-import com.huanchengfly.tieba.post.ui.common.components.glass.GlassComponent
-import com.huanchengfly.tieba.post.ui.common.components.glass.GlassScrollableTabRow
-import com.huanchengfly.tieba.post.ui.common.components.glass.GlassTabLabel
-import com.huanchengfly.tieba.post.ui.common.components.glass.useGlassComponent
+import com.huanchengfly.tieba.post.ui.common.components.glass.ProfileAction
+import com.huanchengfly.tieba.post.ui.common.components.glass.ProfileActionPill
+import com.huanchengfly.tieba.post.ui.common.components.glass.ProfileHeaderTabs
 import com.huanchengfly.tieba.post.ui.common.components.glass.UserProfileCard
 import com.huanchengfly.tieba.post.ui.common.components.glass.UserProfileCardSpec
 
@@ -784,20 +780,6 @@ private fun UserProfileContentNormal(
                                 } else {
                                     Modifier.padding(16.dp).padding(top = 8.dp)
                                 },
-                                showBtn = showActionBtn,
-                                isSelf = isSelf,
-                                onBtnClick = {
-                                    if (disableButton || !showActionBtn) {
-                                        return@UserProfileDetail
-                                    }
-                                    if (isSelf) {
-                                        context.goToActivity<EditProfileActivity>()
-                                    } else if (user.get { has_concerned } == 0) {
-                                        onFollow()
-                                    } else {
-                                        onUnfollow()
-                                    }
-                                },
                                 onCopyIdClick = {
                                     val id = user.get { id }.toString()
                                     // 复制贴吧 ID 到剪贴板，同时跳转到「查人」页并粘贴该 ID 自动查询。
@@ -823,11 +805,31 @@ private fun UserProfileContentNormal(
                         }
                     }
 
+                    // 动作胶囊住在 tab 行右侧（不再放资料卡里）
+                    val onProfileAction: () -> Unit = {
+                        if (!disableButton && showActionBtn) {
+                            if (isSelf) {
+                                context.goToActivity<EditProfileActivity>()
+                            } else if (user.get { has_concerned } == 0) {
+                                onFollow()
+                            } else {
+                                onUnfollow()
+                            }
+                        }
+                    }
                     UserProfileTabRow(
                         user = user,
                         pages = pages,
                         pagerState = pagerState,
-//                                    modifier = Modifier.padding(horizontal = 16.dp)
+                        action = {
+                            UserProfileActionPill(
+                                user = user,
+                                isSelf = isSelf,
+                                showActionBtn = showActionBtn,
+                                enabled = !disableButton,
+                                onClick = onProfileAction,
+                            )
+                        },
                     )
 
                     LazyLoadHorizontalPager(
@@ -949,20 +951,6 @@ private fun UserProfileContentExpanded(
                         UserProfileDetail(
                             user = user,
                             modifier = Modifier,
-                            showBtn = showActionBtn,
-                            isSelf = isSelf,
-                            onBtnClick = {
-                                if (disableButton || !showActionBtn) {
-                                    return@UserProfileDetail
-                                }
-                                if (isSelf) {
-                                    context.goToActivity<EditProfileActivity>()
-                                } else if (user.get { has_concerned } == 0) {
-                                    onFollow()
-                                } else {
-                                    onUnfollow()
-                                }
-                            },
                             onCopyIdClick = {
                                 val id = user.get { id }.toString()
                                 // 与 Chip 显示保持一致：显示的就是 user_id，复制的也是 user_id。
@@ -989,10 +977,30 @@ private fun UserProfileContentExpanded(
                     Column(
                         modifier = Modifier.weight(2f)
                     ) {
+                        val onProfileAction: () -> Unit = {
+                            if (!disableButton && showActionBtn) {
+                                if (isSelf) {
+                                    context.goToActivity<EditProfileActivity>()
+                                } else if (user.get { has_concerned } == 0) {
+                                    onFollow()
+                                } else {
+                                    onUnfollow()
+                                }
+                            }
+                        }
                         UserProfileTabRow(
                             user = user,
                             pages = pages,
                             pagerState = pagerState,
+                            action = {
+                                UserProfileActionPill(
+                                    user = user,
+                                    isSelf = isSelf,
+                                    showActionBtn = showActionBtn,
+                                    enabled = !disableButton,
+                                    onClick = onProfileAction,
+                                )
+                            },
                         )
 
                         LazyLoadHorizontalPager(
@@ -1023,61 +1031,41 @@ private fun UserProfileTabRow(
     pages: ImmutableList<UserProfilePageData>,
     pagerState: PagerState,
     modifier: Modifier = Modifier,
+    action: (@Composable () -> Unit)? = null,
 ) {
     val coroutineScope = rememberCoroutineScope()
+    // 标题是 @Composable 字符串（含计数），先拍平再交给共享 tab 行
+    val labels = pages.map { it.title(user) }.toImmutableList()
 
-    val tabTextStyle = MaterialTheme.typography.button.copy(
-        fontWeight = FontWeight.Bold,
-        fontSize = 13.sp,
-        letterSpacing = 0.sp
+    ProfileHeaderTabs(
+        labels = labels,
+        selectedIndex = pagerState.currentPage,
+        onSelected = { index -> coroutineScope.launch { pagerState.animateScrollToPage(index) } },
+        modifier = modifier,
+        action = action,
     )
+}
 
-    // T3：Glass 分段控件优先；回滚走 M2 官方 ScrollableTabRow（原来的分叉实现已删）
-    if (useGlassComponent(GlassComponent.TabRow)) {
-        GlassScrollableTabRow(
-            selectedTabIndex = pagerState.currentPage,
-            onTabSelected = { index ->
-                coroutineScope.launch { pagerState.animateScrollToPage(index) }
-            },
-            tabCount = pages.size,
-            modifier = modifier
-                .wrapContentWidth(align = Alignment.Start)
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-        ) { index, selected ->
-            GlassTabLabel(text = pages[index].title(user), selected = selected)
-        }
-        return
+/**
+ * 资料页右上角的动作胶囊：关注 / 已关注 / 编辑资料。
+ *
+ * 三态由「是否本人 + has_concerned」决定；点击行为沿用原来的 follow/unfollow/编辑资料。
+ */
+@Composable
+private fun UserProfileActionPill(
+    user: ImmutableHolder<User>,
+    isSelf: Boolean,
+    showActionBtn: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    if (!showActionBtn) return
+    val action = when {
+        isSelf -> ProfileAction.EditProfile
+        user.get { has_concerned } == 0 -> ProfileAction.Follow
+        else -> ProfileAction.Following
     }
-    ScrollableTabRow(
-        selectedTabIndex = pagerState.currentPage,
-        divider = {},
-        backgroundColor = Color.Transparent,
-        contentColor = AppTokens.primary,
-        edgePadding = 0.dp,
-        modifier = modifier.wrapContentWidth(align = Alignment.Start),
-    ) {
-        pages.fastForEachIndexed { i, pageData ->
-            Tab(
-                selected = pagerState.currentPage == i,
-                onClick = {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(i)
-                    }
-                },
-                selectedContentColor = AppTokens.primary,
-                unselectedContentColor = AppTokens.textSecondary,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .height(48.dp)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    Text(text = pageData.title(user), style = tabTextStyle)
-                }
-            }
-        }
-    }
+    ProfileActionPill(action = action, enabled = enabled, onClick = onClick)
 }
 
 @Composable
@@ -1113,13 +1101,11 @@ private fun UserProfileDetail(
     user: ImmutableHolder<User>,
     modifier: Modifier = Modifier,
     glassmio: Boolean = false,
-    showBtn: Boolean = true,
-    isSelf: Boolean = false,
-    onBtnClick: () -> Unit = {},
     onCopyIdClick: () -> Unit = {},
 ) {
     val navigator = LocalNavigator.current
     // 资料区拍平成 UserProfileCardSpec，交给 UserProfileCard 渲染（预览入口复用同一个组件）。
+    // 动作（关注/已关注/编辑资料）不在这张卡里：它在 tab 行右侧的 ProfileActionPill。
     val badgeText = user.getNullableImmutable { bazhu_grade }
         ?.takeIf { it.get { desc }.isNotBlank() }
         ?.get { desc }
@@ -1137,14 +1123,10 @@ private fun UserProfileDetail(
         agreeNum = user.get { total_agree_num },
         intro = user.get { intro },
         portraitUrl = StringUtil.getBigAvatarUrl(user.get { portrait }),
-        showBtn = showBtn,
-        isSelf = isSelf,
-        hasConcerned = user.get { has_concerned },
         badgeText = badgeText,
     )
     UserProfileCard(
         spec = spec,
-        onBtnClick = onBtnClick,
         onCopyIdClick = onCopyIdClick,
         onFollowListClick = {
             navigator.navigate(FollowListPageDestination(user.get { id }))

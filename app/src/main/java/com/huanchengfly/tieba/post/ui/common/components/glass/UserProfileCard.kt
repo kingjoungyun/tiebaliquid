@@ -17,16 +17,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -145,8 +141,11 @@ private fun TextStyle.tight(size: TextUnit): TextStyle = copy(
 /**
  * 个人主页「资料卡」的数据：把 `User` 拍平成基础类型，便于**复用**（真实页面 + debug 预览）。
  *
- * 为什么单独抽出来：预览入口要能显示完整资料区（含关注按钮状态），但造一个假 `User`
+ * 为什么单独抽出来：预览入口要能显示完整资料区，但造一个假 `User`
  * 需要填几十个接口字段。拍平成 [UserProfileCardSpec] 后，预览只要给几个字符串。
+ *
+ * 注意：**动作（关注 / 已关注 / 编辑资料）不在卡片里**，它在 tab 行右侧的
+ * [ProfileActionPill]；卡片只负责「头像 + 名字 / 元信息 / 数据 + 简介」。
  */
 data class UserProfileCardSpec(
     val name: String,
@@ -159,9 +158,6 @@ data class UserProfileCardSpec(
     val agreeNum: Int,
     val intro: String,
     val portraitUrl: String,
-    val showBtn: Boolean,
-    val isSelf: Boolean,
-    val hasConcerned: Int,
     /** 吧务等级 / 神认证之类的一行徽标文字（没有就 null）。 */
     val badgeText: String? = null,
     /** 仅 debug 预览用：本地 drawable 资源 id（非 null 时优先于 [portraitUrl]）。 */
@@ -189,7 +185,6 @@ fun UserProfileCard(
     spec: UserProfileCardSpec,
     avatarSize: Dp = AvatarSize,
     nameSp: TextUnit = 22.sp,
-    onBtnClick: () -> Unit,
     onCopyIdClick: () -> Unit,
     onFollowListClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -321,23 +316,17 @@ fun UserProfileCard(
             }
         }
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = spec.intro.takeIf { it.isNotEmpty() }
-                    ?: stringResource(id = R.string.tip_no_intro),
-                style = LocalTextStyle.current.copy(fontSize = 15.sp, lineHeight = 20.sp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            // 关注 / 已关注 / 编辑资料：放在简介行右侧，避免和数据行抢宽度
-            if (spec.showBtn) {
-                FollowButton(spec = spec, onBtnClick = onBtnClick)
-            }
-        }
+        // 简介行：动作（关注 / 已关注 / 编辑资料）已经移到 tab 行右侧的胶囊里，
+        // 卡片里只剩简介，宽度全给文字。
+        Text(
+            text = spec.intro.takeIf { it.isNotEmpty() }
+                ?: stringResource(id = R.string.tip_no_intro),
+            style = LocalTextStyle.current.copy(fontSize = 15.sp, lineHeight = 20.sp),
+            color = AppTokens.text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         if (spec.badgeText != null) {
             Row(
@@ -386,41 +375,4 @@ private fun ProfileStat(
     }
 }
 
-/** 关注 / 已关注 / 编辑资料 三种形态的按钮。 */
-@Composable
-private fun FollowButton(spec: UserProfileCardSpec, onBtnClick: () -> Unit) {
-    Button(
-        onClick = onBtnClick,
-        colors = if (spec.hasConcerned == 0 || spec.isSelf) {
-            ButtonDefaults.buttonColors()
-        } else {
-            ButtonDefaults.outlinedButtonColors()
-        },
-        border = if (spec.hasConcerned == 0 || spec.isSelf) {
-            null
-        } else {
-            ButtonDefaults.outlinedBorder
-        },
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            if (spec.isSelf) {
-                Icon(
-                    imageVector = PhosphorIcons["pencil-simple"] ?: Icons.Rounded.Edit,
-                    contentDescription = null,
-                )
-                Text(text = stringResource(id = R.string.menu_edit_info))
-            } else if (spec.hasConcerned == 0) {
-                Icon(
-                    imageVector = PhosphorIcons["plus"] ?: Icons.Rounded.Add,
-                    contentDescription = null,
-                )
-                Text(text = stringResource(id = R.string.button_follow))
-            } else {
-                Text(text = stringResource(id = R.string.button_unfollow))
-            }
-        }
-    }
-}
+/** 资料卡里的一项数据：标签（次级色 15/20）+ 数字（主文字色 SemiBold），整项可点。 */
