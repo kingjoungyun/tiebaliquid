@@ -150,6 +150,9 @@ private fun TextStyle.tight(size: TextUnit): TextStyle = copy(
  */
 data class UserProfileCardSpec(
     val name: String,
+    /** 显示名。
+ame 为空时兜底用它（贴吧有把 name 置空的账号，页面别处也是这么兜的）。 */
+    val nameShow: String = "",
     val sex: Int,
     val id: Long,
     val ipAddress: String,
@@ -191,6 +194,9 @@ fun UserProfileCard(
     modifier: Modifier = Modifier,
 ) {
     val colors = GlasmioTheme.colors
+    // name 为空时退回 nameShow：真实存在这种账号（实测「伏枥骥」那页 name 为空，
+    // 名字行整行空白）。与 UserProfilePage 里 name.ifEmpty { nameShow } 的写法一致。
+    val displayName = spec.name.ifEmpty { spec.nameShow }
     val sexEmoji = when (spec.sex) {
         1 -> "♂"
         2 -> "♀"
@@ -253,12 +259,15 @@ fun UserProfileCard(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         Text(
-                            text = spec.name,
+                            text = displayName,
                             style = LocalTextStyle.current.tight(nameSp).copy(
                                 fontWeight = FontWeight.SemiBold,
                             ),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
+                            // fill = false：名字长（如「贴吧用户_GDQCDeM」）时让名字自己省略，
+                            // 别把后面的性别符号挤出可用宽度（不加这个，♀ 会压在最后一个字上）
+                            modifier = Modifier.weight(1f, fill = false),
                         )
                         if (sexEmoji != null) {
                             Text(

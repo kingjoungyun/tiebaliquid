@@ -98,9 +98,10 @@ fun DebugDialogPreviewDialogs(
         // 头像固定 80dp（AvatarSize）：v1.9.2 已定「资料卡头像 = 80dp」，不再做 76/74 变体
         val avatarSize = 80
         var nameSp by remember { mutableStateOf(22) }
+        var nameEmpty by remember { mutableStateOf(false) }
         var action by remember { mutableStateOf(ProfileAction.Follow) }
         var tabIndex by remember { mutableStateOf(0) }
-        // 名字字号三档（22 / 26 / 30sp）；头像已固定 80dp，胶囊三态在下面一行
+        // 名字字号三档（22 / 26 / 30sp）+「空」变体（验 name.ifEmpty { nameShow } 兜底）
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(bottom = 4.dp),
@@ -109,16 +110,30 @@ fun DebugDialogPreviewDialogs(
                 Text(
                     text = "名字 ${size}sp",
                     fontSize = 13.sp,
-                    color = if (nameSp == size) AppTokens.primary else AppTokens.textSecondary,
+                    color = if (!nameEmpty && nameSp == size) AppTokens.primary else AppTokens.textSecondary,
                     modifier = Modifier
                         // 28dp：debug 开关不该按 48dp 触摸区撑高，否则弹窗放不下卡片 + tab 行
                         .height(28.dp)
                         // pointerInput 而不是 clickable：clickable 会按 48dp 最小触摸区撑高，
                         // 弹窗高度不够时会把下面的资料卡挤扁（实测卡片少 62px、数据行只剩 1px）
-                        .pointerInput(size) { detectTapGestures { nameSp = size } }
+                        .pointerInput(size) {
+                            detectTapGestures {
+                                nameSp = size
+                                nameEmpty = false
+                            }
+                        }
                         .padding(horizontal = 8.dp, vertical = 2.dp),
                 )
             }
+            Text(
+                text = "名字 空",
+                fontSize = 13.sp,
+                color = if (nameEmpty) AppTokens.primary else AppTokens.textSecondary,
+                modifier = Modifier
+                    .height(28.dp)
+                    .pointerInput(Unit) { detectTapGestures { nameEmpty = true } }
+                    .padding(horizontal = 8.dp, vertical = 2.dp),
+            )
         }
         // 动作胶囊三态（v1.9.2：胶囊已从卡片挪到 tab 行右侧）
         Row(
@@ -157,7 +172,9 @@ fun DebugDialogPreviewDialogs(
             avatarSize = avatarSize.dp,
             nameSp = nameSp.sp,
             spec = UserProfileCardSpec(
-                name = "特没谱先生",
+                name = if (nameEmpty) "" else "特没谱先生",
+                // name 为空时卡片应显示这个（name.ifEmpty { nameShow }）
+                nameShow = "贴吧用户_GDQCDeM",
                 sex = 2,
                 id = 1234567L,
                 ipAddress = "河北",

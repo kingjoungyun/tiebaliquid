@@ -1120,6 +1120,7 @@ private fun UserProfileDetail(
             ?.let { stringResource(id = R.string.text_god_verify, it.get { field_name }) }
     val spec = UserProfileCardSpec(
         name = user.get { name },
+        nameShow = user.get { nameShow },
         sex = user.get { sex },
         id = user.get { id },
         ipAddress = user.get { ip_address },
