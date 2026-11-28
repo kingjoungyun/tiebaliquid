@@ -347,7 +347,10 @@ fun Dialog(
                 .wrapContentHeight()
                 .animateContentSize()
                 .fillMaxWidth(if (compact) 1f else 0.6f)
-                .padding(16.dp)
+                // 底部不能贴屏幕边缘：iOS 的 alert / action sheet 离底部有「导航栏 + 8~16pt」。
+                // 实测弹窗窗口里 systemBarsPadding() 的导航栏 insets 是 0（decorFitsSystemWindows=false），
+                // 所以显式给一段底部留白：贴底布局 16dp，底部弹出再 +24dp。
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = if (compact) 40.dp else 16.dp)
                 .clip(shape)
                 .background(AppTokens.windowBackground)
                 .border(width = 1.dp, color = AppTokens.divider, shape = shape),

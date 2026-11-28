@@ -110,7 +110,8 @@ fun GlassDialogCard(
                 .wrapContentHeight()
                 .animateContentSize()
                 .fillMaxWidth()
-                .padding(16.dp),
+                // 底部留白：弹窗窗口里导航栏 insets 为 0，显式给 40dp（16 + 24）避免圆角被屏幕边缘切掉
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 40.dp),
         ) {
             GlassComponentSurface(
                 modifier = Modifier.matchParentSize(),
